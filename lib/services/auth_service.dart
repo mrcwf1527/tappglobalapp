@@ -1,14 +1,18 @@
 // lib/services/auth_service.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:logger/logger.dart';
+import 'package:http/http.dart' as http;
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   final Logger _logger = Logger();
+  bool _isSigningIn = false;
 
   Future<void> resetPassword(String email) async {
     try {
@@ -22,17 +26,14 @@ class AuthService {
   Future<UserCredential?> signUpWithEmail(String email, String password) async {
     try {
       return await _auth.createUserWithEmailAndPassword(
-        email: email, 
-        password: password
-      );
+          email: email, password: password);
     } on FirebaseAuthException catch (e) {
       _logger.e('Sign up failed', error: e);
       throw FirebaseAuthException(
-        code: e.code,
-        message: e.code == 'email-already-in-use' 
-          ? 'Email address is already in use'
-          : 'Sign up failed. Please try again.'
-      );
+          code: e.code,
+          message: e.code == 'email-already-in-use'
+              ? 'Email address is already in use'
+              : 'Sign up failed. Please try again.');
     }
   }
 
@@ -45,7 +46,7 @@ class AuthService {
     } on FirebaseAuthException catch (e) {
       _logger.e('Login failed', error: e);
       String message = 'Login failed';
-    
+
       switch (e.code) {
         case 'invalid-credential':
           message = 'Invalid email or password';
@@ -60,52 +61,49 @@ class AuthService {
           message = 'Invalid email address';
           break;
       }
-    
-      throw FirebaseAuthException(
-        code: e.code,
-        message: message
-      );
+
+      throw FirebaseAuthException(code: e.code, message: message);
     }
   }
 
   Future<UserCredential?> signInWithGoogle() async {
+    if (_isSigningIn) {
+      return null; // If already signing in, return null
+    }
+    _isSigningIn = true;
     try {
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) {
-        throw FirebaseAuthException(
-          code: 'cancelled',
-          message: 'Sign in cancelled by user'
+      if (kIsWeb) {
+        final googleProvider = GoogleAuthProvider();
+        googleProvider
+            .addScope('https://www.googleapis.com/auth/contacts.readonly');
+
+        // Always use popup for web
+        return await _auth.signInWithPopup(googleProvider);
+      } else {
+        // Existing mobile implementation
+        final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+        if (googleUser == null) {
+          throw FirebaseAuthException(
+              code: 'cancelled', message: 'Sign in cancelled by user');
+        }
+
+        final GoogleSignInAuthentication googleAuth =
+            await googleUser.authentication;
+        final credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
         );
+
+        return await _auth.signInWithCredential(credential);
       }
-
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      final userCredential = await _auth.signInWithCredential(credential);
-      if (userCredential.user != null) {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(userCredential.user!.uid)
-            .update({
-          'lastLogin': FieldValue.serverTimestamp(),
-        });
-        // Add user document if it doesn't exist
-        await createUserDocument(userCredential.user!);
-      }
-      return userCredential;
-
-    } on FirebaseAuthException catch (e) {
-      _logger.e('Google sign in failed', error: e);
-      rethrow;
+    } on FirebaseException catch (e) {
+      _logger.e('Google sign in failed with Firebase Exception: $e', error: e);
+      return null;
     } catch (e) {
-      _logger.e('Google sign in failed', error: e);
-      throw FirebaseAuthException(
-        code: 'cancelled',
-        message: 'Sign in cancelled by user'
-      );
+      _logger.e('Google sign in failed with general exception: $e', error: e);
+      return null;
+    } finally {
+      _isSigningIn = false;
     }
   }
 
@@ -120,9 +118,7 @@ class AuthService {
 
       if (appleCredential.userIdentifier == null) {
         throw FirebaseAuthException(
-          code: 'cancelled',
-          message: 'Sign in cancelled by user'
-        );
+            code: 'cancelled', message: 'Sign in cancelled by user');
       }
 
       final oauthCredential = OAuthProvider("apple.com").credential(
@@ -131,9 +127,8 @@ class AuthService {
       );
 
       final userCredential = await _auth.signInWithCredential(oauthCredential);
-    
+
       if (userCredential.user != null) {
-        await createUserDocument(userCredential.user!);
         await FirebaseFirestore.instance
             .collection('users')
             .doc(userCredential.user!.uid)
@@ -141,38 +136,72 @@ class AuthService {
           'lastLogin': FieldValue.serverTimestamp(),
         });
       }
-    
       return userCredential;
-    } on SignInWithAppleAuthorizationException catch (e) {
-      _logger.e('Apple sign in failed', error: e);
-      throw FirebaseAuthException(
-        code: 'cancelled',
-        message: 'Sign in cancelled by user'
-      );
-    } on FirebaseAuthException catch (e) {
-      _logger.e('Apple sign in failed', error: e);
-      rethrow;
     } catch (e) {
       _logger.e('Apple sign in failed', error: e);
       throw FirebaseAuthException(
-        code: 'cancelled',
-        message: 'Sign in cancelled by user'
-      );
+          code: 'cancelled', message: 'Sign in cancelled by user');
     }
   }
 
   Future<void> createUserDocument(User user) async {
-  try {
-    await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-      'email': user.email,
-      'displayName': user.displayName,
-      'createdAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
-  } catch (e) {
-    _logger.e('Failed to create user document', error: e);
-    rethrow;
+    final userDocRef =
+        FirebaseFirestore.instance.collection('users').doc(user.uid);
+    final userDoc = await userDocRef.get();
+
+    if (userDoc.exists && userDoc.data()?['profileCreated'] == true) {
+      debugPrint('User document already exists and profile is created');
+      return;
+    }
+
+    try {
+      debugPrint('Starting to cache profile image...');
+      String? photoURL = user.photoURL;
+      if (photoURL != null && !kIsWeb) {
+        photoURL = await _cacheGoogleProfileImage(photoURL);
+      }
+
+      debugPrint('Creating/updating Firestore document...');
+      await userDocRef.set({
+        'email': user.email,
+        'displayName': user.displayName,
+        'photoURL': photoURL,
+        'createdAt': FieldValue.serverTimestamp(),
+        'profileCreated': true, // Set the flag here
+      }, SetOptions(merge: true));
+      debugPrint('User document created successfully');
+    } on FirebaseException catch (e) {
+      if (e.code == 'permission-denied') {
+        debugPrint('Permission denied creating user document: $e');
+      } else {
+        debugPrint('Failed to create user document: $e');
+        debugPrint('Stack trace: ${e.stackTrace}');
+        rethrow;
+      }
+    } catch (e, stack) {
+      debugPrint('Failed to create user document: $e');
+      debugPrint('Stack trace: $stack');
+      rethrow;
+    }
   }
-}
+
+  Future<String?> _cacheGoogleProfileImage(String photoURL) async {
+    try {
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child('profile_images/${_auth.currentUser?.uid}.jpg');
+
+      final response = await http.get(Uri.parse(photoURL));
+      if (response.statusCode == 200) {
+        await storageRef.putData(
+            response.bodyBytes, SettableMetadata(contentType: 'image/jpeg'));
+        return await storageRef.getDownloadURL();
+      }
+    } catch (e) {
+      debugPrint('Failed to cache profile image: $e');
+    }
+    return photoURL; // Fallback to original URL if caching fails
+  }
 
   Future<void> signOut() async {
     try {

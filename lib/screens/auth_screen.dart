@@ -1,5 +1,4 @@
 // lib/screens/auth_screen.dart
-// ignore_for_file: use_build_context_synchronously, deprecated_member_use
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -209,7 +208,7 @@ class _AuthScreenState extends State<AuthScreen> {
           style: TextStyle(color: isError ? Colors.red : Colors.black),
           decoration: InputDecoration(
             hintText: hintText,
-            hintStyle: TextStyle(color: isError ? Colors.red.withOpacity(0.5) : null),
+            hintStyle: TextStyle(color: isError ? Colors.red.withAlpha(128) : null),
             prefixIcon: IconTheme(
               data: IconThemeData(color: isError ? Colors.red : null),
               child: prefixIcon,
@@ -250,6 +249,7 @@ class _AuthScreenState extends State<AuthScreen> {
   }) {
     return OutlinedButton.icon(
       onPressed: () async {
+        final navigator = Navigator.of(context);
         setState(() => _isLoading = true);
         try {
           final result = await onPressed();
@@ -260,7 +260,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 .update({
               'lastLogin': FieldValue.serverTimestamp(),
             });
-            Navigator.pushReplacementNamed(context, '/home');
+            navigator.pushReplacementNamed('/home');
           }
         } on SignInWithAppleAuthorizationException {
           if (mounted) {

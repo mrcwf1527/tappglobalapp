@@ -1,50 +1,50 @@
 <!DOCTYPE html>
 <html>
 <head>
- <base href="$FLUTTER_BASE_HREF">
+  <base href="$FLUTTER_BASE_HREF">
 
- <meta charset="UTF-8">
- <meta content="IE=Edge" http-equiv="X-UA-Compatible">
- <meta name="description" content="A digital business card application that revolutionizes networking through smart lead management and seamless contact sharing.">
- 
- <!-- Google Sign-in -->
- <meta name="google-signin-client_id" content="756432671303-bkqrpotplrcemao856mqd4m9ii68itgp.apps.googleusercontent.com">
- <script src="https://apis.google.com/js/platform.js" async defer></script>
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="A digital business card application that revolutionizes networking through smart lead management and seamless contact sharing.">
 
- <!-- iOS meta tags & icons -->
- <meta name="apple-mobile-web-app-capable" content="yes">
- <meta name="apple-mobile-web-app-status-bar-style" content="black">
- <meta name="apple-mobile-web-app-title" content="TAPP! Global">
- <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <!-- Google Sign-in -->
+  <meta name="google-signin-client_id" content="756432671303-bkqrpotplrcemao856mqd4m9ii68itgp.apps.googleusercontent.com">
+  <script src="https://apis.google.com/js/platform.js" async defer></script>
 
- <!-- Favicon -->
- <link rel="icon" type="image/png" href="favicon.ico"/>
+  <!-- iOS meta tags & icons -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="TAPP! Global">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
- <title>TAPP! Global</title>
- <link rel="manifest" href="manifest.json">
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.ico"/>
 
- <script>
-   // The value below is injected by flutter build, do not touch.
-   const serviceWorkerVersion = null;
- </script>
- <!-- This script adds the flutter initialization JS code -->
- <script src="flutter.js" defer></script>
+  <title>TAPP! Global</title>
+  <link rel="manifest" href="manifest.json">
+
+  <script>
+    // The value below is injected by flutter build, do not touch.
+    const serviceWorkerVersion = null;
+  </script>
+  <!-- This script adds the flutter initialization JS code -->
+  <script src="flutter.js" defer></script>
 </head>
 <body>
- <script>
-   window.addEventListener('load', function(ev) {
-     // Download main.dart.js
-     _flutter.loader.loadEntrypoint({
-       serviceWorker: {
-         serviceWorkerVersion: serviceWorkerVersion,
-       },
-       onEntrypointLoaded: function(engineInitializer) {
-         engineInitializer.initializeEngine().then(function(appRunner) {
-           appRunner.runApp();
-         });
-       }
-     });
-   });
- </script>
+  <script>
+    window.addEventListener('load', function(ev) {
+      // Download main.dart.js
+      _flutter.loader.loadEntrypoint({
+        serviceWorker: {
+          serviceWorkerVersion: serviceWorkerVersion,
+        },
+        onEntrypointLoaded: function(engineInitializer) {
+          engineInitializer.initializeEngine().then(function(appRunner) {
+            appRunner.runApp();
+          });
+        }
+      });
+    });
+  </script>
 </body>
 </html>
