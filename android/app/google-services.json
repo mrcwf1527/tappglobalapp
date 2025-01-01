@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "756432671303",
+    "project_id": "tappglobal-app",
+    "storage_bucket": "tappglobal-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:756432671303:android:5345f4240580058e651762",
+        "android_client_info": {
+          "package_name": "com.tappglobal.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "756432671303-bkqrpotplrcemao856mqd4m9ii68itgp.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAK5Jz-n7XA4k3riyebzS1Ne56o9S8AWxM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "756432671303-bkqrpotplrcemao856mqd4m9ii68itgp.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "756432671303-mbfigkvshcm0l1e3hkbkgukdbii8rf8k.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.tappglobal.app"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

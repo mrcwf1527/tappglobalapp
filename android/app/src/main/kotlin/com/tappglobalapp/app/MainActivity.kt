@@ -1,4 +1,4 @@
-package com.example.tappglobalapp_flutter
+package com.tappglobal.app
 
 import io.flutter.embedding.android.FlutterActivity
 
