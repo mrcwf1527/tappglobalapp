@@ -80,15 +80,18 @@ class AppDrawer extends StatelessWidget {
   }
 
   Widget _buildWebAvatar(String url) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(50),
+    return ClipOval(
       child: Image.network(
         url,
-        fit: BoxFit.cover,
         width: 60,
         height: 60,
-        errorBuilder: (_, __, ___) {
-          debugPrint('Web drawer avatar load error for URL: $url');
+        fit: BoxFit.cover,
+        loadingBuilder: (_, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+            return _buildLoadingAvatar();
+        },
+        errorBuilder: (_, __, error) {
+          debugPrint('Web avatar load error: $error');
           return _buildDefaultAvatar();
         },
       ),

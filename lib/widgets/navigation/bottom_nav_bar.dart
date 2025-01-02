@@ -23,20 +23,28 @@ class AppBottomNavBar extends StatelessWidget {
             offset: const Offset(0, -2),
           ),
         ],
-        color: Colors.white,
+        color: Theme.of(context).brightness == Brightness.dark 
+          ? const Color(0xFF191919) 
+          : Colors.white,
       ),
       child: BottomNavigationBar(
         currentIndex: currentIndex,
         onTap: onTap,
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.black,
-        unselectedItemColor: Colors.grey,
+        selectedItemColor: Theme.of(context).brightness == Brightness.dark 
+          ? Colors.white 
+          : Colors.black,
+        unselectedItemColor: Theme.of(context).brightness == Brightness.dark 
+          ? const Color(0xFFD9D9D9) 
+          : Colors.grey,
         showUnselectedLabels: true,
         selectedFontSize: 12,
         unselectedFontSize: 12,
         iconSize: 22,
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).brightness == Brightness.dark 
+          ? const Color(0xFF191919) 
+          : Colors.white,
         items: const [
           BottomNavigationBarItem(
             icon: FaIcon(FontAwesomeIcons.house),

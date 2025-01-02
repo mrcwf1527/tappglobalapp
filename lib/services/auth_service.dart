@@ -145,31 +145,26 @@ class AuthService {
   }
 
   Future<void> createUserDocument(User user) async {
-    final userDocRef =
-        FirebaseFirestore.instance.collection('users').doc(user.uid);
+    final userDocRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
     final userDoc = await userDocRef.get();
 
     if (userDoc.exists && userDoc.data()?['profileCreated'] == true) {
-      debugPrint('User document already exists and profile is created');
       return;
     }
 
     try {
-      debugPrint('Starting to cache profile image...');
       String? photoURL = user.photoURL;
-      if (photoURL != null && !kIsWeb) {
+      if (photoURL != null && photoURL.contains('googleusercontent.com')) {
         photoURL = await _cacheGoogleProfileImage(photoURL);
       }
 
-      debugPrint('Creating/updating Firestore document...');
       await userDocRef.set({
         'email': user.email,
         'displayName': user.displayName,
         'photoURL': photoURL,
         'createdAt': FieldValue.serverTimestamp(),
-        'profileCreated': true, // Set the flag here
+        'profileCreated': true,
       }, SetOptions(merge: true));
-      debugPrint('User document created successfully');
     } on FirebaseException catch (e) {
       if (e.code == 'permission-denied') {
         debugPrint('Permission denied creating user document: $e');
@@ -187,11 +182,18 @@ class AuthService {
 
   Future<String?> _cacheGoogleProfileImage(String photoURL) async {
     try {
+      // Extract size parameter for Google URLs
+      String finalURL = photoURL;
+      if (photoURL.contains('googleusercontent.com')) {
+        // Force a larger size to prevent quality issues
+        finalURL = '$photoURL?sz=400';
+      }
+    
       final storageRef = FirebaseStorage.instance
           .ref()
           .child('profile_images/${_auth.currentUser?.uid}.jpg');
 
-      final response = await http.get(Uri.parse(photoURL));
+      final response = await http.get(Uri.parse(finalURL));
       if (response.statusCode == 200) {
         await storageRef.putData(
             response.bodyBytes, SettableMetadata(contentType: 'image/jpeg'));
@@ -200,7 +202,8 @@ class AuthService {
     } catch (e) {
       debugPrint('Failed to cache profile image: $e');
     }
-    return photoURL; // Fallback to original URL if caching fails
+    // Return null instead of original URL on failure
+    return null;
   }
 
   Future<void> signOut() async {

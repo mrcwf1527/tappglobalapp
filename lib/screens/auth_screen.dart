@@ -1,8 +1,10 @@
 // lib/screens/auth_screen.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/auth_service.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
@@ -31,7 +33,9 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark 
+        ? const Color(0xFF0E0E0E) 
+        : Colors.white,
       body: Center(
         child: SingleChildScrollView(
           child: Padding(
@@ -42,7 +46,9 @@ class _AuthScreenState extends State<AuthScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Image.asset(
-                    'assets/logo/logo_black.png',
+                    Theme.of(context).brightness == Brightness.dark
+                      ? 'assets/logo/logo_white.png'
+                      : 'assets/logo/logo_black.png',
                     width: 120,
                     height: 120,
                   ),
@@ -50,8 +56,11 @@ class _AuthScreenState extends State<AuthScreen> {
                   Text(
                     _isLogin ? 'Welcome to TAPP!' : 'Create Account',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white
+                        : Colors.black,
+                    ),
                   ),
                   const SizedBox(height: 24),
                   Form(
@@ -77,20 +86,21 @@ class _AuthScreenState extends State<AuthScreen> {
                             onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                           ),
                         ),
-                        if (!_isLogin) ...[
-                          const SizedBox(height: 16),
-                          _buildTextField(
-                            controller: _confirmPasswordController,
-                            hintText: 'Confirm Password',
-                            prefixIcon: const Icon(Icons.lock_outline),
-                            obscureText: _obscureConfirmPassword,
-                            errorText: _confirmPasswordError,
-                            suffixIcon: IconButton(
-                              icon: Icon(_obscureConfirmPassword ? Icons.visibility_off : Icons.visibility),
-                              onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                        if (!_isLogin) 
+                          Padding(
+                            padding: const EdgeInsets.only(top: 16),
+                            child: _buildTextField(
+                              controller: _confirmPasswordController,
+                              hintText: 'Confirm Password',
+                              prefixIcon: const Icon(Icons.lock_outline),
+                              obscureText: _obscureConfirmPassword,
+                              errorText: _confirmPasswordError,
+                              suffixIcon: IconButton(
+                                icon: Icon(_obscureConfirmPassword ? Icons.visibility_off : Icons.visibility),
+                                onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                              ),
                             ),
                           ),
-                        ],
                       ],
                     ),
                   ),
@@ -99,13 +109,14 @@ class _AuthScreenState extends State<AuthScreen> {
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
-                        onPressed: () => Navigator.pushNamed(
-                          context, 
-                          '/forgot-password'
-                        ),
-                        child: const Text(
+                        onPressed: () => Navigator.pushNamed(context, '/forgot-password'),
+                        child: Text(
                           'Forgot Password?',
-                          style: TextStyle(color: Colors.black87),
+                          style: TextStyle(
+                            color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white
+                              : Colors.black87,
+                          ),
                         ),
                       ),
                     ),
@@ -113,27 +124,34 @@ class _AuthScreenState extends State<AuthScreen> {
                   ElevatedButton(
                     onPressed: _isLoading ? null : _handleSubmit,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
+                      backgroundColor: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF252525)
+                        : Colors.black,
                       minimumSize: const Size(double.infinity, 50),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
+                        side: Theme.of(context).brightness == Brightness.dark
+                          ? const BorderSide(color: Colors.white24)
+                          : BorderSide.none,
                       ),
                     ),
                     child: _isLoading
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : Text(
-                            _isLogin ? 'Sign In' : 'Sign Up',
-                            style: const TextStyle(color: Colors.white),
-                          ),
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : Text(
+                          _isLogin ? 'Sign In' : 'Sign Up',
+                          style: const TextStyle(color: Colors.white),
+                        ),
                   ),
                   const SizedBox(height: 16),
                   TextButton(
                     onPressed: () => setState(() => _isLogin = !_isLogin),
                     child: Text(
-                      _isLogin
-                          ? "Don't have an account? Sign Up"
-                          : 'Already have an account? Sign In',
-                      style: const TextStyle(color: Colors.black87),
+                      _isLogin ? "Don't have an account? Sign Up" : 'Already have an account? Sign In',
+                      style: TextStyle(
+                        color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : Colors.black87,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -153,14 +171,52 @@ class _AuthScreenState extends State<AuthScreen> {
                     icon: FontAwesomeIcons.google,
                     text: 'Continue with Google',
                   ),
-                  if (Theme.of(context).platform == TargetPlatform.iOS) ...[
-                    const SizedBox(height: 16),
-                    _buildSocialButton(
-                      onPressed: () => _authService.signInWithApple(),
-                      icon: FontAwesomeIcons.apple,
-                      text: 'Continue with Apple',
+                  if (Theme.of(context).platform == TargetPlatform.iOS)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: _buildSocialButton(
+                        onPressed: () => _authService.signInWithApple(),
+                        icon: FontAwesomeIcons.apple,
+                        text: 'Continue with Apple',
+                      ),
                     ),
-                  ],
+                  if (!_isLogin)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 24),
+                      child: Text.rich(
+                        TextSpan(
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white70
+                              : Colors.black87,
+                          ),
+                          children: [
+                            const TextSpan(text: 'By signing up, you are agreeing to our '),
+                            TextSpan(
+                              text: 'Terms of Service',
+                              style: const TextStyle(
+                                decoration: TextDecoration.underline,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () => _launchURL('https://tappglobal.app/tnc'),
+                            ),
+                            const TextSpan(text: ' and '),
+                            TextSpan(
+                              text: 'Privacy Policy',
+                              style: const TextStyle(
+                                decoration: TextDecoration.underline,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () => _launchURL('https://tappglobal.app/policyPrivacy'),
+                            ),
+                          ],
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -180,6 +236,8 @@ class _AuthScreenState extends State<AuthScreen> {
     String? errorText,
   }) {
     final isError = errorText != null;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -205,28 +263,56 @@ class _AuthScreenState extends State<AuthScreen> {
               });
             }
           },
-          style: TextStyle(color: isError ? Colors.red : Colors.black),
+          style: TextStyle(
+            color: isError 
+              ? Colors.red 
+              : (isDark ? Colors.white : Colors.black)
+          ),
           decoration: InputDecoration(
             hintText: hintText,
-            hintStyle: TextStyle(color: isError ? Colors.red.withAlpha(128) : null),
+            hintStyle: TextStyle(
+              color: isError 
+                ? Colors.red.withAlpha(179)
+                : (isDark ? Colors.white.withAlpha(179) : Colors.black54)
+            ),
             prefixIcon: IconTheme(
-              data: IconThemeData(color: isError ? Colors.red : null),
+              data: IconThemeData(
+                color: isError 
+                ? Colors.red 
+                : (isDark ? Colors.white : Colors.black54)
+              ),
               child: prefixIcon,
             ),
-            suffixIcon: suffixIcon,
+            suffixIcon: suffixIcon != null 
+              ? IconTheme(
+                  data: IconThemeData(
+                    color: isError 
+                      ? Colors.red 
+                      : (isDark ? Colors.white : Colors.black54)
+                  ),
+                  child: suffixIcon,
+                )
+              : null,
             filled: true,
-            fillColor: Colors.grey[50],
+            fillColor: isDark ? const Color(0xFF121212) : Colors.grey[50],
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: isError ? Colors.red : Colors.grey[300]!),
+              borderSide: BorderSide(
+                color: isError ? Colors.red : Colors.grey
+              ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: isError ? Colors.red : Colors.grey[300]!),
+              borderSide: BorderSide(
+                color: isError ? Colors.red : Colors.grey
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: isError ? Colors.red : Colors.black, width: 2),
+              borderSide: BorderSide(
+                color: isError ? Colors.red : Colors.grey,
+                width: 2
+              ),
             ),
           ),
         ),
@@ -235,7 +321,10 @@ class _AuthScreenState extends State<AuthScreen> {
             padding: const EdgeInsets.only(top: 6, left: 12),
             child: Text(
               errorText,
-              style: const TextStyle(color: Colors.red, fontSize: 12),
+              style: TextStyle(
+                color: Colors.red,
+                fontSize: 12
+              ),
             ),
           ),
       ],
@@ -303,20 +392,32 @@ class _AuthScreenState extends State<AuthScreen> {
         }
       },
       style: OutlinedButton.styleFrom(
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF252525)
+          : Colors.white,
+        foregroundColor: Theme.of(context).brightness == Brightness.dark
+          ? Colors.white
+          : Colors.black,
         minimumSize: const Size(double.infinity, 50),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
         ),
-        side: const BorderSide(color: Colors.grey),
+        side: BorderSide(
+          color: Theme.of(context).brightness == Brightness.dark
+            ? Colors.white24
+            : Colors.grey,
+        ),
       ),
       icon: FaIcon(icon, size: 18),
       label: _isLoading ? 
-        const SizedBox(
+        SizedBox(
           height: 20,
           width: 20,
           child: CircularProgressIndicator(
             strokeWidth: 2,
-            color: Colors.black,
+            color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.white
+              : Colors.black,
           ),
         ) : 
         Text(text),
@@ -457,6 +558,13 @@ class _AuthScreenState extends State<AuthScreen> {
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _launchURL(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
     }
   }
 }

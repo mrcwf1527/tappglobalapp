@@ -28,6 +28,8 @@ dependencies:
   js: ^0.7.1
   universal_html: ^2.2.4
   path_provider: ^2.1.5
+  shared_preferences: ^2.3.4
+  provider: ^6.1.2
 
 dev_dependencies:
   flutter_test:

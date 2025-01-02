@@ -80,12 +80,12 @@ class _HomeScreenState extends State<HomeScreen> {
         width: 40,
         height: 40,
         fit: BoxFit.cover,
-        loadingBuilder: (_, child, loadingProgress) {
+        loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
           if (loadingProgress == null) return child;
           return _buildLoadingAvatar();
         },
-        errorBuilder: (_, __, ___) {
-          debugPrint('Web avatar load error: $_');
+        errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) {
+          debugPrint('Web avatar load error: $error');
           return _buildDefaultAvatar();
         },
       ),
