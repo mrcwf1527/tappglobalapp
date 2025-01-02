@@ -17,6 +17,7 @@ class DesktopSidebar extends StatelessWidget {
     return Container(
       width: 250,
       decoration: BoxDecoration(
+        color: Color(0xFF191919),
         border: Border(
           right: BorderSide(color: Colors.grey[200]!),
         ),
@@ -105,36 +106,26 @@ class DesktopSidebar extends StatelessWidget {
 
   Widget _buildNavItem(int index, IconData icon, String label) {
     final isSelected = selectedIndex == index;
-
-    return InkWell(
-      onTap: () => onNavigate(index),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.grey[100] : null,
-          border: Border(
-            left: BorderSide(
-              color: isSelected ? Colors.black : Colors.transparent,
-              width: 3,
-            ),
-          ),
+  
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: isSelected ? const Color(0xFFD9D9D9) : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: ListTile(
+        onTap: () => onNavigate(index),
+        leading: FaIcon(
+          icon,
+          color: isSelected ? Colors.black : Colors.white,
+          size: 18,
         ),
-        child: Row(
-          children: [
-            FaIcon(
-              icon,
-              color: isSelected ? Colors.black : Colors.grey[600],
-              size: 18,
-            ),
-            const SizedBox(width: 12),
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? Colors.black : Colors.grey[600],
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-          ],
+        title: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.black : Colors.white,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
         ),
       ),
     );

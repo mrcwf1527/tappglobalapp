@@ -128,6 +128,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildMobileLayout() {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Theme.of(context).brightness == Brightness.dark 
+          ? const Color(0xFF191919)
+          : const Color(0xFFF5F5F5),
         title: const Text('TAPP!'),
         actions: [
           IconButton(
@@ -182,20 +185,14 @@ class _HomeScreenState extends State<HomeScreen> {
     final user = FirebaseAuth.instance.currentUser;
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withAlpha(26),
-            blurRadius: 10,
-          ),
-        ],
+      decoration: const BoxDecoration(
+        color: Color(0xFF191919),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           IconButton(
-            icon: const Icon(Icons.notifications_outlined),
+            icon: const Icon(Icons.notifications_outlined, color: Colors.white),
             onPressed: () {},
           ),
           const SizedBox(width: 8),

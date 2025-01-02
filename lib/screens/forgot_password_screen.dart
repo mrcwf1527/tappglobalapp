@@ -71,19 +71,31 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(
-                color: isError ? Colors.red : Colors.grey
+                color: isError
+                  ? Colors.red
+                  : (Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF232323)
+                      : Colors.grey[900]!),
               ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(
-                color: isError ? Colors.red : Colors.grey
+                color: isError
+                  ? Colors.red
+                  : (Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF232323)
+                      : Colors.grey[900]!),
               ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(
-                color: isError ? Colors.red : Colors.grey,
+                color: isError
+                  ? Colors.red
+                  : (Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF232323)
+                      : Colors.black),
                 width: 2
               ),
             ),
@@ -107,9 +119,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).brightness == Brightness.dark 
-        ? const Color(0xFF0E0E0E) 
-        : Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Center(
         child: SingleChildScrollView(
           child: Padding(

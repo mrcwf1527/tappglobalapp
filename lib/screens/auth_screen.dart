@@ -33,9 +33,7 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).brightness == Brightness.dark 
-        ? const Color(0xFF0E0E0E) 
-        : Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Center(
         child: SingleChildScrollView(
           child: Padding(
@@ -294,23 +292,37 @@ class _AuthScreenState extends State<AuthScreen> {
                 )
               : null,
             filled: true,
-            fillColor: isDark ? const Color(0xFF121212) : Colors.grey[50],
+            fillColor: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF121212)
+              : Colors.grey[50],
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(
-                color: isError ? Colors.red : Colors.grey
+                color: isError
+                  ? Colors.red
+                  : (Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF232323)
+                      : Colors.grey[900]!),
               ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(
-                color: isError ? Colors.red : Colors.grey
+                color: isError
+                  ? Colors.red
+                  : (Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF232323)
+                      : Colors.grey[900]!),
               ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(
-                color: isError ? Colors.red : Colors.grey,
+                color: isError
+                  ? Colors.red
+                  : (Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF232323)
+                      : Colors.black),
                 width: 2
               ),
             ),
