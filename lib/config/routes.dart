@@ -6,7 +6,7 @@ import '../screens/home_screen.dart';
 import '../screens/leads_screen.dart';
 import '../screens/scan_screen.dart';
 import '../screens/inbox_screen.dart';
-import '../screens/digital_profile_screen.dart';
+import '../screens/digital_profile/digital_profile_screen.dart';
 import '../screens/settings_screen.dart';
 
 class AppRoutes {

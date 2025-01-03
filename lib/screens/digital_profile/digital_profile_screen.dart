@@ -1,6 +1,6 @@
 // lib/screens/digital_profile_screen.dart
 import 'package:flutter/material.dart';
-import '../widgets/responsive_layout.dart';
+import '../../widgets/responsive_layout.dart';
 import 'edit_digital_profile_screen.dart';
 
 class DigitalProfileScreen extends StatelessWidget {

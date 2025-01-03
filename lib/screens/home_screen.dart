@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'leads_screen.dart';
 import 'scan_screen.dart';
-import 'digital_profile_screen.dart';
+import 'digital_profile/digital_profile_screen.dart';
 import 'inbox_screen.dart';
 import '../widgets/responsive_layout.dart';
 import '../widgets/navigation/bottom_nav_bar.dart';
