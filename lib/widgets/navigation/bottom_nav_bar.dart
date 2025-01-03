@@ -67,8 +67,8 @@ class AppBottomNavBar extends StatelessWidget {
             label: 'Inbox',
           ),
           BottomNavigationBarItem(
-            icon: FaIcon(FontAwesomeIcons.user),
-            activeIcon: FaIcon(FontAwesomeIcons.user),
+            icon: FaIcon(FontAwesomeIcons.idCard),
+            activeIcon: FaIcon(FontAwesomeIcons.idCard),
             label: 'Profile',
           ),
         ],

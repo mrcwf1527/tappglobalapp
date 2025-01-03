@@ -44,19 +44,17 @@ class MyApp extends StatelessWidget {
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: themeProvider.themeMode,
+        navigatorKey: AppRoutes.navigatorKey,
+        onGenerateRoute: AppRoutes.onGenerateRoute,
         home: StreamBuilder<User?>(
           stream: FirebaseAuth.instance.authStateChanges(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
-            if (snapshot.data == null) {
-              return const AuthScreen();
-            }
-            return const HomeScreen();
+            return snapshot.data == null ? const AuthScreen() : const HomeScreen();
           },
         ),
-        routes: AppRoutes.routes,
         debugShowCheckedModeBanner: false,
       ),
     );

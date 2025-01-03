@@ -2,12 +2,16 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'leads_screen.dart';
+import 'scan_screen.dart';
+import 'digital_profile_screen.dart';
+import 'inbox_screen.dart';
 import '../widgets/responsive_layout.dart';
 import '../widgets/navigation/bottom_nav_bar.dart';
 import '../widgets/navigation/app_drawer.dart';
 import '../widgets/navigation/desktop_sidebar.dart';
 import '../services/auth_service.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,35 +23,36 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   final AuthService _authService = AuthService();
+  bool _initialized = false;
+
+  // Mapping for desktop sidebar navigation
+  final _pageIndices = {
+    0: 0,  // Overview
+    1: 1,  // Leads 
+    2: 2,  // Scan
+    3: 3,  // Inbox
+    4: 4,  // Digital Profile
+    12: 'settings', // Settings
+  };
 
   @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
+  void initState() {
+    super.initState();
+    _checkInitialAuth();
+  }
 
-        if (snapshot.data == null) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            Navigator.pushReplacementNamed(context, '/auth');
-          });
-          return const SizedBox();
-        }
-
-        if (snapshot.data != null) {
-          _authService.createUserDocument(snapshot.data!);
-        }
-
-        return ResponsiveLayout(
-          mobileLayout: _buildMobileLayout(),
-          desktopLayout: _buildDesktopLayout(),
-        );
-      },
-    );
+  Future<void> _checkInitialAuth() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/auth');
+      }
+    } else {
+      await _authService.createUserDocument(user);
+      if (mounted) {
+        setState(() => _initialized = true);
+      }
+    }
   }
 
   void _onItemTapped(int index) {
@@ -55,6 +60,22 @@ class _HomeScreenState extends State<HomeScreen> {
       _handleSignOut();
       return;
     }
+
+    // Handle special routes for desktop sidebar
+    if (index == 12) {
+      Navigator.pushNamed(context, '/settings');
+      return;
+    }
+
+    // Map sidebar index to page index for desktop view
+    if (ResponsiveLayout.isDesktop(context)) {
+      final pageIndex = _pageIndices[index];
+      if (pageIndex != null && pageIndex is int) {
+        setState(() => _selectedIndex = pageIndex);
+      }
+      return;
+    }
+
     setState(() => _selectedIndex = index);
   }
 
@@ -65,12 +86,163 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  @override
+  Widget build(BuildContext context) {
+    if (!_initialized) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    return ResponsiveLayout(
+      mobileLayout: _buildMobileLayout(),
+      desktopLayout: _buildDesktopLayout(),
+    );
+  }
+
+  Widget _buildMobileLayout() {
+    String appBarTitle = switch (_selectedIndex) {
+      0 => 'TAPP!',
+      1 => 'Leads',
+      2 => 'Scan',
+      3 => 'Inbox',
+      4 => 'Digital Profile',
+      _ => 'TAPP!'
+    };
+
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF191919)
+            : const Color(0xFFF5F5F5),
+        title: Text(appBarTitle),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_outlined),
+            onPressed: () {},
+          ),
+        ],
+      ),
+      drawer: AppDrawer(onSignOut: _handleSignOut),
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        child: _buildBody(),
+      ),
+      bottomNavigationBar: AppBottomNavBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+      ),
+    );
+  }
+
+  Widget _buildDesktopLayout() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Scaffold(
+          body: Row(
+            children: [
+              DesktopSidebar(
+                selectedIndex: _selectedIndex,
+                onNavigate: _onItemTapped,
+              ),
+              if (FirebaseAuth.instance.currentUser != null)
+                Expanded(
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        height: 72,
+                        child: _buildDesktopHeader(),
+                      ),
+                      Expanded(
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 300),
+                          child: SingleChildScrollView(
+                            child: _buildBody(),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildBody() {
+    return KeyedSubtree(
+      key: ValueKey<int>(_selectedIndex),
+      child: switch (_selectedIndex) {
+        0 => _buildHomeContent(),
+        1 => const LeadsScreen(),
+        2 => const ScanScreen(),
+        3 => const InboxScreen(),
+        4 => const DigitalProfileScreen(),
+        _ => _buildHomeContent(),
+      },
+    );
+  }
+
+  Widget _buildHomeContent() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Overview',
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 24),
+            _buildQuickStats(),
+            const SizedBox(height: 24),
+            _buildRecentActivity(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDesktopHeader() {
+    final user = FirebaseAuth.instance.currentUser;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: const BoxDecoration(
+        color: Color(0xFF191919),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+            onPressed: () {},
+          ),
+          const SizedBox(width: 8),
+          Container(
+            constraints: const BoxConstraints(
+              maxWidth: 40,
+              maxHeight: 40,
+            ),
+            child: _buildUserAvatar(user),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildUserAvatar(User? user) {
     if (user?.photoURL == null) {
       return _buildDefaultAvatar();
     }
 
-    return kIsWeb ? _buildWebAvatar(user!.photoURL!) : _buildMobileAvatar(user!);
+    return kIsWeb
+        ? _buildWebAvatar(user!.photoURL!)
+        : _buildMobileAvatar(user!);
   }
 
   Widget _buildWebAvatar(String url) {
@@ -80,7 +252,8 @@ class _HomeScreenState extends State<HomeScreen> {
         width: 40,
         height: 40,
         fit: BoxFit.cover,
-        loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+        loadingBuilder: (BuildContext context, Widget child,
+            ImageChunkEvent? loadingProgress) {
           if (loadingProgress == null) return child;
           return _buildLoadingAvatar();
         },
@@ -121,112 +294,6 @@ class _HomeScreenState extends State<HomeScreen> {
         width: 20,
         height: 20,
         child: CircularProgressIndicator(strokeWidth: 2),
-      ),
-    );
-  }
-
-  Widget _buildMobileLayout() {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark 
-          ? const Color(0xFF191919)
-          : const Color(0xFFF5F5F5),
-        title: const Text('TAPP!'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {},
-          ),
-        ],
-      ),
-      drawer: AppDrawer(onSignOut: _handleSignOut),
-      body: _buildBody(),
-      bottomNavigationBar: AppBottomNavBar(
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-      ),
-    );
-  }
-
-  Widget _buildDesktopLayout() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return Scaffold(
-          body: Row(
-            children: [
-              DesktopSidebar(
-                selectedIndex: _selectedIndex,
-                onNavigate: _onItemTapped,
-              ),
-              if (FirebaseAuth.instance.currentUser != null)
-                Expanded(
-                  child: Column(
-                    children: [
-                      SizedBox(
-                        height: 72,
-                        child: _buildDesktopHeader(),
-                      ),
-                      Expanded(
-                        child: SingleChildScrollView(
-                          child: _buildBody(),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildDesktopHeader() {
-    final user = FirebaseAuth.instance.currentUser;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
-        color: Color(0xFF191919),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-            onPressed: () {},
-          ),
-          const SizedBox(width: 8),
-          Container(
-            constraints: const BoxConstraints(
-              maxWidth: 40,
-              maxHeight: 40,
-            ),
-            child: _buildUserAvatar(user),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBody() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Overview',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 24),
-            _buildQuickStats(),
-            const SizedBox(height: 24),
-            _buildRecentActivity(),
-          ],
-        ),
       ),
     );
   }

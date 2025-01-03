@@ -39,27 +39,13 @@ class DesktopSidebar extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildNavGroup('Home', [
-                    _buildNavItem(0, FontAwesomeIcons.house, 'Overview'),
-                  ]),
-                  _buildNavGroup('Lead Management', [
-                    _buildNavItem(1, FontAwesomeIcons.users, 'All Leads'),
-                    _buildNavItem(2, FontAwesomeIcons.fileImport, 'Import Leads'),
-                    _buildNavItem(3, FontAwesomeIcons.chartLine, 'Lead Analytics'),
-                  ]),
-                  _buildNavGroup('Business Cards', [
-                    _buildNavItem(4, FontAwesomeIcons.qrcode, 'Scan Card'),
-                    _buildNavItem(5, FontAwesomeIcons.addressCard, 'My Cards'),
-                    _buildNavItem(6, FontAwesomeIcons.palette, 'Card Templates'),
-                  ]),
-                  _buildNavGroup('Communications', [
-                    _buildNavItem(7, FontAwesomeIcons.envelope, 'Inbox'),
-                    _buildNavItem(8, FontAwesomeIcons.fileLines, 'Templates'),
-                    _buildNavItem(9, FontAwesomeIcons.clock, 'Scheduled'),
-                  ]),
-                  _buildNavItem(10, FontAwesomeIcons.user, 'Digital Profile'),
-                  _buildNavItem(
-                      11, FontAwesomeIcons.chartBar, 'Analytics & Reports'),
+                  _buildNavItem(0, FontAwesomeIcons.house, 'Overview'),
+                  _buildNavItem(1, FontAwesomeIcons.users, 'All Leads'),
+                  _buildDisabledNavItem(FontAwesomeIcons.chartLine, 'Lead Analytics'),
+                  _buildNavItem(2, FontAwesomeIcons.qrcode, 'Scan Card'),
+                  _buildNavItem(3, FontAwesomeIcons.envelope, 'Inbox'),
+                  _buildNavItem(4, FontAwesomeIcons.user, 'Digital Profile'),
+                  _buildDisabledNavItem(FontAwesomeIcons.chartBar, 'Analytics & Reports'),
                   _buildNavItem(12, FontAwesomeIcons.gear, 'Settings'),
                 ],
               ),
@@ -83,32 +69,11 @@ class DesktopSidebar extends StatelessWidget {
     );
   }
 
-  Widget _buildNavGroup(String title, List<Widget> items) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Text(
-            title,
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-            ),
-          ),
-        ),
-        ...items,
-        const SizedBox(height: 16),
-      ],
-    );
-  }
-
   Widget _buildNavItem(int index, IconData icon, String label) {
     final isSelected = selectedIndex == index;
   
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: isSelected ? const Color(0xFFD9D9D9) : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
@@ -125,6 +90,26 @@ class DesktopSidebar extends StatelessWidget {
           style: TextStyle(
             color: isSelected ? Colors.black : Colors.white,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDisabledNavItem(IconData icon, String label) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: ListTile(
+        enabled: false,
+        leading: FaIcon(
+          icon,
+          color: Colors.grey,
+          size: 18,
+        ),
+        title: Text(
+          label,
+          style: const TextStyle(
+            color: Colors.grey,
           ),
         ),
       ),
