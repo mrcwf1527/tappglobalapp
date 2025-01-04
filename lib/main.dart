@@ -9,9 +9,12 @@ import 'config/theme.dart';
 import 'config/routes.dart';
 import 'firebase_options.dart';
 import 'screens/auth_screen.dart';
-import 'screens/home_screen.dart';
 import 'providers/theme_provider.dart';
 import 'providers/digital_profile_provider.dart';
+import 'screens/home_screen.dart';
+import 'screens/digital_profile/public_profile_screen.dart';
+import 'package:universal_html/html.dart' as html;
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,20 +36,65 @@ void main() async {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
   @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  String? _initialRoute;
+  bool _isInitialRouteChecked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkInitialRoute();
+  }
+  
+  Future<void> _checkInitialRoute() async {
+        final path = html.window.location.pathname;
+        final uri = Uri.tryParse(path!);
+
+      if (uri != null && uri.pathSegments.length == 1 &&
+          !AppRoutes.isKnownRoute('/${uri.pathSegments[0]}')) {
+          setState(() {
+              _initialRoute = path;
+          });
+      }
+       setState(() {
+          _isInitialRouteChecked = true;
+      });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, _) => MaterialApp(
-        title: 'TAPP',
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: themeProvider.themeMode,
-        navigatorKey: AppRoutes.navigatorKey,
-        onGenerateRoute: AppRoutes.onGenerateRoute,
-        home: StreamBuilder<User?>(
+       if (!_isInitialRouteChecked) {
+            return const Center(child: CircularProgressIndicator());
+        }
+
+      return Consumer<ThemeProvider>(
+        builder: (context, themeProvider, _) => MaterialApp(
+          title: 'TAPP',
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: themeProvider.themeMode,
+          navigatorKey: AppRoutes.navigatorKey,
+          onGenerateRoute: AppRoutes.onGenerateRoute,
+          home: _getHomeWidget(),
+            debugShowCheckedModeBanner: false,
+        ),
+      );
+  }
+  
+   Widget _getHomeWidget() {
+        if (_initialRoute != null) {
+            final uri = Uri.parse(_initialRoute!);
+          return PublicProfileScreen(username: uri.pathSegments[0]);
+        }
+        
+        return StreamBuilder<User?>(
           stream: FirebaseAuth.instance.authStateChanges(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
@@ -54,11 +102,8 @@ class MyApp extends StatelessWidget {
             }
             return snapshot.data == null ? const AuthScreen() : const HomeScreen();
           },
-        ),
-        debugShowCheckedModeBanner: false,
-      ),
-    );
-  }
+        );
+    }
 }
 
 // TODO: Implement theme toggle in settings_screen.dart

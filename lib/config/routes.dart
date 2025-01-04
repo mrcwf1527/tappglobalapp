@@ -8,7 +8,9 @@ import '../screens/scan_screen.dart';
 import '../screens/inbox_screen.dart';
 import '../screens/digital_profile/digital_profile_screen.dart';
 import '../screens/settings_screen.dart';
-import '../screens/digital_profile/edit_digital_profile_screen.dart'; // Import the new screen
+import '../screens/digital_profile/edit_digital_profile_screen.dart';
+import '../screens/digital_profile/public_profile_screen.dart';
+
 
 class AppRoutes {
   static final navigatorKey = GlobalKey<NavigatorState>();
@@ -21,7 +23,7 @@ class AppRoutes {
   static const String inbox = '/inbox';
   static const String digitalProfile = '/digital-profile';
   static const String settings = '/settings';
-  static const String editDigitalProfile = '/edit-digital-profile'; // Added new route
+  static const String editDigitalProfile = '/edit-digital-profile';
 
   static PageRoute _buildRoute(Widget page) {
     return PageRouteBuilder(
@@ -49,16 +51,34 @@ class AppRoutes {
     settings: (context) => const SettingsScreen(),
   };
 
- static Route<dynamic> onGenerateRoute(RouteSettings settings) {
+  static bool isKnownRoute(String path) {
+      if (path.isEmpty) return false;
+    return _routes.containsKey(path);
+  }
+
+  static Route<dynamic> onGenerateRoute(RouteSettings settings) {
+    // Handle existing routes first
     final builder = _routes[settings.name];
     if (builder != null) {
-      return _buildRoute(builder(navigatorKey.currentContext!));
+        return _buildRoute(builder(navigatorKey.currentContext!));
     }
-     if (settings.name == editDigitalProfile) {
+
+      if (settings.name == editDigitalProfile) {
         return _buildRoute(EditDigitalProfileScreen(
           profileId: settings.arguments as String,
         ));
       }
+
+    // Then handle username paths
+    final uri = Uri.tryParse(settings.name ?? '');
+
+    if (uri != null && uri.pathSegments.isNotEmpty) {
+        if (uri.pathSegments.length == 1 ) {
+            final username = uri.pathSegments[0];
+            return _buildRoute(PublicProfileScreen(username: username));
+      }
+    }
+    // Fallback route
     return MaterialPageRoute(
       builder: (_) => const Scaffold(
         body: Center(child: Text('Route not found')),
