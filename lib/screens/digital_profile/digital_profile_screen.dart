@@ -143,10 +143,7 @@ class _DigitalProfileScreenState extends State<DigitalProfileScreen> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => ChangeNotifierProvider(
-                                      create: (_) => DigitalProfileProvider()..loadProfile(profileId),
-                                      child: EditDigitalProfileScreen(profileId: profileId),
-                                    ),
+                                    builder: (context) => EditDigitalProfileScreen(profileId: profileId),
                                   ),
                                 );
                               }
@@ -169,38 +166,145 @@ class _DigitalProfileScreenState extends State<DigitalProfileScreen> {
   Widget build(BuildContext context) {
     return ResponsiveLayout(
       mobileLayout: _DigitalProfileMobileLayout(showUsernameDialog: _showUsernameDialog),
-      desktopLayout: const _DigitalProfileDesktopLayout(),
+      desktopLayout: _DigitalProfileDesktopLayout(showUsernameDialog: _showUsernameDialog),
     );
   }
 }
 
+// UPDATED THE MOBILE LAYOUT WIDGET
 class _DigitalProfileMobileLayout extends StatelessWidget {
   final VoidCallback showUsernameDialog;
+  
   const _DigitalProfileMobileLayout({required this.showUsernameDialog});
 
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final provider = Provider.of<DigitalProfileProvider>(context, listen: false);
 
     return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset(
-              'assets/images/digital_profile_illustration.png',
-              width: 200,
-              height: 200,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Create your first digital profile',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: isDarkMode ? const Color(0xFFD9D9D9) : Colors.black,
+      body: StreamBuilder<List<DigitalProfileData>>(
+        stream: provider.getProfilesStream(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final profiles = snapshot.data ?? [];
+          
+          if (profiles.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset(
+                    'assets/images/digital_profile_illustration.png',
+                    width: 200, height: 200,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Create your first digital profile',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: isDarkMode ? const Color(0xFFD9D9D9) : Colors.black,
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
+            );
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: profiles.length,
+            itemBuilder: (context, index) {
+              final profile = profiles[index];
+              return GestureDetector(
+                onTap: () {
+                  if (!context.mounted) return;
+                  final provider = Provider.of<DigitalProfileProvider>(context, listen: false);
+  
+                  // Preload profile data
+                  provider.loadProfile(profile.id);
+  
+                  // Navigate immediately
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => EditDigitalProfileScreen(
+                        profileId: profile.id,
+                      ),
+                    ),
+                  );
+                },
+                child: Card(
+                  elevation: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            profile.profileImageUrl?.isNotEmpty == true
+                              ? CircleAvatar(
+                                  radius: 30,
+                                  backgroundImage: NetworkImage(profile.profileImageUrl!),
+                                )
+                              : const CircleAvatar(
+                                  radius: 30,
+                                  child: Icon(Icons.person, size: 36),
+                                ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    profile.displayName ?? profile.username,
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  if (profile.jobTitle?.isNotEmpty == true) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      profile.jobTitle!,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ],
+                                  if (profile.companyName?.isNotEmpty == true) ...[
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      profile.companyName!,
+                                      style: const TextStyle(fontSize: 14),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (profile.bio?.isNotEmpty == true) ...[
+                          const SizedBox(height: 16),
+                          Text(
+                            profile.bio!,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          );
+        },
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: showUsernameDialog,
@@ -215,7 +319,8 @@ class _DigitalProfileMobileLayout extends StatelessWidget {
 }
 
 class _DigitalProfileDesktopLayout extends StatelessWidget {
-  const _DigitalProfileDesktopLayout();
+    final VoidCallback showUsernameDialog;
+  const _DigitalProfileDesktopLayout({required this.showUsernameDialog});
 
   @override
   Widget build(BuildContext context) {
@@ -243,9 +348,7 @@ class _DigitalProfileDesktopLayout extends StatelessWidget {
               SizedBox(
                 width: MediaQuery.of(context).size.width * 0.5,
                 child: ElevatedButton.icon(
-                  onPressed: () {
-                    // TODO: Navigate to create new profile screen
-                  },
+                  onPressed: showUsernameDialog,
                   icon: const Icon(Icons.add, color: Colors.black, size: 24),
                   label: const Text('Create New Profile'),
                   style: ElevatedButton.styleFrom(

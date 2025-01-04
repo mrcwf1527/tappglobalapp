@@ -18,61 +18,70 @@ class HeaderTab extends StatefulWidget {
 class _HeaderTabState extends State<HeaderTab> {
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 8),
-            _buildUrlTextField(),
-            const SizedBox(height: 24),
-            Row(
+    return Consumer<DigitalProfileProvider>(
+      builder: (context, provider, child) {
+        // Add this check
+        if (provider.profileData.id.isEmpty) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        return GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: ProfileImageUpload(
-                    currentImageUrl:
-                        context.watch<DigitalProfileProvider>().profileData.profileImageUrl,
-                    onImageUploaded: (url) {
-                      context.read<DigitalProfileProvider>().updateProfile(
-                            profileImageUrl: url,
-                          );
-                    },
-                  ),
+                const SizedBox(height: 8),
+                _buildUrlTextField(),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ProfileImageUpload(
+                        currentImageUrl:
+                            context.watch<DigitalProfileProvider>().profileData.profileImageUrl,
+                        onImageUploaded: (url) {
+                          context.read<DigitalProfileProvider>().updateProfile(
+                                profileImageUrl: url,
+                              );
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: CompanyImageUpload(
+                        currentImageUrl:
+                            context.watch<DigitalProfileProvider>().profileData.companyImageUrl,
+                        onImageUploaded: (url) {
+                          context.read<DigitalProfileProvider>().updateProfile(
+                                companyImageUrl: url,
+                              );
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: CompanyImageUpload(
-                    currentImageUrl:
-                        context.watch<DigitalProfileProvider>().profileData.companyImageUrl,
-                    onImageUploaded: (url) {
-                      context.read<DigitalProfileProvider>().updateProfile(
-                            companyImageUrl: url,
-                          );
-                    },
-                  ),
+                const SizedBox(height: 24),
+                BannerUpload(
+                  currentImageUrl:
+                      context.watch<DigitalProfileProvider>().profileData.bannerImageUrl,
+                  onImageUploaded: (url) {
+                    context.read<DigitalProfileProvider>().updateProfile(
+                          bannerImageUrl: url,
+                        );
+                  },
                 ),
+                const SizedBox(height: 24),
+                const ProfileForm(),
+                const SizedBox(height: 24),
+                const SocialIcons(),
+                const SizedBox(height: 50),
               ],
             ),
-            const SizedBox(height: 24),
-            BannerUpload(
-              currentImageUrl:
-                  context.watch<DigitalProfileProvider>().profileData.bannerImageUrl,
-              onImageUploaded: (url) {
-                context.read<DigitalProfileProvider>().updateProfile(
-                      bannerImageUrl: url,
-                    );
-              },
-            ),
-            const SizedBox(height: 24),
-            const ProfileForm(),
-            const SizedBox(height: 24),
-            const SocialIcons(),
-            const SizedBox(height: 50),
-          ],
-        ),
-      ),
+          ),
+        );
+      }
     );
   }
 

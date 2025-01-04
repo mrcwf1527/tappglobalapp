@@ -4,6 +4,24 @@ import '../models/social_platform.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+class SocialPlatformData {
+  final String id;
+  final String value;
+  final int sequence;
+
+  SocialPlatformData({
+    required this.id,
+    required this.value,
+    required this.sequence,
+  });
+
+  Map<String, dynamic> toMap() => {
+        'id': id,
+        'value': value,
+        'sequence': sequence,
+      };
+}
+
 class DigitalProfileData {
   String id;
   String userId;
@@ -50,7 +68,8 @@ class DigitalProfileData {
       'companyImageUrl': companyImageUrl,
       'bannerImageUrl': bannerImageUrl,
       'socialPlatforms': socialPlatforms.map((p) => p.toMap()).toList(),
-      'createdAt': createdAt != null ? Timestamp.fromDate(createdAt!) : FieldValue.serverTimestamp(),
+      'createdAt':
+          createdAt != null ? Timestamp.fromDate(createdAt!) : FieldValue.serverTimestamp(),
       'updatedAt': Timestamp.fromDate(DateTime.now()),
     };
   }
@@ -69,8 +88,9 @@ class DigitalProfileData {
       companyImageUrl: map['companyImageUrl'],
       bannerImageUrl: map['bannerImageUrl'],
       socialPlatforms: (map['socialPlatforms'] as List?)
-          ?.map((p) => SocialPlatform.fromMap(p))
-          .toList() ?? [],
+              ?.map((p) => SocialPlatform.fromMap(p))
+              .toList() ??
+          [],
       createdAt: (map['createdAt'] as Timestamp?)?.toDate(),
       updatedAt: (map['updatedAt'] as Timestamp?)?.toDate(),
     );
@@ -161,7 +181,7 @@ class DigitalProfileProvider extends ChangeNotifier {
       companyName: "",
       profileImageUrl: "",
       companyImageUrl: "",
-      bannerImageUrl: "",  
+      bannerImageUrl: "",
       socialPlatforms: [],
     );
 
@@ -185,8 +205,25 @@ class DigitalProfileProvider extends ChangeNotifier {
   }
 
   void updateSocialPlatforms(List<SocialPlatform> platforms) {
+    final platformsWithSequence = platforms.asMap().entries.map((entry) {
+      return SocialPlatformData(
+        id: entry.value.id,
+        value: entry.value.value ?? '',
+        sequence: entry.key + 1,
+      );
+    }).toList();
+
     _profileData.socialPlatforms = platforms;
     _isDirty = true;
+
+    // Save to Firestore
+    FirebaseFirestore.instance
+        .collection('digitalProfiles')
+        .doc(_profileData.id)
+        .update({
+      'socialPlatforms': platformsWithSequence.map((p) => p.toMap()).toList()
+    });
+
     notifyListeners();
   }
 
@@ -213,13 +250,13 @@ class DigitalProfileProvider extends ChangeNotifier {
     }
   }
 
-    Future<void> loadProfile(String profileId) async {
+  Future<void> loadProfile(String profileId) async {
     try {
       final doc = await FirebaseFirestore.instance
-        .collection('digitalProfiles')
-        .doc(profileId)
-        .get();
-        
+          .collection('digitalProfiles')
+          .doc(profileId)
+          .get();
+
       if (doc.exists) {
         _profileData = DigitalProfileData.fromMap(doc.id, doc.data()!);
         notifyListeners();
@@ -228,40 +265,54 @@ class DigitalProfileProvider extends ChangeNotifier {
       throw Exception('Failed to load profile: $e');
     }
   }
+
+  // ADDED STREAM HERE
+  Stream<List<DigitalProfileData>> getProfilesStream() {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) return Stream.value([]);
+
+    return FirebaseFirestore.instance
+        .collection('digitalProfiles')
+        .where('userId', isEqualTo: userId)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => DigitalProfileData.fromMap(doc.id, doc.data()))
+            .toList());
+  }
 }
 
 extension DigitalProfileDataExtension on DigitalProfileData {
-    DigitalProfileData copyWith({
-      String? id,
-      String? userId,
-      String? username,
-      String? displayName,
-      String? bio,
-      String? location,
-      String? jobTitle,
-      String? companyName,
-      String? profileImageUrl,
-      String? companyImageUrl,
-      String? bannerImageUrl,
-      List<SocialPlatform>? socialPlatforms,
-      DateTime? createdAt,
-      DateTime? updatedAt,
-    }) {
-      return DigitalProfileData(
-        id: id ?? this.id,
-        userId: userId ?? this.userId,
-        username: username ?? this.username,
-        displayName: displayName ?? this.displayName,
-        bio: bio ?? this.bio,
-        location: location ?? this.location,
-        jobTitle: jobTitle ?? this.jobTitle,
-        companyName: companyName ?? this.companyName,
-        profileImageUrl: profileImageUrl ?? this.profileImageUrl,
-        companyImageUrl: companyImageUrl ?? this.companyImageUrl,
-        bannerImageUrl: bannerImageUrl ?? this.bannerImageUrl,
-        socialPlatforms: socialPlatforms ?? this.socialPlatforms,
-        createdAt: createdAt ?? this.createdAt,
-        updatedAt: updatedAt ?? this.updatedAt,
-      );
-    }
+  DigitalProfileData copyWith({
+    String? id,
+    String? userId,
+    String? username,
+    String? displayName,
+    String? bio,
+    String? location,
+    String? jobTitle,
+    String? companyName,
+    String? profileImageUrl,
+    String? companyImageUrl,
+    String? bannerImageUrl,
+    List<SocialPlatform>? socialPlatforms,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
+    return DigitalProfileData(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      username: username ?? this.username,
+      displayName: displayName ?? this.displayName,
+      bio: bio ?? this.bio,
+      location: location ?? this.location,
+      jobTitle: jobTitle ?? this.jobTitle,
+      companyName: companyName ?? this.companyName,
+      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
+      companyImageUrl: companyImageUrl ?? this.companyImageUrl,
+      bannerImageUrl: bannerImageUrl ?? this.bannerImageUrl,
+      socialPlatforms: socialPlatforms ?? this.socialPlatforms,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
   }
+}

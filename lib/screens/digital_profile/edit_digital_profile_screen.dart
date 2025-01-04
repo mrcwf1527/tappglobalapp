@@ -23,6 +23,11 @@ class _EditDigitalProfileScreenState extends State<EditDigitalProfileScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    
+    // Add this line
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<DigitalProfileProvider>().loadProfile(widget.profileId);
+    });
   }
 
   @override
@@ -39,13 +44,7 @@ class _EditDigitalProfileScreenState extends State<EditDigitalProfileScreen>
           title: const Text('Digital Profile'),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
-            onPressed: () {
-              if (provider.isDirty) {
-                _showDiscardDialog(context);
-              } else {
-                Navigator.pop(context);
-              }
-            },
+            onPressed: () => Navigator.pop(context),
           ),
           bottom: TabBar(
             controller: _tabController,
@@ -67,29 +66,6 @@ class _EditDigitalProfileScreenState extends State<EditDigitalProfileScreen>
             const Center(child: Text('Settings')),
           ],
         ),
-      ),
-    );
-  }
-
-  Future<void> _showDiscardDialog(BuildContext context) {
-    return showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Discard Changes?'),
-        content: const Text('You have unsaved changes. Are you sure you want to discard them?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context); // Close dialog
-              Navigator.pop(context); // Go back
-            },
-            child: const Text('Discard'),
-          ),
-        ],
       ),
     );
   }
