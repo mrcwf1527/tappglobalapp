@@ -1,6 +1,5 @@
 // lib/screens/digital_profile/tabs/header_tab.dart
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../providers/digital_profile_provider.dart';
 import '../../../widgets/digital_profile/banner_upload.dart';
@@ -17,25 +16,6 @@ class HeaderTab extends StatefulWidget {
 }
 
 class _HeaderTabState extends State<HeaderTab> {
-  late TextEditingController _usernameController;
-
-  @override
-  void initState() {
-    super.initState();
-    final provider = context.read<DigitalProfileProvider>();
-    _usernameController = TextEditingController(text: provider.profileData.username);
-
-    _usernameController.addListener(() {
-      provider.updateProfile(username: _usernameController.text);
-    });
-  }
-
-  @override
-  void dispose() {
-    _usernameController.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -48,38 +28,41 @@ class _HeaderTabState extends State<HeaderTab> {
             const SizedBox(height: 8),
             _buildUrlTextField(),
             const SizedBox(height: 24),
-             Row(
+            Row(
               children: [
                 Expanded(
                   child: ProfileImageUpload(
-                    currentImageUrl: context.watch<DigitalProfileProvider>().profileData.profileImageUrl,
+                    currentImageUrl:
+                        context.watch<DigitalProfileProvider>().profileData.profileImageUrl,
                     onImageUploaded: (url) {
                       context.read<DigitalProfileProvider>().updateProfile(
-                        profileImageUrl: url,
-                      );
+                            profileImageUrl: url,
+                          );
                     },
                   ),
                 ),
                 const SizedBox(width: 16),
-                 Expanded(
-                    child: CompanyImageUpload(
-                      currentImageUrl: context.watch<DigitalProfileProvider>().profileData.companyImageUrl,
-                      onImageUploaded: (url) {
-                        context.read<DigitalProfileProvider>().updateProfile(
-                          companyImageUrl: url,
-                        );
-                      },
-                    ),
+                Expanded(
+                  child: CompanyImageUpload(
+                    currentImageUrl:
+                        context.watch<DigitalProfileProvider>().profileData.companyImageUrl,
+                    onImageUploaded: (url) {
+                      context.read<DigitalProfileProvider>().updateProfile(
+                            companyImageUrl: url,
+                          );
+                    },
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 24),
-             BannerUpload(
-              currentImageUrl: context.watch<DigitalProfileProvider>().profileData.bannerImageUrl,
+            BannerUpload(
+              currentImageUrl:
+                  context.watch<DigitalProfileProvider>().profileData.bannerImageUrl,
               onImageUploaded: (url) {
                 context.read<DigitalProfileProvider>().updateProfile(
-                  bannerImageUrl: url,
-                );
+                      bannerImageUrl: url,
+                    );
               },
             ),
             const SizedBox(height: 24),
@@ -95,23 +78,41 @@ class _HeaderTabState extends State<HeaderTab> {
 
   Widget _buildUrlTextField() {
     return Consumer<DigitalProfileProvider>(
-      builder: (context, provider, child) => TextFormField(
-        controller: _usernameController,
-        decoration: InputDecoration(
-          labelText: 'Username',
-          prefixText: 'https://l.tappglobal.app/',
-          prefixStyle: TextStyle(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? Colors.white70
-                : Colors.black54,
-            fontSize: 16,
+      builder: (context, provider, child) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextFormField(
+            controller: TextEditingController(text: provider.profileData.username),
+            enabled: false,
+              style: TextStyle(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white70
+                  : Colors.black54,
+              fontSize: 16,
+            ),
+            decoration: InputDecoration(
+              labelText: 'URL',
+              prefixText: 'https://l.tappglobal.app/',
+              prefixStyle: TextStyle(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white70
+                    : Colors.black54,
+                fontSize: 16,
+              ),
+              filled: true,
+              fillColor: Theme.of(context).colorScheme.surface,
+            ),
           ),
-          filled: true,
-          fillColor: Theme.of(context).colorScheme.surface,
-        ),
-        inputFormatters: [
-          FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
-          LengthLimitingTextInputFormatter(50),
+          const SizedBox(height: 4),
+          Text(
+            'Username cannot be changed after creation',
+            style: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white60
+                  : Colors.black45,
+            ),
+          ),
         ],
       ),
     );

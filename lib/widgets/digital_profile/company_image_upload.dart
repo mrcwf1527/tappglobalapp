@@ -1,3 +1,4 @@
+// lib/widgets/digital_profile/company_image_upload.dart
 import 'dart:io';
 import 'package:flutter/foundation.dart' show Uint8List, kIsWeb;
 import 'package:flutter/material.dart';
@@ -5,6 +6,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:crop_your_image/crop_your_image.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
+import '../../providers/digital_profile_provider.dart';
 
 class CompanyImageUpload extends StatefulWidget {
   final String? currentImageUrl;
@@ -149,7 +152,9 @@ class _CompanyImageUploadState extends State<CompanyImageUpload> {
       final downloadUrl = await ref.getDownloadURL();
 
       if (mounted) {
-        widget.onImageUploaded?.call(downloadUrl);
+        final provider = context.read<DigitalProfileProvider>();
+        provider.updateProfile(companyImageUrl: downloadUrl);
+        await provider.saveProfile();
       }
     } catch (e) {
       _showErrorDialog('Error uploading image: $e');

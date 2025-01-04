@@ -8,6 +8,7 @@ import '../screens/scan_screen.dart';
 import '../screens/inbox_screen.dart';
 import '../screens/digital_profile/digital_profile_screen.dart';
 import '../screens/settings_screen.dart';
+import '../screens/digital_profile/edit_digital_profile_screen.dart'; // Import the new screen
 
 class AppRoutes {
   static final navigatorKey = GlobalKey<NavigatorState>();
@@ -20,6 +21,7 @@ class AppRoutes {
   static const String inbox = '/inbox';
   static const String digitalProfile = '/digital-profile';
   static const String settings = '/settings';
+  static const String editDigitalProfile = '/edit-digital-profile'; // Added new route
 
   static PageRoute _buildRoute(Widget page) {
     return PageRouteBuilder(
@@ -47,11 +49,16 @@ class AppRoutes {
     settings: (context) => const SettingsScreen(),
   };
 
-  static Route<dynamic> onGenerateRoute(RouteSettings settings) {
+ static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     final builder = _routes[settings.name];
     if (builder != null) {
       return _buildRoute(builder(navigatorKey.currentContext!));
     }
+     if (settings.name == editDigitalProfile) {
+        return _buildRoute(EditDigitalProfileScreen(
+          profileId: settings.arguments as String,
+        ));
+      }
     return MaterialPageRoute(
       builder: (_) => const Scaffold(
         body: Center(child: Text('Route not found')),

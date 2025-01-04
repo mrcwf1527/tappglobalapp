@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../providers/digital_profile_provider.dart';
+import 'dart:async';
 
 class ProfileForm extends StatefulWidget {
  const ProfileForm({super.key});
@@ -12,11 +13,12 @@ class ProfileForm extends StatefulWidget {
 }
 
 class _ProfileFormState extends State<ProfileForm> {
- late TextEditingController _displayNameController;
- late TextEditingController _locationController;
- late TextEditingController _jobTitleController;
- late TextEditingController _companyNameController;
- late TextEditingController _bioController;
+  late TextEditingController _displayNameController;
+  late TextEditingController _locationController;
+  late TextEditingController _jobTitleController;
+  late TextEditingController _companyNameController;
+  late TextEditingController _bioController;
+  Timer? _saveTimer;
 
  @override
  void initState() {
@@ -31,23 +33,43 @@ class _ProfileFormState extends State<ProfileForm> {
    _setupListeners(provider);
  }
 
- void _setupListeners(DigitalProfileProvider provider) {
-   _displayNameController.addListener(() {
-     provider.updateProfile(displayName: _displayNameController.text);
-   });
-   _locationController.addListener(() {
-     provider.updateProfile(location: _locationController.text);
-   });
-   _jobTitleController.addListener(() {
-     provider.updateProfile(jobTitle: _jobTitleController.text);
-   });
-   _companyNameController.addListener(() {
-     provider.updateProfile(companyName: _companyNameController.text);
-   });
-   _bioController.addListener(() {
-     provider.updateProfile(bio: _bioController.text);
-   });
- }
+  void _setupListeners(DigitalProfileProvider provider) {
+    _displayNameController.addListener(() {
+      if (_saveTimer?.isActive ?? false) _saveTimer?.cancel();
+      _saveTimer = Timer(const Duration(milliseconds: 500), () {
+        provider.updateProfile(displayName: _displayNameController.text);
+        provider.saveProfile();
+      });
+    });
+    _locationController.addListener(() {
+      if (_saveTimer?.isActive ?? false) _saveTimer?.cancel();
+      _saveTimer = Timer(const Duration(milliseconds: 500), () {
+        provider.updateProfile(location: _locationController.text);
+        provider.saveProfile();
+      });
+    });
+    _jobTitleController.addListener(() {
+      if (_saveTimer?.isActive ?? false) _saveTimer?.cancel();
+      _saveTimer = Timer(const Duration(milliseconds: 500), () {
+        provider.updateProfile(jobTitle: _jobTitleController.text);
+        provider.saveProfile();
+      });
+    });
+    _companyNameController.addListener(() {
+      if (_saveTimer?.isActive ?? false) _saveTimer?.cancel();
+      _saveTimer = Timer(const Duration(milliseconds: 500), () {
+        provider.updateProfile(companyName: _companyNameController.text);
+        provider.saveProfile();
+      });
+    });
+    _bioController.addListener(() {
+       if (_saveTimer?.isActive ?? false) _saveTimer?.cancel();
+      _saveTimer = Timer(const Duration(milliseconds: 500), () {
+        provider.updateProfile(bio: _bioController.text);
+        provider.saveProfile();
+      });
+    });
+  }
 
  @override
  void dispose() {
@@ -56,6 +78,7 @@ class _ProfileFormState extends State<ProfileForm> {
    _jobTitleController.dispose();
    _companyNameController.dispose();
    _bioController.dispose();
+   _saveTimer?.cancel();
    super.dispose();
  }
 

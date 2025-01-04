@@ -6,6 +6,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:crop_your_image/crop_your_image.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
+import '../../providers/digital_profile_provider.dart';
 
 class BannerUpload extends StatefulWidget {
   final String? currentImageUrl;
@@ -151,7 +153,9 @@ class _BannerUploadState extends State<BannerUpload> {
       final downloadUrl = await ref.getDownloadURL();
 
        if (mounted) {
-        widget.onImageUploaded?.call(downloadUrl);
+        final provider = context.read<DigitalProfileProvider>();
+        provider.updateProfile(bannerImageUrl: downloadUrl);
+        await provider.saveProfile();
       }
     } catch (e) {
       _showErrorDialog('Error uploading image: $e');

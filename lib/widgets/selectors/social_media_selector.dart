@@ -1,4 +1,4 @@
-// lib/widgets/digital_profile/social_media_selector.dart
+// lib/widgets/selectors/social_media_selector.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:tappglobalapp/models/social_platform.dart';

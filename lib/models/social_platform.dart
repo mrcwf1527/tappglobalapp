@@ -1,3 +1,4 @@
+// lib/models/social_platform.dart
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -60,6 +61,29 @@ class SocialPlatform {
     case UrlHandlingType.urlOnly:
       return input.contains('?') ? input.split('?')[0] : input;
   }
+}
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'value': value,
+      'urlHandlingType': urlHandlingType.toString(),
+      'standardUrlFormat': standardUrlFormat,
+    };
+  }
+
+  static SocialPlatform fromMap(Map<String, dynamic> map) {
+  return SocialPlatforms.platforms.firstWhere(
+    (p) => p.id == map['id'],
+    orElse: () => SocialPlatform(
+      id: map['id'],
+      name: map['name'],
+      icon: FontAwesomeIcons.link,
+      value: map['value'],
+      standardUrlFormat: map['standardUrlFormat'],
+    ),
+  ).copyWith(value: map['value']);
 }
 
 
