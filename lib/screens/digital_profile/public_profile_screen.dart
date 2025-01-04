@@ -6,6 +6,8 @@ import 'package:tappglobalapp/widgets/responsive_layout.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:tappglobalapp/models/social_platform.dart';
 
 class PublicProfileScreen extends StatefulWidget {
   final String username;
@@ -17,7 +19,7 @@ class PublicProfileScreen extends StatefulWidget {
 
 class _PublicProfileScreenState extends State<PublicProfileScreen> {
   late Future<DocumentSnapshot> _profileFuture;
-  
+
   @override
   void initState() {
     super.initState();
@@ -30,7 +32,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
         .collection('usernames')
         .doc(widget.username)
         .get();
-        
+
     if (!usernameDoc.exists) {
       throw Exception('Profile not found');
     }
@@ -46,7 +48,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
         .collection('usernames')
         .doc(widget.username)
         .get();
-    
+
     if (!usernameDoc.exists) return;
 
     final profileId = usernameDoc.get('profileId');
@@ -54,16 +56,16 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
         .collection('profileViews')
         .doc(profileId);
 
-    
+
     Map<String, dynamic> historyEntry = {
-        'timestamp': FieldValue.serverTimestamp(),
-        'ip': '000',
+      'timestamp': FieldValue.serverTimestamp(),
+      'ip': '000',
     };
     if (kIsWeb) {
       historyEntry['referrer'] = html.window.location.href;
     }
-    
-      await viewsRef.update({
+
+    await viewsRef.update({
       'views': FieldValue.increment(1),
       'lastViewed': FieldValue.serverTimestamp(),
       'viewHistory': FieldValue.arrayUnion([historyEntry]),
@@ -131,7 +133,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
             height: 200,
             fit: BoxFit.cover,
           ),
-        
+
         // Profile Image
         Positioned(
           top: 100,
@@ -145,7 +147,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                 : null,
           ),
         ),
-        
+
         // Company Logo
         if (data['companyImageUrl'] != null)
           Positioned(
@@ -214,43 +216,40 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
       runSpacing: 16,
       alignment: WrapAlignment.center,
       children: platforms.map<Widget>((platform) {
-        final IconData icon = _getIconForPlatform(platform['id']);
+        final socialPlatform = SocialPlatforms.platforms.firstWhere(
+          (p) => p.id == platform['id'],
+          orElse: () => SocialPlatform(
+            id: platform['id'],
+            name: platform['name'],
+            icon: FontAwesomeIcons.link,
+          ),
+        );
+
         return InkWell(
           onTap: () => _launchSocialLink(platform),
-          child: FaIcon(
-            icon,
-            color: Colors.white,
-            size: 24,
-          ),
+          child: socialPlatform.imagePath != null
+            ? SvgPicture.asset(
+                socialPlatform.imagePath!,
+                width: 24,
+                height: 24,
+                colorFilter: const ColorFilter.mode(
+                  Colors.white,
+                  BlendMode.srcIn,
+                ),
+              )
+            : FaIcon(
+                socialPlatform.icon ?? FontAwesomeIcons.link,
+                color: Colors.white,
+                size: 24,
+              ),
         );
       }).toList(),
     );
   }
 
-  IconData _getIconForPlatform(String platformId) {
-    switch (platformId) {
-      case 'facebook':
-        return FontAwesomeIcons.facebook;
-      case 'linkedin':
-        return FontAwesomeIcons.linkedin;
-      case 'twitter':
-        return FontAwesomeIcons.twitter;
-      case 'instagram':
-        return FontAwesomeIcons.instagram;
-      case 'whatsapp':
-        return FontAwesomeIcons.whatsapp;
-      case 'phone':
-        return FontAwesomeIcons.phone;
-      case 'email':
-        return FontAwesomeIcons.envelope;
-      default:
-        return FontAwesomeIcons.link;
-    }
-  }
-
   Future<void> _launchSocialLink(Map<String, dynamic> platform) async {
     String url = '';
-    
+
     switch (platform['id']) {
       case 'phone':
         url = 'tel:${platform['value']}';
@@ -262,8 +261,8 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
         url = 'https://wa.me/${platform['value']}';
         break;
       default:
-        url = platform['value'].startsWith('http') 
-            ? platform['value'] 
+        url = platform['value'].startsWith('http')
+            ? platform['value']
             : 'https://${platform['value']}';
     }
 

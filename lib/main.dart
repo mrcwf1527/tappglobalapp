@@ -71,7 +71,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
        if (!_isInitialRouteChecked) {
-            return const Center(child: CircularProgressIndicator());
+            return _buildLoadingScreen();
         }
 
       return Consumer<ThemeProvider>(
@@ -98,14 +98,26 @@ class _MyAppState extends State<MyApp> {
           stream: FirebaseAuth.instance.authStateChanges(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
+              return _buildLoadingScreen(); //Change to the loading screen
             }
             return snapshot.data == null ? const AuthScreen() : const HomeScreen();
           },
         );
     }
+    
+    Widget _buildLoadingScreen() {
+      return Container(
+        color: Colors.white,
+        child: const Center(
+          child: SizedBox(
+            width: 120,
+            height: 120,
+            child:  Image(image: AssetImage('assets/tapp_logo.png')),
+          ),
+        ),
+      );
+    }
 }
-
 // TODO: Implement theme toggle in settings_screen.dart
 // - Add radio buttons for system/light/dark theme selection
 // - Use ThemeProvider to update theme preference
