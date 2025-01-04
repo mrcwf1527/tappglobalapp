@@ -1,6 +1,8 @@
 // lib/providers/digital_profile_provider.dart
 import 'package:flutter/material.dart';
 import '../models/social_platform.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class DigitalProfileData {
   String? username;
@@ -35,14 +37,14 @@ class DigitalProfileProvider extends ChangeNotifier {
   DigitalProfileData get profileData => _profileData;
   bool get isDirty => _isDirty;
 
-  void updateProfile({
+    void updateProfile({
     String? username,
     String? displayName,
     String? location,
     String? jobTitle,
     String? companyName,
     String? bio,
-    String? profileImageUrl,
+     String? profileImageUrl,
     String? companyImageUrl,
     String? bannerImageUrl,
   }) {
@@ -62,6 +64,37 @@ class DigitalProfileProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<String?> checkUsernameAvailability(String username) async {
+  if (!RegExp(r'^[a-z0-9]{6,30}$').hasMatch(username)) {
+    return 'Username must be 6-30 characters long and contain only lowercase letters and numbers';
+  }
+  
+  final doc = await FirebaseFirestore.instance
+      .collection('usernames')
+      .doc(username)
+      .get();
+      
+  return doc.exists ? 'Username already taken' : null;
+}
+
+Future<bool> reserveUsername(String username) async {
+  final userId = FirebaseAuth.instance.currentUser?.uid;
+  if (userId == null) return false;
+
+  try {
+    await FirebaseFirestore.instance
+        .collection('usernames')
+        .doc(username)
+        .set({
+          'userId': userId,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
   void updateSocialPlatforms(List<SocialPlatform> platforms) {
     _profileData.socialPlatforms = platforms;
     _isDirty = true;
@@ -69,8 +102,30 @@ class DigitalProfileProvider extends ChangeNotifier {
   }
 
   Future<void> saveProfile() async {
-    // TODO: Implement save to Firebase
-    _isDirty = false;
-    notifyListeners();
+    try {
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId == null) throw Exception('User not logged in');
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .set({
+        'profileImageUrl': _profileData.profileImageUrl,
+         'username': _profileData.username,
+        'displayName': _profileData.displayName,
+        'location': _profileData.location,
+        'jobTitle': _profileData.jobTitle,
+        'companyName': _profileData.companyName,
+        'bio': _profileData.bio,
+        'companyImageUrl': _profileData.companyImageUrl,
+        'bannerImageUrl': _profileData.bannerImageUrl,
+        
+      }, SetOptions(merge: true));
+
+      _isDirty = false;
+      notifyListeners();
+    } catch (e) {
+      throw Exception('Failed to save profile: $e');
+    }
   }
 }

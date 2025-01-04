@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-
 import '../../../providers/digital_profile_provider.dart';
 import '../../../widgets/digital_profile/banner_upload.dart';
 import '../../../widgets/digital_profile/company_image_upload.dart';
@@ -19,13 +18,13 @@ class HeaderTab extends StatefulWidget {
 
 class _HeaderTabState extends State<HeaderTab> {
   late TextEditingController _usernameController;
-  
+
   @override
   void initState() {
     super.initState();
     final provider = context.read<DigitalProfileProvider>();
     _usernameController = TextEditingController(text: provider.profileData.username);
-    
+
     _usernameController.addListener(() {
       provider.updateProfile(username: _usernameController.text);
     });
@@ -49,15 +48,40 @@ class _HeaderTabState extends State<HeaderTab> {
             const SizedBox(height: 8),
             _buildUrlTextField(),
             const SizedBox(height: 24),
-            const Row(
+             Row(
               children: [
-                Expanded(child: ProfileImageUpload()),
-                SizedBox(width: 16),
-                Expanded(child: CompanyImageUpload()),
+                Expanded(
+                  child: ProfileImageUpload(
+                    currentImageUrl: context.watch<DigitalProfileProvider>().profileData.profileImageUrl,
+                    onImageUploaded: (url) {
+                      context.read<DigitalProfileProvider>().updateProfile(
+                        profileImageUrl: url,
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(width: 16),
+                 Expanded(
+                    child: CompanyImageUpload(
+                      currentImageUrl: context.watch<DigitalProfileProvider>().profileData.companyImageUrl,
+                      onImageUploaded: (url) {
+                        context.read<DigitalProfileProvider>().updateProfile(
+                          companyImageUrl: url,
+                        );
+                      },
+                    ),
+                ),
               ],
             ),
             const SizedBox(height: 24),
-            const BannerUpload(),
+             BannerUpload(
+              currentImageUrl: context.watch<DigitalProfileProvider>().profileData.bannerImageUrl,
+              onImageUploaded: (url) {
+                context.read<DigitalProfileProvider>().updateProfile(
+                  bannerImageUrl: url,
+                );
+              },
+            ),
             const SizedBox(height: 24),
             const ProfileForm(),
             const SizedBox(height: 24),
@@ -74,7 +98,7 @@ class _HeaderTabState extends State<HeaderTab> {
       builder: (context, provider, child) => TextFormField(
         controller: _usernameController,
         decoration: InputDecoration(
-          labelText: 'Profile Link',
+          labelText: 'Username',
           prefixText: 'https://l.tappglobal.app/',
           prefixStyle: TextStyle(
             color: Theme.of(context).brightness == Brightness.dark
