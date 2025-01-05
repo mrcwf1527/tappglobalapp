@@ -40,9 +40,9 @@ class CountryCodeSelectorButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
         ),
         child: Center(
-          child: Text(
-            selectedCountry.flag,
-            style: const TextStyle(fontSize: 20),
+          child: selectedCountry.getFlagWidget(
+            width: 24,
+            height: 16,
           ),
         ),
       ),
@@ -113,9 +113,9 @@ class _CountrySearchDialogState extends State<CountrySearchDialog> {
                 itemBuilder: (context, index) {
                   final country = _filteredCountries[index];
                   return ListTile(
-                    leading: Text(
-                      country.flag,
-                      style: const TextStyle(fontSize: 24),
+                    leading: country.getFlagWidget(
+                      width: 24,
+                      height: 16,
                     ),
                     title: Text(country.name),
                     subtitle: Text(country.dialCode),

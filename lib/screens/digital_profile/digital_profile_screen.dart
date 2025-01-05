@@ -6,6 +6,7 @@ import '../../widgets/responsive_layout.dart';
 import '../../providers/digital_profile_provider.dart';
 import 'edit_digital_profile_screen.dart';
 import 'dart:async';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class DigitalProfileScreen extends StatefulWidget {
   const DigitalProfileScreen({super.key});
@@ -242,6 +243,7 @@ class _DigitalProfileMobileLayout extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
@@ -288,15 +290,45 @@ class _DigitalProfileMobileLayout extends StatelessWidget {
                             ),
                           ],
                         ),
-                        if (profile.bio?.isNotEmpty == true) ...[
-                          const SizedBox(height: 16),
-                          Text(
-                            profile.bio!,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 14),
+                        const SizedBox(height: 16),
+                        // Social Icons Row
+                        if (profile.socialPlatforms.isNotEmpty) ...[
+                          Padding(
+                            padding: const EdgeInsets.only(left: 76), // Aligns with profile image (30px radius + 16px spacing + 30px extra)
+                            child: Wrap(
+                              spacing: 12,
+                              runSpacing: 12,
+                              children: profile.socialPlatforms.map((platform) {
+                                return platform.icon != null
+  ? Icon(platform.icon, 
+      size: 20,
+      color: Colors.grey[600], // Add consistent color
+    )
+  : platform.imagePath != null
+    ? SvgPicture.asset(
+        platform.imagePath!,
+        width: 20,
+        height: 20,
+        colorFilter: ColorFilter.mode(
+          Colors.grey[600]!, // Match the color
+          BlendMode.srcIn,
+        ),
+      )
+                                    : const SizedBox();
+                              }).toList(),
+                            ),
                           ),
+                          const SizedBox(height: 12),
                         ],
+                        // Bio Text
+                        if (profile.bio?.isNotEmpty == true)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 76), // Same padding as social icons
+                            child: Text(
+                              profile.bio!,
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ),
                       ],
                     ),
                   ),

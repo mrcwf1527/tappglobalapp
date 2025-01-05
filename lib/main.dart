@@ -12,7 +12,7 @@ import 'screens/auth_screen.dart';
 import 'providers/theme_provider.dart';
 import 'providers/digital_profile_provider.dart';
 import 'screens/home_screen.dart';
-import 'screens/digital_profile/public_profile_screen.dart';
+import 'screens/digital_profile/public_digital_profile_screen.dart';
 import 'package:universal_html/html.dart' as html;
 
 
@@ -40,10 +40,10 @@ class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
   @override
-  _MyAppState createState() => _MyAppState();
+  MyAppState createState() => MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class MyAppState extends State<MyApp> {
   String? _initialRoute;
   bool _isInitialRouteChecked = false;
 

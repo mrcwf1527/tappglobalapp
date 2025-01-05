@@ -62,7 +62,26 @@ class _SocialIconsState extends State<SocialIcons> {
   }
   
    void _handleFocusLost(SocialPlatform platform, int index) {
-    if (!(platform.id == 'facebook' || platform.id == 'linkedin' || platform.id == 'linkedin_company')) return;
+    // Add website, address, bluesky, etc to the check
+    if (!(platform.id == 'facebook' || 
+          platform.id == 'linkedin' || 
+          platform.id == 'linkedin_company' ||
+          platform.id == 'website' ||
+          platform.id == 'address' ||
+          platform.id == 'bluesky' ||
+          platform.id == 'discord' ||
+          platform.id == 'googleReviews' ||
+          platform.id == 'shopee' ||
+          platform.id == 'lazada' ||
+          platform.id == 'amazon' ||
+          platform.id == 'googlePlay' ||
+          platform.id == 'appStore' ||
+          platform.id == 'line' ||
+          platform.id == 'weibo' ||
+          platform.id == 'naver'
+        )) {
+      return;
+    }
     
     final controller = _socialControllers[platform.id];
     if (controller == null || controller.text.isEmpty) return;
@@ -79,10 +98,48 @@ class _SocialIconsState extends State<SocialIcons> {
         case 'linkedin_company':
           prefix = 'linkedin.com/company/';
           break;
+        case 'website':
+          prefix = ''; // Remove https:// prefix addition
+          break;
+        case 'address':
+          prefix = ''; // No prefix for address
+          break;
+        case 'bluesky':
+          prefix = 'bsky.app/profile/';
+          break;
+        case 'discord':
+          prefix = 'discord.gg/';
+          break;
+        case 'googleReviews':
+          prefix = ''; // No prefix for googleReviews
+          break;
+         case 'shopee':
+          prefix = '';
+          break;
+        case 'lazada':
+          prefix = '';
+          break;
+        case 'amazon':
+          prefix = '';
+          break;
+        case 'googlePlay':
+          prefix = '';
+          break;
+         case 'appStore':
+          prefix = '';
+          break;
+        case 'line':
+           prefix = '';
+          break;
+        case 'weibo':
+          prefix = '';
+          break;
+        case 'naver':
+           prefix = '';
+          break;
       }
-      final newValue = prefix + controller.text;
-      controller.text = newValue;
-      
+       final newValue = prefix + controller.text;
+        controller.text = newValue;
       // Update platforms with the new value
       final platforms = [...context.read<DigitalProfileProvider>().profileData.socialPlatforms];
       platforms[index] = platform.copyWith(value: newValue);
@@ -291,10 +348,10 @@ class _SocialIconsState extends State<SocialIcons> {
                             provider.updateSocialPlatforms(platforms);
                           }
                         },
-                        child: Text(
-                          selectedCountry.value.flag,
-                          style: const TextStyle(fontSize: 20),
-                        ),
+                         child: selectedCountry.value.getFlagWidget(
+                            width: 24, 
+                            height: 16,
+                          ),
                       ),
                       const SizedBox(width: 8),
                     ],
@@ -504,6 +561,13 @@ class _SocialIconsState extends State<SocialIcons> {
                 }
                 
                 final parsedValue = platform.parseUrl(value);
+                if (parsedValue != value && parsedValue != null) {
+                  _socialControllers[platform.id]?.text = parsedValue;
+                  _socialControllers[platform.id]?.selection = TextSelection.collapsed(
+                    offset: parsedValue.length
+                  );
+                }
+                
                 final platforms = [...provider.profileData.socialPlatforms];
                 platforms[index] = platform.copyWith(value: parsedValue);
                 

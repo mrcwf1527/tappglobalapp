@@ -7,6 +7,7 @@ import 'package:universal_html/html.dart' as html;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:tappglobalapp/models/social_platform.dart';
+import 'package:flutter/services.dart';
 
 class PublicProfileScreen extends StatefulWidget {
   final String username;
@@ -278,27 +279,167 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
 
   Future<void> _launchSocialLink(Map<String, dynamic> platform) async {
     String url = '';
+    final value = platform['value'];
+    
+    if (value == null || value.isEmpty) return;
 
     switch (platform['id']) {
       case 'phone':
-        url = 'tel:${platform['value']}';
+        url = 'tel:$value';
+        break;
+      case 'sms':
+        url = 'sms:$value';
         break;
       case 'email':
-        url = 'mailto:${platform['value']}';
+        url = 'mailto:$value';
+        break;
+      case 'website':
+        url = value.startsWith('http') ? value : 'https://$value';
+        break;
+      case 'address':
+        url = value.startsWith('http') ? value : 'https://$value';
         break;
       case 'whatsapp':
-        url = 'https://wa.me/${platform['value']}';
+        final number = value.replaceAll('+', '');
+        url = 'https://wa.me/$number';
         break;
-      default:
-        url = platform['value'].startsWith('http')
-            ? platform['value']
-            : 'https://${platform['value']}';
+      case 'telegram':
+        url = 'https://t.me/$value';
+        break;
+      case 'line':
+        if (value.contains('line.me')) {
+          url = value.startsWith('http') ? value : 'https://$value';
+        } else {
+          await _copyToClipboard(value);
+          if (!mounted) return;
+          _showCopiedSnackbar(context, 'LINE ID copied to clipboard');
+          return;
+        }
+        break;
+      case 'wechat':
+        await _copyToClipboard(value);
+        if (!mounted) return;
+        _showCopiedSnackbar(context, 'WeChat ID copied to clipboard');
+        return;
+      case 'zalo':
+        final number = value.replaceAll('+', '');
+        url = 'https://zalo.me/$number';
+        break;
+      case 'kakaotalk':
+        await _copyToClipboard(value);
+        if (!mounted) return;
+        _showCopiedSnackbar(context, 'KakaoTalk ID copied to clipboard');
+        return;
+      case 'facebook':
+        url = 'https://$value';
+        break;
+      case 'instagram':
+        url = 'https://instagram.com/$value';
+        break;
+      case 'linkedin':
+        url = 'https://$value';
+        break;
+      case 'tiktok':
+        url = 'https://tiktok.com/@$value';
+        break;
+      case 'threads':
+        url = 'https://threads.net/@$value';
+        break;
+      case 'twitter':
+        url = 'https://x.com/$value';
+        break;
+      case 'snapchat':
+        url = 'https://snapchat.com/add/$value';
+        break;
+      case 'tumblr':
+        url = 'https://tumblr.com/$value';
+        break;
+      case 'linkedin_company':
+        url = 'https://$value';
+        break;
+      case 'mastodon':
+        url = 'https://mastodon.social/@$value';
+        break;
+      case 'bluesky':
+        url = 'https://$value';
+        break;
+      case 'pinterest':
+        url = 'https://pinterest.com/$value';
+        break;
+        case 'appStore':
+        url = 'https://$value';
+        break;
+      case 'github':
+        url = 'https://github.com/$value';
+        break;
+      case 'gitlab':
+        url = 'https://gitlab.com/$value';
+        break;
+      case 'youtube':
+        url = 'https://youtube.com/@$value';
+        break;
+      case 'twitch':
+        url = 'https://twitch.tv/$value';
+        break;
+       case 'discord':
+        url = 'https://$value';
+        break;
+      case 'steam':
+        url = 'https://steamcommunity.com/id/$value';
+        break;
+      case 'reddit':
+        url = 'https://reddit.com/user/$value';
+        break;
+      case 'googleReviews':
+        url = 'https://$value';
+        break;
+      case 'shopee':
+        url = 'https://$value';
+        break;
+      case 'lazada':
+        url = 'https://$value';
+        break;
+       case 'amazon':
+        url = 'https://$value';
+        break;
+      case 'etsy':
+        url = 'https://etsy.com/shop/$value';
+        break;
+      case 'behance':
+        url = 'https://behance.net/$value';
+        break;
+      case 'dribbble':
+        url = 'https://dribbble.com/$value';
+        break;
+      case 'googlePlay':
+        url = 'https://$value';
+        break;
+      case 'weibo':
+        url = 'https://$value';
+        break;
+      case 'naver':
+        url = 'https://$value';
+        break;
     }
 
     final uri = Uri.parse(url);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     }
+  }
+  
+  Future<void> _copyToClipboard(String text) async {
+    await Clipboard.setData(ClipboardData(text: text));
+  }
+
+  void _showCopiedSnackbar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   Widget _buildActionButtons(Map<String, dynamic> data) {

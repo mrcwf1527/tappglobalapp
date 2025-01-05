@@ -44,45 +44,39 @@ class SocialPlatform {
             'Either icon or imagePath must be provided');
 
   String? parseUrl(String input) {
-  if (input.isEmpty) return input;
+    if (input.isEmpty) return input;
 
-  switch (urlHandlingType) {
-    case UrlHandlingType.preserveFrontOnly:
-      if (id == 'facebook' || id == 'linkedin' || id == 'linkedin_company') {
-        String result = input;
-        // If it's just a username without URL structure
-        if (!input.contains('/')) {
-          switch (id) {
-            case 'facebook':
-              return 'facebook.com/$input';
-            case 'linkedin':
-              return 'linkedin.com/in/$input';
-            case 'linkedin_company':
-              return 'linkedin.com/company/$input';
-          }
+    switch (urlHandlingType) {
+      case UrlHandlingType.urlOnly:
+         if (id == 'website') {
+          return input.split('?')[0]; // Only remove UTM tracking
         }
-        // If it's a full URL, clean it
-        result = result.replaceAll(RegExp(r'^(https?:\/\/)?(www\.)?'), '');
-        result = result.split('?')[0];
-        result = result.replaceAll(RegExp(r'/$'), '');
-        return result;
-      }
-      return input.contains('?') ? input.split('?')[0] : input;
-    // Other cases remain unchanged
-    case UrlHandlingType.usernameOnly:
-      String username = input;
-      if (input.contains('/')) {
-        username = input.split('/').last;
-      }
-      username = username.replaceAll('@', '');
-      return username;
-    case UrlHandlingType.preserveAll:
-      return input;
-    case UrlHandlingType.urlOnly:
-      return input.contains('?') ? input.split('?')[0] : input;
-  }
-}
+        if (id == 'googlePlay') {
+          // Remove https:// and www. but keep UTM parameters
+          return input.replaceAll(RegExp(r'^(https?:\/\/)?(www\.)?'), '');
+        }
+        String result = input.replaceAll(RegExp(r'^(https?:\/\/)?(www\.)?'), '');
+        return result.split('?')[0];
 
+      case UrlHandlingType.preserveFrontOnly:
+        // Handle Line, Weibo, and Naver similar to Google Play
+        if (id == 'line' || id == 'weibo' || id == 'naver') {
+          return input.replaceAll(RegExp(r'^(https?:\/\/)?(www\.)?'), '');
+        }
+        // Other platforms like Facebook, LinkedIn etc.
+        return input.contains('?') ? input.split('?')[0] : input;
+
+      case UrlHandlingType.usernameOnly:
+        String username = input;
+        if (input.contains('/')) {
+          username = input.split('/').last;
+        }
+        username = username.replaceAll('@', '');
+        return username;
+      case UrlHandlingType.preserveAll:
+        return input;
+    }
+  }
 
   Map<String, dynamic> toMap() {
     return {
@@ -101,7 +95,6 @@ class SocialPlatform {
         id: map['id'],
         name: map['name'],
         icon: FontAwesomeIcons.link,
-        
       ),
     );
 
@@ -139,14 +132,14 @@ class SocialPlatforms {
       name: 'Website',
       icon: FontAwesomeIcons.globe,
       placeholder: 'Enter website URL',
-      urlHandlingType: UrlHandlingType.preserveAll,
+      urlHandlingType: UrlHandlingType.urlOnly,
     ),
     SocialPlatform(
       id: 'address',
       name: 'Address',
       icon: FontAwesomeIcons.locationDot,
       placeholder: 'Enter business address',
-      urlHandlingType: UrlHandlingType.preserveFrontOnly,
+      urlHandlingType: UrlHandlingType.urlOnly,
     ),
 
     // Social Media with username format
@@ -260,25 +253,28 @@ class SocialPlatforms {
     ),
 
     // URL-only platforms
-    SocialPlatform(
+        SocialPlatform(
       id: 'line',
       name: 'Line',
       icon: FontAwesomeIcons.line,
       placeholder: 'Enter Line URL or username',
+      urlPattern: r'^(?:https?:\/\/)?(?:www\.)?line\.me\/ti\/p\/[\w\.\-]+\/?$',
       urlHandlingType: UrlHandlingType.preserveFrontOnly,
     ),
     SocialPlatform(
       id: 'weibo',
       name: 'Weibo',
       icon: FontAwesomeIcons.weibo,
-      placeholder: 'Enter Weibo URL or username',
+      placeholder: 'Enter Weibo URL',
+      urlPattern: r'^(?:https?:\/\/)?(?:www\.)?weibo\.com\/u\/[\w\.\-]+\/?$',
       urlHandlingType: UrlHandlingType.preserveFrontOnly,
     ),
     SocialPlatform(
       id: 'naver',
       name: 'Naver',
       imagePath: 'assets/social_icons/naver.svg',
-      placeholder: 'Enter Naver URL or username',
+      placeholder: 'Enter Naver URL',
+      urlPattern: r'^(?:https?:\/\/)?(?:www\.)?blog\.naver\.com\/[\w\.\-]+\/?$',
       urlHandlingType: UrlHandlingType.preserveFrontOnly,
     ),
     SocialPlatform(
@@ -316,7 +312,7 @@ class SocialPlatforms {
       placeholder: 'Enter Lazada URL',
       urlHandlingType: UrlHandlingType.urlOnly,
     ),
-    SocialPlatform(
+        SocialPlatform(
       id: 'amazon',
       name: 'Amazon',
       icon: FontAwesomeIcons.amazon,
@@ -366,7 +362,7 @@ class SocialPlatforms {
       urlHandlingType: UrlHandlingType.usernameOnly,
       standardUrlFormat: 'https://instagram.com/{username}',
     ),
-   SocialPlatform(
+    SocialPlatform(
       id: 'linkedin',
       name: 'LinkedIn',
       icon: FontAwesomeIcons.linkedin,
@@ -375,7 +371,7 @@ class SocialPlatforms {
           r'^(?:https?:\/\/)?(?:www\.)?linkedin\.com\/(?:in|company)\/[\w\-\.]+\/?$',
       urlHandlingType: UrlHandlingType.preserveFrontOnly,
     ),
-    SocialPlatform(
+        SocialPlatform(
       id: 'tiktok',
       name: 'TikTok',
       icon: FontAwesomeIcons.tiktok,
@@ -385,7 +381,7 @@ class SocialPlatforms {
       urlHandlingType: UrlHandlingType.usernameOnly,
       standardUrlFormat: 'https://tiktok.com/@{username}',
     ),
-    SocialPlatform(
+        SocialPlatform(
       id: 'twitter',
       name: 'X (Twitter)',
       icon: FontAwesomeIcons.xTwitter,
@@ -405,12 +401,12 @@ class SocialPlatforms {
       urlHandlingType: UrlHandlingType.usernameOnly,
       standardUrlFormat: 'https://threads.net/@{username}',
     ),
-    SocialPlatform(
+        SocialPlatform(
       id: 'linkedin_company',
       name: 'LinkedIn Company',
       icon: FontAwesomeIcons.linkedin,
       placeholder: 'linkedin.com/company/',
-      urlPattern: r'^(?:https?:\/\/)?(?:www\.)?linkedin\.com\/company\/[\w\-\.]+\/?$',
+       urlPattern: r'^(?:https?:\/\/)?(?:www\.)?linkedin\.com\/company\/[\w\-\.]+\/?$',
       urlHandlingType: UrlHandlingType.preserveFrontOnly,
     ),
     SocialPlatform(
@@ -430,15 +426,15 @@ class SocialPlatforms {
       placeholder: 'Enter app URL',
       urlPattern:
           r'^(?:https?:\/\/)?(?:play\.)?google\.com\/store\/apps\/details\?id=[\w\.\-]+\/?$',
-      urlHandlingType: UrlHandlingType.preserveFrontOnly,
+      urlHandlingType: UrlHandlingType.urlOnly,
     ),
     SocialPlatform(
       id: 'appStore',
       name: 'App Store',
       icon: FontAwesomeIcons.appStore,
       placeholder: 'Enter app URL',
-      urlPattern: r'^(?:https?:\/\/)?(?:apps\.)?apple\.com\/[\w\.\-\/]+\/?$',
-      urlHandlingType: UrlHandlingType.preserveFrontOnly,
+       urlPattern: r'^(?:https?:\/\/)?(?:apps\.)?apple\.com\/[\w\.\-\/]+\/?$',
+      urlHandlingType: UrlHandlingType.urlOnly,
     ),
     // Messaging
     SocialPlatform(
@@ -450,7 +446,7 @@ class SocialPlatforms {
       requiresCountryCode: true,
       numbersOnly: true,
     ),
-    SocialPlatform(
+     SocialPlatform(
       id: 'telegram',
       name: 'Telegram',
       icon: FontAwesomeIcons.telegram,
@@ -460,21 +456,21 @@ class SocialPlatforms {
       urlHandlingType: UrlHandlingType.usernameOnly,
       standardUrlFormat: 'https://t.me/{username}',
     ),
-     SocialPlatform(
+        SocialPlatform(
       id: 'wechat',
       name: 'WeChat',
       icon: FontAwesomeIcons.weixin,
       placeholder: 'Enter WeChat ID',
       urlHandlingType: UrlHandlingType.usernameOnly,
     ),
-    SocialPlatform(
+      SocialPlatform(
       id: 'kakaotalk',
       name: 'KakaoTalk',
       imagePath: 'assets/social_icons/kakaotalk.svg',
       placeholder: 'Enter KakaoTalk ID',
       urlHandlingType: UrlHandlingType.usernameOnly,
     ),
-    SocialPlatform(
+        SocialPlatform(
       id: 'zalo',
       name: 'Zalo',
       imagePath: 'assets/social_icons/zalo.svg',
