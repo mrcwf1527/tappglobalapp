@@ -1,4 +1,5 @@
 // lib/screens/home_screen.dart
+// Under TAPP! Global Flutter Project
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';

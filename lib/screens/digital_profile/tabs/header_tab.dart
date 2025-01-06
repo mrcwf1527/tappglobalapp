@@ -1,4 +1,5 @@
 // lib/screens/digital_profile/tabs/header_tab.dart
+// Under TAPP! Global Flutter Project
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../providers/digital_profile_provider.dart';
@@ -93,7 +94,7 @@ class _HeaderTabState extends State<HeaderTab> {
           TextFormField(
             controller: TextEditingController(text: provider.profileData.username),
             enabled: false,
-              style: TextStyle(
+            style: TextStyle(
               color: Theme.of(context).brightness == Brightness.dark
                   ? Colors.white70
                   : Colors.black54,

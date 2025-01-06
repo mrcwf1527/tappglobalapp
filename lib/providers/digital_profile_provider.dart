@@ -1,4 +1,5 @@
 // lib/providers/digital_profile_provider.dart
+// Under TAPP! Global Flutter Project
 import 'package:flutter/material.dart';
 import '../models/social_platform.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -119,7 +120,6 @@ class DigitalProfileProvider extends ChangeNotifier {
     String? companyImageUrl,
     String? bannerImageUrl,
   }) async {
-    // Update local state first
     _profileData = DigitalProfileData(
       id: _profileData.id,
       userId: _profileData.userId,
@@ -139,7 +139,6 @@ class DigitalProfileProvider extends ChangeNotifier {
     _isDirty = true;
     notifyListeners();
 
-    // Add immediate auto-save to Firestore
     try {
       await saveProfile();
     } catch (e) {
@@ -166,10 +165,8 @@ class DigitalProfileProvider extends ChangeNotifier {
 
     final batch = FirebaseFirestore.instance.batch();
 
-    // Create profile document with auto-generated ID
     final profileRef = FirebaseFirestore.instance.collection('digitalProfiles').doc();
 
-    // Create initial profile data
     final profile = DigitalProfileData(
       id: profileRef.id,
       userId: userId,
@@ -185,7 +182,6 @@ class DigitalProfileProvider extends ChangeNotifier {
       socialPlatforms: [],
     );
 
-    // Reserve username
     final usernameRef = FirebaseFirestore.instance.collection('usernames').doc(username);
     batch.set(usernameRef, {
       'userId': userId,
@@ -193,7 +189,6 @@ class DigitalProfileProvider extends ChangeNotifier {
       'createdAt': FieldValue.serverTimestamp(),
     });
 
-    // Create profile
     batch.set(profileRef, profile.toMap());
 
     try {
@@ -216,7 +211,6 @@ class DigitalProfileProvider extends ChangeNotifier {
     _profileData.socialPlatforms = platforms;
     _isDirty = true;
 
-    // Save to Firestore
     FirebaseFirestore.instance
         .collection('digitalProfiles')
         .doc(_profileData.id)
@@ -236,7 +230,6 @@ class DigitalProfileProvider extends ChangeNotifier {
           .collection('digitalProfiles')
           .doc(_profileData.id);
 
-      // Update profile with current timestamp
       _profileData = _profileData.copyWith(
         updatedAt: DateTime.now(),
       );
@@ -266,7 +259,6 @@ class DigitalProfileProvider extends ChangeNotifier {
     }
   }
 
-  // ADDED STREAM HERE
   Stream<List<DigitalProfileData>> getProfilesStream() {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) return Stream.value([]);

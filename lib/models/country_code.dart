@@ -1,4 +1,5 @@
 // lib/models/country_code.dart
+// Under TAPP! Global Flutter Project
 import 'package:country_flags/country_flags.dart';
 import 'package:flutter/material.dart';
 
@@ -160,7 +161,7 @@ class CountryCodes {
     CountryCode(name: 'Macedonia, The Former Yugoslav Republic of', code: 'MK', dialCode: '+389'),
     CountryCode(name: 'Madagascar', code: 'MG', dialCode: '+261'),
     CountryCode(name: 'Malawi', code: 'MW', dialCode: '+265'),
-     CountryCode(name: 'Malaysia', code: 'MY', dialCode: '+60'),
+    CountryCode(name: 'Malaysia', code: 'MY', dialCode: '+60'),
     CountryCode(name: 'Maldives', code: 'MV', dialCode: '+960'),
     CountryCode(name: 'Mali', code: 'ML', dialCode: '+223'),
     CountryCode(name: 'Malta', code: 'MT', dialCode: '+356'),
@@ -217,7 +218,7 @@ class CountryCodes {
     CountryCode(name: 'Saint Vincent and the Grenadines', code: 'VC', dialCode: '+1784'),
     CountryCode(name: 'Samoa', code: 'WS', dialCode: '+685'),
     CountryCode(name: 'San Marino', code: 'SM', dialCode: '+378'),
-     CountryCode(name: 'Saudi Arabia', code: 'SA', dialCode: '+966'),
+    CountryCode(name: 'Saudi Arabia', code: 'SA', dialCode: '+966'),
     CountryCode(name: 'Sao Tome and Principe', code: 'ST', dialCode: '+239'),
     CountryCode(name: 'Senegal', code: 'SN', dialCode: '+221'),
     CountryCode(name: 'Serbia and Montenegro', code: 'CS', dialCode: '+381'),

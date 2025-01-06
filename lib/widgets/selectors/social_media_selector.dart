@@ -1,4 +1,5 @@
 // lib/widgets/selectors/social_media_selector.dart
+// Under TAPP! Global Flutter Project
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:tappglobalapp/models/social_platform.dart';
@@ -13,29 +14,64 @@ class SocialMediaSelector extends StatelessWidget {
 
   static final Map<String, List<String>> _categoryOrder = {
     'General': ['phone', 'sms', 'email', 'website', 'address'],
-    'Messaging': ['whatsapp', 'telegram', 'line', 'wechat', 'zalo', 'kakaotalk'],
-    'Social Media': ['facebook', 'instagram', 'linkedin', 'tiktok', 'threads', 
-                     'twitter', 'snapchat', 'tumblr', 'linkedin_company', 
-                     'mastodon', 'bluesky', 'weibo', 'naver', 'pinterest'],
+    'Messaging': [
+      'whatsapp',
+      'telegram',
+      'line',
+      'wechat',
+      'zalo',
+      'kakaotalk'
+    ],
+    'Social Media': [
+      'facebook',
+      'instagram',
+      'linkedin',
+      'tiktok',
+      'threads',
+      'twitter',
+      'snapchat',
+      'tumblr',
+      'linkedin_company',
+      'mastodon',
+      'bluesky',
+      'weibo',
+      'naver',
+      'pinterest'
+    ],
     'App Stores & Dev': ['googlePlay', 'appStore', 'github', 'gitlab'],
-    'Others': ['youtube', 'twitch', 'discord', 'steam', 'reddit', 'googleReviews', 'shopee', 'lazada', 'amazon', 'etsy', 'behance', 'dribbble']
+    'Others': [
+      'youtube',
+      'twitch',
+      'discord',
+      'steam',
+      'reddit',
+      'googleReviews',
+      'shopee',
+      'lazada',
+      'amazon',
+      'etsy',
+      'behance',
+      'dribbble'
+    ]
   };
 
   Map<String, List<SocialPlatform>> _categorizedPlatforms() {
-  final availablePlatforms = SocialPlatforms.platforms
-      .where((p) => !selectedPlatformIds.contains(p.id))
-      .toList();
-  
-  return Map.fromEntries(
-    _categoryOrder.entries.map((entry) => MapEntry(
-      entry.key,
-      entry.value
-          .where((id) => availablePlatforms.any((p) => p.id == id))
-          .map((id) => availablePlatforms.firstWhere((p) => p.id == id))
-          .toList()
-    )).where((entry) => entry.value.isNotEmpty)
-  );
-}
+    final availablePlatforms = SocialPlatforms.platforms
+        .where((p) => !selectedPlatformIds.contains(p.id))
+        .toList();
+
+    return Map.fromEntries(
+      _categoryOrder.entries
+          .map((entry) => MapEntry(
+                entry.key,
+                entry.value
+                    .where((id) => availablePlatforms.any((p) => p.id == id))
+                    .map((id) =>
+                        availablePlatforms.firstWhere((p) => p.id == id))
+                    .toList()))
+          .where((entry) => entry.value.isNotEmpty),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,63 +103,68 @@ class SocialMediaSelector extends StatelessWidget {
                 ],
               ),
               Expanded(
-                child: nonEmptyCategories.isEmpty 
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Image.asset(
-                            'assets/images/social_icon_illustration.png',
-                            width: 200,
-                            height: 200,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'All platforms have been added',
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                        ],
-                      ),
-                    )
-                  : ListView.builder(
-                      itemCount: nonEmptyCategories.length,
-                      itemBuilder: (context, index) {
-                        final category = nonEmptyCategories[index];
-                        final platforms = category.value;
-                        
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                child: nonEmptyCategories.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              child: Text(
-                                category.key,
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            GridView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 3,
-                                crossAxisSpacing: 12,
-                                mainAxisSpacing: 12,
-                                childAspectRatio: 0.85,
-                              ),
-                              itemCount: platforms.length,
-                              itemBuilder: (context, i) => _buildPlatformTile(
-                                context, 
-                                platforms[i],
-                                isDarkMode,
-                              ),
+                            Image.asset(
+                              'assets/images/social_icon_illustration.png',
+                              width: 200,
+                              height: 200,
                             ),
                             const SizedBox(height: 16),
+                            Text(
+                              'All platforms have been added',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
                           ],
-                        );
-                      },
-                    ),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: nonEmptyCategories.length,
+                        itemBuilder: (context, index) {
+                          final category = nonEmptyCategories[index];
+                          final platforms = category.value;
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 8),
+                                child: Text(
+                                  category.key,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                ),
+                              ),
+                              GridView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                gridDelegate:
+                                    const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 3,
+                                  crossAxisSpacing: 12,
+                                  mainAxisSpacing: 12,
+                                  childAspectRatio: 0.85,
+                                ),
+                                itemCount: platforms.length,
+                                itemBuilder: (context, i) => _buildPlatformTile(
+                                  context,
+                                  platforms[i],
+                                  isDarkMode,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                            ],
+                          );
+                        },
+                      ),
               ),
             ],
           ),
@@ -132,7 +173,8 @@ class SocialMediaSelector extends StatelessWidget {
     );
   }
 
-  Widget _buildPlatformTile(BuildContext context, SocialPlatform platform, bool isDarkMode) {
+  Widget _buildPlatformTile(
+      BuildContext context, SocialPlatform platform, bool isDarkMode) {
     return InkWell(
       onTap: () => Navigator.pop(context, platform),
       borderRadius: BorderRadius.circular(8),

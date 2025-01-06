@@ -1,4 +1,5 @@
 // lib/widgets/digital_profile/banner_upload.dart
+// Under TAPP! Global Flutter Project
 import 'dart:io';
 import 'package:flutter/foundation.dart' show Uint8List, kIsWeb;
 import 'package:flutter/material.dart';
@@ -50,7 +51,7 @@ class _BannerUploadState extends State<BannerUpload> {
     }
   }
 
-    void _showCropDialog() {
+  void _showCropDialog() {
     final cropController = CropController();
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
   
@@ -103,7 +104,7 @@ class _BannerUploadState extends State<BannerUpload> {
               padding: const EdgeInsets.all(16.0),
               child: ElevatedButton(
                 onPressed: () => cropController.crop(),
-                 style: ElevatedButton.styleFrom(
+                style: ElevatedButton.styleFrom(
                   backgroundColor: isDarkMode ? const Color(0xFFD9D9D9) : Colors.black,
                   foregroundColor: isDarkMode ? Colors.black : Colors.white,
                   minimumSize: const Size(double.infinity, 50),
@@ -116,7 +117,6 @@ class _BannerUploadState extends State<BannerUpload> {
       ),
     );
   }
-
 
   Future<void> _uploadImage() async {
     if (_croppedBytes == null) return;
@@ -152,7 +152,7 @@ class _BannerUploadState extends State<BannerUpload> {
       await uploadTask;
       final downloadUrl = await ref.getDownloadURL();
 
-       if (mounted) {
+      if (mounted) {
         final provider = context.read<DigitalProfileProvider>();
         provider.updateProfile(bannerImageUrl: downloadUrl);
         await provider.saveProfile();
@@ -203,7 +203,7 @@ class _BannerUploadState extends State<BannerUpload> {
                 color: Theme.of(context).brightness == Brightness.dark
                     ? Colors.grey[900]
                     : Colors.grey[200],
-                 borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: _buildContent(),
             ),
@@ -212,7 +212,6 @@ class _BannerUploadState extends State<BannerUpload> {
       ],
     );
   }
-
 
   Widget _buildContent() {
     if (_isLoading) {
@@ -257,8 +256,7 @@ class _BannerUploadState extends State<BannerUpload> {
     );
   }
 
-
-   void _showImageSourceDialog() {
+  void _showImageSourceDialog() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(

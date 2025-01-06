@@ -1,4 +1,5 @@
 // lib/widgets/navigation/desktop_sidebar.dart
+// Under TAPP! Global Flutter Project
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 

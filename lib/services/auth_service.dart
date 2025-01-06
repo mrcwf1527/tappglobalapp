@@ -1,4 +1,5 @@
 // lib/services/auth_service.dart
+// Under TAPP! Global Flutter Project
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -145,7 +146,8 @@ class AuthService {
   }
 
   Future<void> createUserDocument(User user) async {
-    final userDocRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+    final userDocRef =
+        FirebaseFirestore.instance.collection('users').doc(user.uid);
     final userDoc = await userDocRef.get();
 
     if (userDoc.exists && userDoc.data()?['profileCreated'] == true) {
@@ -188,7 +190,7 @@ class AuthService {
         // Force a larger size to prevent quality issues
         finalURL = '$photoURL?sz=400';
       }
-    
+
       final storageRef = FirebaseStorage.instance
           .ref()
           .child('profile_images/${_auth.currentUser?.uid}.jpg');

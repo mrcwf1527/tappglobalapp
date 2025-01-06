@@ -1,4 +1,5 @@
 // lib/config/routes.dart
+// Under TAPP! Global Flutter Project
 import 'package:flutter/material.dart';
 import '../screens/auth_screen.dart';
 import '../screens/forgot_password_screen.dart';
@@ -10,7 +11,6 @@ import '../screens/digital_profile/digital_profile_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/digital_profile/edit_digital_profile_screen.dart';
 import '../screens/digital_profile/public_digital_profile_screen.dart';
-
 
 class AppRoutes {
   static final navigatorKey = GlobalKey<NavigatorState>();
@@ -52,7 +52,7 @@ class AppRoutes {
   };
 
   static bool isKnownRoute(String path) {
-      if (path.isEmpty) return false;
+    if (path.isEmpty) return false;
     return _routes.containsKey(path);
   }
 
@@ -60,22 +60,22 @@ class AppRoutes {
     // Handle existing routes first
     final builder = _routes[settings.name];
     if (builder != null) {
-        return _buildRoute(builder(navigatorKey.currentContext!));
+      return _buildRoute(builder(navigatorKey.currentContext!));
     }
 
-      if (settings.name == editDigitalProfile) {
-        return _buildRoute(EditDigitalProfileScreen(
-          profileId: settings.arguments as String,
-        ));
-      }
+    if (settings.name == editDigitalProfile) {
+      return _buildRoute(EditDigitalProfileScreen(
+        profileId: settings.arguments as String,
+      ));
+    }
 
     // Then handle username paths
     final uri = Uri.tryParse(settings.name ?? '');
 
     if (uri != null && uri.pathSegments.isNotEmpty) {
-        if (uri.pathSegments.length == 1 ) {
-            final username = uri.pathSegments[0];
-            return _buildRoute(PublicProfileScreen(username: username));
+      if (uri.pathSegments.length == 1) {
+        final username = uri.pathSegments[0];
+        return _buildRoute(PublicProfileScreen(username: username));
       }
     }
     // Fallback route

@@ -1,12 +1,13 @@
 // lib/models/social_platform.dart
+// Under TAPP! Global Flutter Project
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 enum UrlHandlingType {
-  preserveAll, // Keep entire URL including UTM
-  preserveFrontOnly, // Keep protocol/www but remove UTM
-  usernameOnly, // Convert to standard URL format
-  urlOnly // Preserve front, remove UTM
+  preserveAll,    // Keep entire URL including UTM
+  preserveFrontOnly,    // Keep protocol/www but remove UTM
+  usernameOnly,    // Convert to standard URL format
+  urlOnly    // Preserve front, remove UTM
 }
 
 class SocialPlatform {
@@ -22,7 +23,7 @@ class SocialPlatform {
   final bool numbersOnly;
   final String? urlPattern;
   final UrlHandlingType urlHandlingType;
-  final String? standardUrlFormat; // For username-only platforms
+  final String? standardUrlFormat;    // For username-only platforms
   final int? sequence;
 
   const SocialPlatform({
@@ -48,8 +49,8 @@ class SocialPlatform {
 
     switch (urlHandlingType) {
       case UrlHandlingType.urlOnly:
-         if (id == 'website') {
-          return input.split('?')[0]; // Only remove UTM tracking
+        if (id == 'website') {
+          return input.split('?')[0];    // Only remove UTM tracking
         }
         if (id == 'googlePlay') {
           // Remove https:// and www. but keep UTM parameters
@@ -73,6 +74,7 @@ class SocialPlatform {
         }
         username = username.replaceAll('@', '');
         return username;
+        
       case UrlHandlingType.preserveAll:
         return input;
     }
@@ -253,7 +255,7 @@ class SocialPlatforms {
     ),
 
     // URL-only platforms
-        SocialPlatform(
+    SocialPlatform(
       id: 'line',
       name: 'Line',
       icon: FontAwesomeIcons.line,
@@ -312,7 +314,7 @@ class SocialPlatforms {
       placeholder: 'Enter Lazada URL',
       urlHandlingType: UrlHandlingType.urlOnly,
     ),
-        SocialPlatform(
+    SocialPlatform(
       id: 'amazon',
       name: 'Amazon',
       icon: FontAwesomeIcons.amazon,
@@ -367,11 +369,10 @@ class SocialPlatforms {
       name: 'LinkedIn',
       icon: FontAwesomeIcons.linkedin,
       placeholder: 'linkedin.com/in/',
-      urlPattern:
-          r'^(?:https?:\/\/)?(?:www\.)?linkedin\.com\/(?:in|company)\/[\w\-\.]+\/?$',
+      urlPattern: r'^(?:https?:\/\/)?(?:www\.)?linkedin\.com\/(?:in|company)\/[\w\-\.]+\/?$',
       urlHandlingType: UrlHandlingType.preserveFrontOnly,
     ),
-        SocialPlatform(
+    SocialPlatform(
       id: 'tiktok',
       name: 'TikTok',
       icon: FontAwesomeIcons.tiktok,
@@ -381,7 +382,7 @@ class SocialPlatforms {
       urlHandlingType: UrlHandlingType.usernameOnly,
       standardUrlFormat: 'https://tiktok.com/@{username}',
     ),
-        SocialPlatform(
+    SocialPlatform(
       id: 'twitter',
       name: 'X (Twitter)',
       icon: FontAwesomeIcons.xTwitter,
@@ -401,12 +402,12 @@ class SocialPlatforms {
       urlHandlingType: UrlHandlingType.usernameOnly,
       standardUrlFormat: 'https://threads.net/@{username}',
     ),
-        SocialPlatform(
+    SocialPlatform(
       id: 'linkedin_company',
       name: 'LinkedIn Company',
       icon: FontAwesomeIcons.linkedin,
       placeholder: 'linkedin.com/company/',
-       urlPattern: r'^(?:https?:\/\/)?(?:www\.)?linkedin\.com\/company\/[\w\-\.]+\/?$',
+      urlPattern: r'^(?:https?:\/\/)?(?:www\.)?linkedin\.com\/company\/[\w\-\.]+\/?$',
       urlHandlingType: UrlHandlingType.preserveFrontOnly,
     ),
     SocialPlatform(
@@ -424,8 +425,7 @@ class SocialPlatforms {
       name: 'Google Play',
       icon: FontAwesomeIcons.googlePlay,
       placeholder: 'Enter app URL',
-      urlPattern:
-          r'^(?:https?:\/\/)?(?:play\.)?google\.com\/store\/apps\/details\?id=[\w\.\-]+\/?$',
+      urlPattern: r'^(?:https?:\/\/)?(?:play\.)?google\.com\/store\/apps\/details\?id=[\w\.\-]+\/?$',
       urlHandlingType: UrlHandlingType.urlOnly,
     ),
     SocialPlatform(
@@ -433,7 +433,7 @@ class SocialPlatforms {
       name: 'App Store',
       icon: FontAwesomeIcons.appStore,
       placeholder: 'Enter app URL',
-       urlPattern: r'^(?:https?:\/\/)?(?:apps\.)?apple\.com\/[\w\.\-\/]+\/?$',
+      urlPattern: r'^(?:https?:\/\/)?(?:apps\.)?apple\.com\/[\w\.\-\/]+\/?$',
       urlHandlingType: UrlHandlingType.urlOnly,
     ),
     // Messaging
@@ -446,7 +446,7 @@ class SocialPlatforms {
       requiresCountryCode: true,
       numbersOnly: true,
     ),
-     SocialPlatform(
+    SocialPlatform(
       id: 'telegram',
       name: 'Telegram',
       icon: FontAwesomeIcons.telegram,
@@ -456,21 +456,21 @@ class SocialPlatforms {
       urlHandlingType: UrlHandlingType.usernameOnly,
       standardUrlFormat: 'https://t.me/{username}',
     ),
-        SocialPlatform(
+    SocialPlatform(
       id: 'wechat',
       name: 'WeChat',
       icon: FontAwesomeIcons.weixin,
       placeholder: 'Enter WeChat ID',
       urlHandlingType: UrlHandlingType.usernameOnly,
     ),
-      SocialPlatform(
+    SocialPlatform(
       id: 'kakaotalk',
       name: 'KakaoTalk',
       imagePath: 'assets/social_icons/kakaotalk.svg',
       placeholder: 'Enter KakaoTalk ID',
       urlHandlingType: UrlHandlingType.usernameOnly,
     ),
-        SocialPlatform(
+    SocialPlatform(
       id: 'zalo',
       name: 'Zalo',
       imagePath: 'assets/social_icons/zalo.svg',

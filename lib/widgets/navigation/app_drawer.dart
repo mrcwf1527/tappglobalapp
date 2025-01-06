@@ -1,4 +1,5 @@
 // lib/widgets/navigation/app_drawer.dart
+// Under TAPP! Global Flutter Project
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -88,7 +89,7 @@ class AppDrawer extends StatelessWidget {
         fit: BoxFit.cover,
         loadingBuilder: (_, child, loadingProgress) {
           if (loadingProgress == null) return child;
-            return _buildLoadingAvatar();
+          return _buildLoadingAvatar();
         },
         errorBuilder: (_, __, error) {
           debugPrint('Web avatar load error: $error');
@@ -99,23 +100,23 @@ class AppDrawer extends StatelessWidget {
   }
 
   Widget _buildMobileAvatar(User user) {
-  return ClipOval(
-    child: Image.network(
-      user.photoURL!,
-      width: 60,
-      height: 60,
-      fit: BoxFit.cover,
-      loadingBuilder: (_, child, loadingProgress) {
-        if (loadingProgress == null) return child;
-        return _buildLoadingAvatar();
-      },
-      errorBuilder: (_, __, ___) {
-        debugPrint('Mobile avatar error for URL: ${user.photoURL}');
-        return _buildDefaultAvatar();
-      },
-    ),
-  );
-}
+    return ClipOval(
+      child: Image.network(
+        user.photoURL!,
+        width: 60,
+        height: 60,
+        fit: BoxFit.cover,
+        loadingBuilder: (_, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return _buildLoadingAvatar();
+        },
+        errorBuilder: (_, __, ___) {
+          debugPrint('Mobile avatar error for URL: ${user.photoURL}');
+          return _buildDefaultAvatar();
+        },
+      ),
+    );
+  }
 
   Widget _buildDefaultAvatar() {
     return CircleAvatar(

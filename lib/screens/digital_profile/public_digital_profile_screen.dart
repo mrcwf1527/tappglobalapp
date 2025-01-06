@@ -1,4 +1,5 @@
-// lib/screens/digital_profile/public_profile_screen.dart
+// lib/screens/digital_profile/public_digital_profile_screen.dart
+// Under TAPP! Global Flutter Project
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -109,8 +110,8 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                   _buildHeader(data),
                   const SizedBox(height: 24),
                   _buildMainContent(data),
-                _buildActionButtons(data), // moved here
-                const SizedBox(height: 40),
+                  _buildActionButtons(data),
+                  const SizedBox(height: 40),
                 ],
               ),
             ),
@@ -121,69 +122,63 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   }
 
   Widget _buildHeader(Map<String, dynamic> data) {
-  return Stack(
-    clipBehavior: Clip.none,
-    alignment: Alignment.center,
-    children: [
-      // Banner Image
-      AspectRatio(
-        aspectRatio: 2 / 1,
-        child: data['bannerImageUrl'] != null
-          ? Image.network(
-              data['bannerImageUrl'],
-              width: double.infinity,
-              fit: BoxFit.cover,
-            )
-          : Container(color: Colors.grey[900]),
-      ),
-      
-      // Images Container
-      Positioned(
-        bottom: -60,
-        child: Stack(
-          clipBehavior: Clip.none,
-          alignment: Alignment.center,
-          children: [
-            // Profile Image
-            Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
-              ),
-              child: CircleAvatar(
-                radius: 60,
-                backgroundImage: data['profileImageUrl'] != null
-                    ? NetworkImage(data['profileImageUrl'])
-                    : null,
-                child: data['profileImageUrl'] == null
-                    ? const Icon(Icons.person, size: 60)
-                    : null,
-              ),
-            ),
-            
-            // Company Logo
-            if (data['companyImageUrl'] != null)
-              Positioned(
-                bottom: 0,
-                right: -30,
-                child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
-                  ),
-                  child: CircleAvatar(
-                    radius: 28,
-                    backgroundImage: NetworkImage(data['companyImageUrl']),
-                    backgroundColor: Colors.white,
-                  ),
+    return Stack(
+      clipBehavior: Clip.none,
+      alignment: Alignment.center,
+      children: [
+        AspectRatio(
+          aspectRatio: 2 / 1,
+          child: data['bannerImageUrl'] != null
+              ? Image.network(
+                  data['bannerImageUrl'],
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                )
+              : Container(color: Colors.grey[900]),
+        ),
+        Positioned(
+          bottom: -60,
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.center,
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                ),
+                child: CircleAvatar(
+                  radius: 60,
+                  backgroundImage: data['profileImageUrl'] != null
+                      ? NetworkImage(data['profileImageUrl'])
+                      : null,
+                  child: data['profileImageUrl'] == null
+                      ? const Icon(Icons.person, size: 60)
+                      : null,
                 ),
               ),
-          ],
+              if (data['companyImageUrl'] != null)
+                Positioned(
+                  bottom: 0,
+                  right: -30,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: CircleAvatar(
+                      radius: 28,
+                      backgroundImage: NetworkImage(data['companyImageUrl']),
+                      backgroundColor: Colors.white,
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
-      ),
-    ],
-  );
-}
+      ],
+    );
+  }
 
   Widget _buildMainContent(Map<String, dynamic> data) {
     return Padding(
@@ -259,19 +254,19 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
           onTap: () => _launchSocialLink(platform),
           child: socialPlatform.imagePath != null
               ? SvgPicture.asset(
-            socialPlatform.imagePath!,
-            width: 24,
-            height: 24,
-            colorFilter: const ColorFilter.mode(
-              Colors.white,
-              BlendMode.srcIn,
-            ),
-          )
+                  socialPlatform.imagePath!,
+                  width: 24,
+                  height: 24,
+                  colorFilter: const ColorFilter.mode(
+                    Colors.white,
+                    BlendMode.srcIn,
+                  ),
+                )
               : FaIcon(
-            socialPlatform.icon ?? FontAwesomeIcons.link,
-            color: Colors.white,
-            size: 24,
-          ),
+                  socialPlatform.icon ?? FontAwesomeIcons.link,
+                  color: Colors.white,
+                  size: 24,
+                ),
         );
       }).toList(),
     );
@@ -366,7 +361,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
       case 'pinterest':
         url = 'https://pinterest.com/$value';
         break;
-        case 'appStore':
+      case 'appStore':
         url = 'https://$value';
         break;
       case 'github':
@@ -381,7 +376,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
       case 'twitch':
         url = 'https://twitch.tv/$value';
         break;
-       case 'discord':
+      case 'discord':
         url = 'https://$value';
         break;
       case 'steam':
@@ -399,7 +394,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
       case 'lazada':
         url = 'https://$value';
         break;
-       case 'amazon':
+      case 'amazon':
         url = 'https://$value';
         break;
       case 'etsy':

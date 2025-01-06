@@ -1,4 +1,5 @@
-// lib/widgets/responsive_layout.dart 
+// lib/widgets/responsive_layout.dart
+// Under TAPP! Global Flutter Project
 import 'package:flutter/material.dart';
 
 class ResponsiveLayout extends StatelessWidget {

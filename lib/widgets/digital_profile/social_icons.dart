@@ -1,4 +1,5 @@
 // lib/widgets/digital_profile/social_icons.dart
+// Under TAPP! Global Flutter Project
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -26,7 +27,6 @@ class _SocialIconsState extends State<SocialIcons> {
   final Map<String, Timer?> _debounceTimers = {}; // Store timers for each field
   final Map<String, FocusNode> _focusNodes = {};
 
-
   @override
   void initState() {
     super.initState();
@@ -51,17 +51,17 @@ class _SocialIconsState extends State<SocialIcons> {
         }
       } else {
         _socialControllers[platform.id] = TextEditingController(text: platform.value);
-         _focusNodes[platform.id] = FocusNode()..addListener(() {
-            final focusNode = _focusNodes[platform.id];
-            if (focusNode != null && !focusNode.hasFocus) {
-              _handleFocusLost(platform, index);
-            }
-          });
+        _focusNodes[platform.id] = FocusNode()..addListener(() {
+          final focusNode = _focusNodes[platform.id];
+          if (focusNode != null && !focusNode.hasFocus) {
+            _handleFocusLost(platform, index);
+          }
+        });
       }
     }
   }
-  
-   void _handleFocusLost(SocialPlatform platform, int index) {
+
+  void _handleFocusLost(SocialPlatform platform, int index) {
     // Add website, address, bluesky, etc to the check
     if (!(platform.id == 'facebook' || 
           platform.id == 'linkedin' || 
@@ -113,7 +113,7 @@ class _SocialIconsState extends State<SocialIcons> {
         case 'googleReviews':
           prefix = ''; // No prefix for googleReviews
           break;
-         case 'shopee':
+        case 'shopee':
           prefix = '';
           break;
         case 'lazada':
@@ -125,21 +125,21 @@ class _SocialIconsState extends State<SocialIcons> {
         case 'googlePlay':
           prefix = '';
           break;
-         case 'appStore':
+        case 'appStore':
           prefix = '';
           break;
         case 'line':
-           prefix = '';
+          prefix = '';
           break;
         case 'weibo':
           prefix = '';
           break;
         case 'naver':
-           prefix = '';
+          prefix = '';
           break;
       }
-       final newValue = prefix + controller.text;
-        controller.text = newValue;
+      final newValue = prefix + controller.text;
+      controller.text = newValue;
       // Update platforms with the new value
       final platforms = [...context.read<DigitalProfileProvider>().profileData.socialPlatforms];
       platforms[index] = platform.copyWith(value: newValue);
@@ -163,7 +163,6 @@ class _SocialIconsState extends State<SocialIcons> {
     return CountryCodes.getDefault();
   }
 
-
   @override
   void dispose() {
     for (var controller in _phoneControllers.values) {
@@ -172,7 +171,7 @@ class _SocialIconsState extends State<SocialIcons> {
     for (var controller in _socialControllers.values) {
       controller.dispose();
     }
-     for (var timer in _debounceTimers.values) {
+    for (var timer in _debounceTimers.values) {
       timer?.cancel();
     }
     for (var focusNode in _focusNodes.values) {
@@ -189,30 +188,30 @@ class _SocialIconsState extends State<SocialIcons> {
   }
 
   void _addSocialPlatform() async {
-  final provider = context.read<DigitalProfileProvider>();
-  final result = await showDialog<SocialPlatform>(
-    context: context,
-    builder: (context) => SocialMediaSelector(
-      selectedPlatformIds: provider.profileData.socialPlatforms
-          .map((p) => p.id)
-          .toList(),
-    ),
-  );
+    final provider = context.read<DigitalProfileProvider>();
+    final result = await showDialog<SocialPlatform>(
+      context: context,
+      builder: (context) => SocialMediaSelector(
+        selectedPlatformIds: provider.profileData.socialPlatforms
+            .map((p) => p.id)
+            .toList(),
+      ),
+    );
 
-  if (result != null) {
-    _socialControllers[result.id] = TextEditingController();
-    final index = provider.profileData.socialPlatforms.length; // Get the new index
-    _focusNodes[result.id] = FocusNode()..addListener(() {
-      if (!_focusNodes[result.id]!.hasFocus) {
-        _handleFocusLost(result, index);
-      }
-    });
-    provider.updateSocialPlatforms([
-      ...provider.profileData.socialPlatforms,
-      result,
-    ]);
+    if (result != null) {
+      _socialControllers[result.id] = TextEditingController();
+      final index = provider.profileData.socialPlatforms.length; // Get the new index
+      _focusNodes[result.id] = FocusNode()..addListener(() {
+        if (!_focusNodes[result.id]!.hasFocus) {
+          _handleFocusLost(result, index);
+        }
+      });
+      provider.updateSocialPlatforms([
+        ...provider.profileData.socialPlatforms,
+        result,
+      ]);
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -340,7 +339,7 @@ class _SocialIconsState extends State<SocialIcons> {
                           );
                           if (selected != null) {
                             selectedCountry.value = selected;
-                             // Clear the phone number field
+                            // Clear the phone number field
                             phoneController.clear();
                             // Update platforms with empty value for this entry
                             final platforms = [...provider.profileData.socialPlatforms];
@@ -348,10 +347,10 @@ class _SocialIconsState extends State<SocialIcons> {
                             provider.updateSocialPlatforms(platforms);
                           }
                         },
-                         child: selectedCountry.value.getFlagWidget(
-                            width: 24, 
-                            height: 16,
-                          ),
+                        child: selectedCountry.value.getFlagWidget(
+                          width: 24, 
+                          height: 16,
+                        ),
                       ),
                       const SizedBox(width: 8),
                     ],
@@ -381,7 +380,7 @@ class _SocialIconsState extends State<SocialIcons> {
                       value: '${selectedCountry.value.dialCode}${phoneNumber.nsn}'
                     );
                     
-                     if (_debounceTimers[platform.id]?.isActive ?? false) {
+                    if (_debounceTimers[platform.id]?.isActive ?? false) {
                       _debounceTimers[platform.id]?.cancel();
                     }
                     _debounceTimers[platform.id] = Timer(const Duration(milliseconds: 500), () {
@@ -396,7 +395,7 @@ class _SocialIconsState extends State<SocialIcons> {
                     if (_debounceTimers[platform.id]?.isActive ?? false) {
                       _debounceTimers[platform.id]?.cancel();
                     }
-                     _debounceTimers[platform.id] = Timer(const Duration(milliseconds: 500), () {
+                    _debounceTimers[platform.id] = Timer(const Duration(milliseconds: 500), () {
                       provider.updateSocialPlatforms(platforms);
                     });
                   }
@@ -451,7 +450,7 @@ class _SocialIconsState extends State<SocialIcons> {
             const SizedBox(width: 8),
             Expanded(
               child: TextFormField(
-                 initialValue: platform.value,
+                initialValue: platform.value,
                 decoration: InputDecoration(
                   labelText: platform.name,
                   prefixIcon: SizedBox(
@@ -466,13 +465,13 @@ class _SocialIconsState extends State<SocialIcons> {
                           ),
                     ),
                   ),
-                   hintText: platform.placeholder,
-                   filled: true,
+                  hintText: platform.placeholder,
+                  filled: true,
                   fillColor: Theme.of(context).colorScheme.surface,
                   border: Theme.of(context).inputDecorationTheme.border,
                   enabledBorder: Theme.of(context).inputDecorationTheme.enabledBorder,
                   focusedBorder: Theme.of(context).inputDecorationTheme.focusedBorder,
-                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   errorText: platform.value != null && 
                             !platform.validationPattern!.hasMatch(platform.value!) 
                             ? 'Please enter a valid email address' 
@@ -482,12 +481,12 @@ class _SocialIconsState extends State<SocialIcons> {
                   final parsedValue = platform.parseUrl(value);
                   final platforms = [...provider.profileData.socialPlatforms];
                   platforms[index] = platform.copyWith(value: parsedValue);
-                   if (_debounceTimers[platform.id]?.isActive ?? false) {
-                      _debounceTimers[platform.id]?.cancel();
-                    }
-                     _debounceTimers[platform.id] = Timer(const Duration(milliseconds: 500), () {
-                      provider.updateSocialPlatforms(platforms);
-                    });
+                  if (_debounceTimers[platform.id]?.isActive ?? false) {
+                    _debounceTimers[platform.id]?.cancel();
+                  }
+                  _debounceTimers[platform.id] = Timer(const Duration(milliseconds: 500), () {
+                    provider.updateSocialPlatforms(platforms);
+                  });
                 },
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -544,16 +543,16 @@ class _SocialIconsState extends State<SocialIcons> {
                   ),
                 ),
                 hintText: _socialControllers[platform.id]?.text.isEmpty ?? true 
-    ? platform.placeholder
-    : null,
-  filled: true,
-  fillColor: Theme.of(context).colorScheme.surface,
-  border: Theme.of(context).inputDecorationTheme.border,
-  enabledBorder: Theme.of(context).inputDecorationTheme.enabledBorder,
-  focusedBorder: Theme.of(context).inputDecorationTheme.focusedBorder,
-  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-  prefixText: platform.prefix,
-),
+                  ? platform.placeholder
+                  : null,
+                filled: true,
+                fillColor: Theme.of(context).colorScheme.surface,
+                border: Theme.of(context).inputDecorationTheme.border,
+                enabledBorder: Theme.of(context).inputDecorationTheme.enabledBorder,
+                focusedBorder: Theme.of(context).inputDecorationTheme.focusedBorder,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                prefixText: platform.prefix,
+              ),
               onChanged: (value) {
                 if (value.isEmpty) {
                   setState(() {});
@@ -580,8 +579,8 @@ class _SocialIconsState extends State<SocialIcons> {
               },
               focusNode: _focusNodes[platform.id],
               onTap: () {
-                  FocusScope.of(context).requestFocus(_focusNodes[platform.id]);
-                },
+                FocusScope.of(context).requestFocus(_focusNodes[platform.id]);
+              },
             ),
           ),
           const SizedBox(width: 8),

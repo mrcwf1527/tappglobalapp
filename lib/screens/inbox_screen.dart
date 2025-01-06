@@ -1,4 +1,5 @@
 // lib/screens/inbox_screen.dart
+// Under TAPP! Global Flutter Project
 import 'package:flutter/material.dart';
 
 class InboxScreen extends StatelessWidget {

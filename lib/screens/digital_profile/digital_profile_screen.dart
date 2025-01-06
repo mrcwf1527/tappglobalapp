@@ -1,4 +1,5 @@
 // lib/screens/digital_profile/digital_profile_screen.dart
+// Under TAPP! Global Flutter Project
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -16,7 +17,6 @@ class DigitalProfileScreen extends StatefulWidget {
 }
 
 class _DigitalProfileScreenState extends State<DigitalProfileScreen> {
-  // Add this dialog when + button is clicked
   Future<void> _showUsernameDialog() async {
     final textController = TextEditingController();
     String? validationMessage;
@@ -172,7 +172,6 @@ class _DigitalProfileScreenState extends State<DigitalProfileScreen> {
   }
 }
 
-// UPDATED THE MOBILE LAYOUT WIDGET
 class _DigitalProfileMobileLayout extends StatelessWidget {
   final VoidCallback showUsernameDialog;
   
@@ -291,39 +290,38 @@ class _DigitalProfileMobileLayout extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 16),
-                        // Social Icons Row
                         if (profile.socialPlatforms.isNotEmpty) ...[
                           Padding(
-                            padding: const EdgeInsets.only(left: 76), // Aligns with profile image (30px radius + 16px spacing + 30px extra)
+                            padding: const EdgeInsets.only(left: 76),
                             child: Wrap(
                               spacing: 12,
                               runSpacing: 12,
                               children: profile.socialPlatforms.map((platform) {
                                 return platform.icon != null
-  ? Icon(platform.icon, 
-      size: 20,
-      color: Colors.grey[600], // Add consistent color
-    )
-  : platform.imagePath != null
-    ? SvgPicture.asset(
-        platform.imagePath!,
-        width: 20,
-        height: 20,
-        colorFilter: ColorFilter.mode(
-          Colors.grey[600]!, // Match the color
-          BlendMode.srcIn,
-        ),
-      )
+                                  ? Icon(
+                                      platform.icon, 
+                                      size: 20,
+                                      color: Colors.grey[600],
+                                    )
+                                  : platform.imagePath != null
+                                    ? SvgPicture.asset(
+                                        platform.imagePath!,
+                                        width: 20,
+                                        height: 20,
+                                        colorFilter: ColorFilter.mode(
+                                          Colors.grey[600]!,
+                                          BlendMode.srcIn,
+                                        ),
+                                      )
                                     : const SizedBox();
                               }).toList(),
                             ),
                           ),
                           const SizedBox(height: 12),
                         ],
-                        // Bio Text
                         if (profile.bio?.isNotEmpty == true)
                           Padding(
-                            padding: const EdgeInsets.only(left: 76), // Same padding as social icons
+                            padding: const EdgeInsets.only(left: 76),
                             child: Text(
                               profile.bio!,
                               style: const TextStyle(fontSize: 14),
@@ -351,7 +349,8 @@ class _DigitalProfileMobileLayout extends StatelessWidget {
 }
 
 class _DigitalProfileDesktopLayout extends StatelessWidget {
-    final VoidCallback showUsernameDialog;
+  final VoidCallback showUsernameDialog;
+  
   const _DigitalProfileDesktopLayout({required this.showUsernameDialog});
 
   @override
