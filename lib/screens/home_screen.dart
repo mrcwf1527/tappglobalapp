@@ -1,9 +1,7 @@
 // lib/screens/home_screen.dart
 // Under TAPP! Global Flutter Project
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'leads_screen.dart';
 import 'scan_screen.dart';
 import 'digital_profile/digital_profile_screen.dart';
@@ -11,7 +9,6 @@ import 'inbox_screen.dart';
 import '../widgets/responsive_layout.dart';
 import '../widgets/navigation/bottom_nav_bar.dart';
 import '../widgets/navigation/app_drawer.dart';
-import '../widgets/navigation/desktop_sidebar.dart';
 import '../services/auth_service.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -25,16 +22,6 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   final AuthService _authService = AuthService();
   bool _initialized = false;
-
-  // Mapping for desktop sidebar navigation
-  final _pageIndices = {
-    0: 0,  // Overview
-    1: 1,  // Leads 
-    2: 2,  // Scan
-    3: 3,  // Inbox
-    4: 4,  // Digital Profile
-    12: 'settings', // Settings
-  };
 
   @override
   void initState() {
@@ -62,18 +49,8 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    // Handle special routes for desktop sidebar
     if (index == 12) {
       Navigator.pushNamed(context, '/settings');
-      return;
-    }
-
-    // Map sidebar index to page index for desktop view
-    if (ResponsiveLayout.isDesktop(context)) {
-      final pageIndex = _pageIndices[index];
-      if (pageIndex != null && pageIndex is int) {
-        setState(() => _selectedIndex = pageIndex);
-      }
       return;
     }
 
@@ -94,22 +71,6 @@ class _HomeScreenState extends State<HomeScreen> {
         body: Center(child: CircularProgressIndicator()),
       );
     }
-
-    return ResponsiveLayout(
-      mobileLayout: _buildMobileLayout(),
-      desktopLayout: _buildDesktopLayout(),
-    );
-  }
-
-  Widget _buildMobileLayout() {
-    String appBarTitle = switch (_selectedIndex) {
-      0 => 'TAPP!',
-      1 => 'Leads',
-      2 => 'Scan',
-      3 => 'Inbox',
-      4 => 'Digital Profile',
-      _ => 'TAPP!'
-    };
 
     return Scaffold(
       appBar: AppBar(
@@ -136,41 +97,17 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildDesktopLayout() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return Scaffold(
-          body: Row(
-            children: [
-              DesktopSidebar(
-                selectedIndex: _selectedIndex,
-                onNavigate: _onItemTapped,
-              ),
-              if (FirebaseAuth.instance.currentUser != null)
-                Expanded(
-                  child: Column(
-                    children: [
-                      SizedBox(
-                        height: 72,
-                        child: _buildDesktopHeader(),
-                      ),
-                      Expanded(
-                        child: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 300),
-                          child: SingleChildScrollView(
-                            child: _buildBody(),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-        );
-      },
-    );
+  String get appBarTitle {
+    return switch (_selectedIndex) {
+      0 => 'TAPP!',
+      1 => 'Leads',
+      2 => 'Scan',
+      3 => 'Inbox',
+      4 => 'Digital Profile',
+      _ => 'TAPP!'
+    };
   }
+
 
   Widget _buildBody() {
     return KeyedSubtree(
@@ -205,96 +142,6 @@ class _HomeScreenState extends State<HomeScreen> {
             _buildRecentActivity(),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildDesktopHeader() {
-    final user = FirebaseAuth.instance.currentUser;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
-        color: Color(0xFF191919),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-            onPressed: () {},
-          ),
-          const SizedBox(width: 8),
-          Container(
-            constraints: const BoxConstraints(
-              maxWidth: 40,
-              maxHeight: 40,
-            ),
-            child: _buildUserAvatar(user),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildUserAvatar(User? user) {
-    if (user?.photoURL == null) {
-      return _buildDefaultAvatar();
-    }
-
-    return kIsWeb
-        ? _buildWebAvatar(user!.photoURL!)
-        : _buildMobileAvatar(user!);
-  }
-
-  Widget _buildWebAvatar(String url) {
-    return ClipOval(
-      child: Image.network(
-        url,
-        width: 40,
-        height: 40,
-        fit: BoxFit.cover,
-        loadingBuilder: (BuildContext context, Widget child,
-            ImageChunkEvent? loadingProgress) {
-          if (loadingProgress == null) return child;
-          return _buildLoadingAvatar();
-        },
-        errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) {
-          debugPrint('Web avatar load error: $error');
-          return _buildDefaultAvatar();
-        },
-      ),
-    );
-  }
-
-  Widget _buildMobileAvatar(User user) {
-    return CachedNetworkImage(
-      imageUrl: user.photoURL!,
-      imageBuilder: (_, imageProvider) => CircleAvatar(
-        backgroundImage: imageProvider,
-        backgroundColor: Colors.grey[200],
-      ),
-      placeholder: (_, __) => _buildLoadingAvatar(),
-      errorWidget: (_, __, error) {
-        debugPrint('Mobile avatar load error: $error');
-        return _buildDefaultAvatar();
-      },
-    );
-  }
-
-  Widget _buildDefaultAvatar() {
-    return CircleAvatar(
-      backgroundColor: Colors.grey[200],
-      child: Icon(Icons.person, size: 20, color: Colors.grey[700]),
-    );
-  }
-
-  Widget _buildLoadingAvatar() {
-    return CircleAvatar(
-      backgroundColor: Colors.grey[200],
-      child: const SizedBox(
-        width: 20,
-        height: 20,
-        child: CircularProgressIndicator(strokeWidth: 2),
       ),
     );
   }

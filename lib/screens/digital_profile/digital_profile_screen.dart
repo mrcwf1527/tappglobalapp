@@ -3,7 +3,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import '../../widgets/responsive_layout.dart';
 import '../../providers/digital_profile_provider.dart';
 import 'edit_digital_profile_screen.dart';
 import 'dart:async';
@@ -164,12 +163,9 @@ class _DigitalProfileScreenState extends State<DigitalProfileScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return ResponsiveLayout(
-      mobileLayout: _DigitalProfileMobileLayout(showUsernameDialog: _showUsernameDialog),
-      desktopLayout: _DigitalProfileDesktopLayout(showUsernameDialog: _showUsernameDialog),
-    );
-  }
+Widget build(BuildContext context) {
+  return _DigitalProfileMobileLayout(showUsernameDialog: _showUsernameDialog);
+}
 }
 
 class _DigitalProfileMobileLayout extends StatelessWidget {
@@ -342,58 +338,6 @@ class _DigitalProfileMobileLayout extends StatelessWidget {
         child: Icon(
           Icons.add,
           color: isDarkMode ? Colors.black : Colors.white,
-        ),
-      ),
-    );
-  }
-}
-
-class _DigitalProfileDesktopLayout extends StatelessWidget {
-  final VoidCallback showUsernameDialog;
-  
-  const _DigitalProfileDesktopLayout({required this.showUsernameDialog});
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const SizedBox(height: 40),
-              Image.asset(
-                'assets/images/digital_profile_illustration.png',
-                width: 300,
-                height: 300,
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Create your first digital profile',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: const Color(0xFFD9D9D9),
-                ),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: MediaQuery.of(context).size.width * 0.5,
-                child: ElevatedButton.icon(
-                  onPressed: showUsernameDialog,
-                  icon: const Icon(Icons.add, color: Colors.black, size: 24),
-                  label: const Text('Create New Profile'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFD9D9D9),
-                    foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 16,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );
