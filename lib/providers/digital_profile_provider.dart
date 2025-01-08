@@ -5,6 +5,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/social_platform.dart';
 
+enum ProfileLayout { classic, portrait, banner }
+
 class SocialPlatformData {
   final String id;
   final String value;
@@ -38,6 +40,7 @@ class DigitalProfileData {
   List<SocialPlatform> socialPlatforms;
   DateTime? createdAt;
   DateTime? updatedAt;
+  ProfileLayout layout; // Added layout property
 
   DigitalProfileData({
     required this.id,
@@ -54,6 +57,7 @@ class DigitalProfileData {
     this.socialPlatforms = const [],
     this.createdAt,
     this.updatedAt,
+    this.layout = ProfileLayout.banner, // Default layout value
   });
 
   Map<String, dynamic> toMap() {
@@ -72,6 +76,7 @@ class DigitalProfileData {
       'createdAt':
           createdAt != null ? Timestamp.fromDate(createdAt!) : FieldValue.serverTimestamp(),
       'updatedAt': Timestamp.fromDate(DateTime.now()),
+      'layout': layout.name, // Include layout in toMap
     };
   }
 
@@ -94,6 +99,11 @@ class DigitalProfileData {
           [],
       createdAt: (map['createdAt'] as Timestamp?)?.toDate(),
       updatedAt: (map['updatedAt'] as Timestamp?)?.toDate(),
+      layout: map['layout'] != null // Add layout to fromMap
+          ? ProfileLayout.values.firstWhere(
+              (e) => e.name == map['layout'],
+              orElse: () => ProfileLayout.banner)
+          : ProfileLayout.banner,
     );
   }
 }
@@ -105,9 +115,24 @@ class DigitalProfileProvider extends ChangeNotifier {
     username: '',
   );
   bool _isDirty = false;
-
+  ProfileLayout _selectedLayout = ProfileLayout.banner; // Added property
+  
   DigitalProfileData get profileData => _profileData;
   bool get isDirty => _isDirty;
+  ProfileLayout get selectedLayout => _selectedLayout; // Added getter
+
+  // Added method
+  void setLayout(ProfileLayout layout) {
+    _selectedLayout = layout;
+    _isDirty = true; // Set dirty when layout changes
+    notifyListeners();
+
+      // Save layout to Firestore
+      FirebaseFirestore.instance
+          .collection('digitalProfiles')
+          .doc(_profileData.id)
+          .update({'layout': layout.name});
+  }
 
   void updateProfile({
     String? username,
@@ -135,6 +160,7 @@ class DigitalProfileProvider extends ChangeNotifier {
       socialPlatforms: _profileData.socialPlatforms,
       createdAt: _profileData.createdAt,
       updatedAt: _profileData.updatedAt,
+      layout: _profileData.layout, // Keep existing layout
     );
     _isDirty = true;
     notifyListeners();
@@ -252,6 +278,7 @@ class DigitalProfileProvider extends ChangeNotifier {
 
       if (doc.exists) {
         _profileData = DigitalProfileData.fromMap(doc.id, doc.data()!);
+        _selectedLayout = _profileData.layout; // Load the layout
         notifyListeners();
       }
     } catch (e) {
@@ -316,6 +343,7 @@ extension DigitalProfileDataExtension on DigitalProfileData {
     List<SocialPlatform>? socialPlatforms,
     DateTime? createdAt,
     DateTime? updatedAt,
+    ProfileLayout? layout, // Add layout to copyWith
   }) {
     return DigitalProfileData(
       id: id ?? this.id,
@@ -332,6 +360,7 @@ extension DigitalProfileDataExtension on DigitalProfileData {
       socialPlatforms: socialPlatforms ?? this.socialPlatforms,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      layout: layout ?? this.layout, // Include layout in copyWith
     );
   }
 }

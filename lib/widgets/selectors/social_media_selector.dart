@@ -110,18 +110,22 @@ class SocialMediaSelector extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Select Social Platform',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
+            Padding( // Added Padding here to encompass the Row
+              padding: const EdgeInsets.fromLTRB(0, 0, 0, 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Select Social Platform',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                    padding: EdgeInsets.zero, // Added padding zero to remove extra padding
+                  ),
+                ],
+              ),
             ),
             Expanded(
               child: Center(
@@ -152,7 +156,7 @@ class SocialMediaSelector extends StatelessWidget {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0), // Adjusted padding to match header
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -163,6 +167,7 @@ class SocialMediaSelector extends StatelessWidget {
                 IconButton(
                   icon: const Icon(Icons.close),
                   onPressed: () => Navigator.pop(context),
+                  padding: EdgeInsets.zero, // Added padding zero to remove extra padding
                 ),
               ],
             ),
@@ -206,92 +211,100 @@ class SocialMediaSelector extends StatelessWidget {
     Map<String, List<SocialPlatform>> categories,
     bool isDarkMode,
   ) {
-      final nonEmptyCategories = categories.entries.toList();
+    final nonEmptyCategories = categories.entries.toList();
     return Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Row
+          Padding(
+            padding: const EdgeInsets.fromLTRB(0, 0, 0, 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
                   Text(
                     'Select Social Platform',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
-                  IconButton(
+                 IconButton(
                     icon: const Icon(Icons.close),
                     onPressed: () => Navigator.pop(context),
+                    padding: EdgeInsets.zero, // Added padding zero to remove extra padding
                   ),
-                ],
-              ),
-              Expanded(
-                child: nonEmptyCategories.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Image.asset(
-                              'assets/images/social_icon_illustration.png',
-                              width: 200,
-                              height: 200,
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'All platforms have been added',
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                          ],
-                        ),
-                      )
-                    : ListView.builder(
-                        itemCount: nonEmptyCategories.length,
-                        itemBuilder: (context, index) {
-                          final category = nonEmptyCategories[index];
-                          final platforms = category.value;
-
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 8),
-                                child: Text(
-                                  category.key,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleMedium
-                                      ?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                ),
-                              ),
-                              GridView.builder(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                gridDelegate:
-                                    const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 3,
-                                  crossAxisSpacing: 12,
-                                  mainAxisSpacing: 12,
-                                  childAspectRatio: 0.85,
-                                ),
-                                itemCount: platforms.length,
-                                itemBuilder: (context, i) => _buildPlatformTile(
-                                  context,
-                                  platforms[i],
-                                  isDarkMode,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                            ],
-                          );
-                        },
-                      ),
-              ),
-            ],
+              ],
+            ),
           ),
-        );
+          // Existing expanded content...
+          Expanded(
+            child: nonEmptyCategories.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.asset(
+                          'assets/images/social_icon_illustration.png',
+                          width: 200,
+                          height: 200,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'All platforms have been added',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: nonEmptyCategories.length,
+                    itemBuilder: (context, index) {
+                      final category = nonEmptyCategories[index];
+                      final platforms = category.value;
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Text(
+                              category.key,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                            ),
+                          ),
+                          GridView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: MediaQuery.of(context).size.width > 768
+                                  ? 4
+                                  : (MediaQuery.of(context).size.width < 360 ? 2 : 3),
+                              crossAxisSpacing: 8,
+                              mainAxisSpacing: 8,
+                              childAspectRatio: 1,
+                            ),
+                            itemCount: platforms.length,
+                            itemBuilder: (context, i) => _buildPlatformTile(
+                              context,
+                              platforms[i],
+                              isDarkMode,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
   }
+
 
   Widget _buildPlatformTile(
       BuildContext context, SocialPlatform platform, bool isDarkMode) {
@@ -330,13 +343,13 @@ class SocialMediaSelector extends StatelessWidget {
                   ),
                 ),
               ),
-            const SizedBox(height: 8),
+             
             Flexible(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 2), // Reduced from 4
                 child: Text(
                   platform.name,
-                  style: const TextStyle(fontSize: 12),
+                  style: const TextStyle(fontSize: 11), // Reduced from 12
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,

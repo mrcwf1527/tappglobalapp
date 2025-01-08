@@ -10,6 +10,12 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../models/social_platform.dart';
 
+enum ProfileLayout {
+  classic,
+  portrait,
+  banner
+}
+
 class PublicProfileScreen extends StatefulWidget {
   final String username;
   const PublicProfileScreen({super.key, required this.username});
@@ -156,70 +162,149 @@ Widget build(BuildContext context) {
 }
 
   Widget _buildHeader(Map<String, dynamic> data) {
-    return Stack(
+  final layout = data['layout'] != null 
+      ? ProfileLayout.values.firstWhere(
+          (e) => e.name == data['layout'],
+          orElse: () => ProfileLayout.banner)
+      : ProfileLayout.banner;
+
+  switch (layout) {
+    case ProfileLayout.classic:
+      return _buildClassicHeader(data);
+    case ProfileLayout.portrait:
+      return _buildPortraitHeader(data);
+    case ProfileLayout.banner:
+      return _buildBannerHeader(data);
+  }
+}
+
+Widget _buildClassicHeader(Map<String, dynamic> data) {
+  return Container(
+    padding: const EdgeInsets.only(top: 20),
+    child: Stack(
       clipBehavior: Clip.none,
       alignment: Alignment.center,
       children: [
-        AspectRatio(
-          aspectRatio: 2 / 1,
-          child: data['bannerImageUrl'] != null
-              ? Image.network(
-                  data['bannerImageUrl'],
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                )
-              : Container(color: Colors.grey[900]),
-        ),
+        const SizedBox(height: 120),
         Positioned(
           bottom: -60,
           child: Stack(
             clipBehavior: Clip.none,
             alignment: Alignment.center,
             children: [
-              Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
-                ),
-                child: CircleAvatar(
-                  radius: 60,
-                  backgroundImage: data['profileImageUrl'] != null
-                      ? NetworkImage(data['profileImageUrl'])
-                      : null,
-                  child: data['profileImageUrl'] == null
-                      ? const Icon(Icons.person, size: 60)
-                      : null,
-                ),
-              ),
+              _buildProfileImage(data, 60),
               if (data['companyImageUrl'] != null)
                 Positioned(
                   bottom: 0,
                   right: -30,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                    ),
-                    child: CircleAvatar(
-                      radius: 28,
-                      backgroundImage: NetworkImage(data['companyImageUrl']),
-                      backgroundColor: Colors.white,
-                    ),
-                  ),
+                  child: _buildCompanyImage(data, 28),
                 ),
             ],
           ),
         ),
       ],
-    );
-  }
+    ),
+  );
+}
+
+Widget _buildPortraitHeader(Map<String, dynamic> data) {
+  return SizedBox(
+    width: double.infinity,
+    height: 500,
+    child: data['profileImageUrl'] != null
+        ? Image.network(
+            data['profileImageUrl'],
+            width: double.infinity,
+            height: double.infinity,
+            fit: BoxFit.cover,
+          )
+        : Container(
+            color: Colors.grey[900],
+            child: const Icon(Icons.person, size: 120, color: Colors.white54),
+          ),
+  );
+}
+
+Widget _buildBannerHeader(Map<String, dynamic> data) {
+  return Stack(
+    clipBehavior: Clip.none,
+    alignment: Alignment.center,
+    children: [
+      AspectRatio(
+        aspectRatio: 2 / 1,
+        child: data['bannerImageUrl'] != null
+            ? Image.network(
+                data['bannerImageUrl'],
+                width: double.infinity,
+                fit: BoxFit.cover,
+              )
+            : Container(color: Colors.grey[900]),
+      ),
+      Positioned(
+        bottom: -60,
+        child: Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.center,
+          children: [
+            _buildProfileImage(data, 60),
+            if (data['companyImageUrl'] != null)
+              Positioned(
+                bottom: 0,
+                right: -30,
+                child: _buildCompanyImage(data, 28),
+              ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
+// Add helper methods for profile and company images
+Widget _buildProfileImage(Map<String, dynamic> data, double radius) {
+  return Container(
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      border: Border.all(color: Colors.white, width: 2),
+    ),
+    child: CircleAvatar(
+      radius: radius,
+      backgroundImage: data['profileImageUrl'] != null
+          ? NetworkImage(data['profileImageUrl'])
+          : null,
+      child: data['profileImageUrl'] == null
+          ? Icon(Icons.person, size: radius)
+          : null,
+    ),
+  );
+}
+
+Widget _buildCompanyImage(Map<String, dynamic> data, double radius) {
+  return Container(
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      border: Border.all(color: Colors.white, width: 2),
+    ),
+    child: CircleAvatar(
+      radius: radius,
+      backgroundImage: NetworkImage(data['companyImageUrl']),
+      backgroundColor: Colors.white,
+    ),
+  );
+}
 
   Widget _buildMainContent(Map<String, dynamic> data) {
+    final layout = data['layout'] != null 
+      ? ProfileLayout.values.firstWhere(
+          (e) => e.name == data['layout'],
+          orElse: () => ProfileLayout.banner)
+      : ProfileLayout.banner;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         children: [
-          const SizedBox(height: 80),
+          SizedBox(height: layout == ProfileLayout.portrait ? 24 : 80),
           Text(
             data['displayName'] ?? '',
             style: const TextStyle(
@@ -472,7 +557,7 @@ Widget build(BuildContext context) {
       case 'googlePlay':
         url = 'https://$value';
         break;
-      case 'weibo':
+        case 'weibo':
         url = 'https://$value';
         break;
       case 'naver':

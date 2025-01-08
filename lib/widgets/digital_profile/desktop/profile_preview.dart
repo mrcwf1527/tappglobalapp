@@ -57,6 +57,71 @@ class _ProfilePreviewState extends State<ProfilePreview> {
   }
 
   Widget _buildHeader(Map<String, dynamic> data) {
+    final layout = context.watch<DigitalProfileProvider>().selectedLayout;
+
+    switch (layout) {
+      case ProfileLayout.classic:
+        return _buildClassicHeader(data);
+      case ProfileLayout.portrait:
+        return _buildPortraitHeader(data);
+      case ProfileLayout.banner:
+        return _buildBannerHeader(data);
+    }
+  }
+
+  Widget _buildClassicHeader(Map<String, dynamic> data) {
+    return Container(
+      padding: const EdgeInsets.only(top: 20),
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.center,
+        children: [
+          const SizedBox(height: 120),
+          Positioned(
+            bottom: -60, // Added to match banner layout spacing
+            child: Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.center,
+              children: [
+                _buildProfileImage(data, 60),
+                if (data['companyImageUrl'] != null)
+                  Positioned(
+                    bottom: 0,
+                    right: -30,
+                    child: _buildCompanyImage(data, 28),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPortraitHeader(Map<String, dynamic> data) {
+    return SizedBox(
+      width: double.infinity,
+      height: 500, // Adjust height as needed
+      child: data['profileImageUrl'] != null
+          ? Image.network(
+              data['profileImageUrl'],
+              width: double.infinity,
+              height: double.infinity,
+              fit: BoxFit.cover,
+            )
+          : Container(
+              color: Colors.grey[900],
+              child: const Icon(
+                Icons.person,
+                size: 120,
+                color: Colors.white54,
+              ),
+            ),
+    );
+  }
+
+  Widget _buildBannerHeader(Map<String, dynamic> data) {
+    // Current implementation remains the same
     return Stack(
       clipBehavior: Clip.none,
       alignment: Alignment.center,
@@ -77,36 +142,12 @@ class _ProfilePreviewState extends State<ProfilePreview> {
             clipBehavior: Clip.none,
             alignment: Alignment.center,
             children: [
-              Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
-                ),
-                child: CircleAvatar(
-                  radius: 60,
-                  backgroundImage: data['profileImageUrl'] != null
-                      ? NetworkImage(data['profileImageUrl'])
-                      : null,
-                  child: data['profileImageUrl'] == null
-                      ? const Icon(Icons.person, size: 60)
-                      : null,
-                ),
-              ),
+              _buildProfileImage(data, 60),
               if (data['companyImageUrl'] != null)
                 Positioned(
                   bottom: 0,
                   right: -30,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                    ),
-                    child: CircleAvatar(
-                      radius: 28,
-                      backgroundImage: NetworkImage(data['companyImageUrl']),
-                      backgroundColor: Colors.white,
-                    ),
-                  ),
+                  child: _buildCompanyImage(data, 28),
                 ),
             ],
           ),
@@ -115,12 +156,49 @@ class _ProfilePreviewState extends State<ProfilePreview> {
     );
   }
 
+
+  Widget _buildProfileImage(Map<String, dynamic> data, double radius) {
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white, width: 2),
+      ),
+      child: CircleAvatar(
+        radius: radius,
+        backgroundImage: data['profileImageUrl'] != null
+            ? NetworkImage(data['profileImageUrl'])
+            : null,
+        child: data['profileImageUrl'] == null
+            ? Icon(Icons.person, size: radius)
+            : null,
+      ),
+    );
+  }
+
+  Widget _buildCompanyImage(Map<String, dynamic> data, double radius) {
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white, width: 2),
+      ),
+      child: CircleAvatar(
+        radius: radius,
+        backgroundImage: NetworkImage(data['companyImageUrl']),
+        backgroundColor: Colors.white,
+      ),
+    );
+  }
+
   Widget _buildMainContent(Map<String, dynamic> data) {
+    final layout = context.watch<DigitalProfileProvider>().selectedLayout;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         children: [
-          const SizedBox(height: 80),
+          // Adjust top spacing based on layout
+          SizedBox(height: layout == ProfileLayout.portrait ? 24 : 80),
+          // Rest of the content remains the same
           Text(
             data['displayName'] ?? '',
             style: const TextStyle(
