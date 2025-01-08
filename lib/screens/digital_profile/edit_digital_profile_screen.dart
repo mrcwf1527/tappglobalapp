@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/digital_profile_provider.dart';
+import '../../widgets/navigation/web_side_nav.dart';
 import '../../widgets/responsive_layout.dart';
 import 'tabs/header_tab.dart';
 import '../../widgets/digital_profile/desktop/desktop_preview.dart';
@@ -82,57 +83,76 @@ class _EditDigitalProfileScreenState extends State<EditDigitalProfileScreen>
   }
 
   Widget _buildDesktopLayout() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final maxWidth = MediaQuery.of(context).size.width;
-    final shouldCenter = maxWidth > 1530;
-    final contentWidth = shouldCenter ? 1530.0 : maxWidth;
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  final maxWidth = MediaQuery.of(context).size.width - 230.0; // Account for WebSideNav width
+  final shouldCenter = maxWidth > 1530;
+  final contentWidth = shouldCenter ? 1530.0 : maxWidth;
 
-    return Consumer<DigitalProfileProvider>(
-      builder: (context, provider, child) => Scaffold(
-        body: Center(
-          child: SizedBox(
-            width: contentWidth,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex: 60,
-                  child: Column(
+  return Consumer<DigitalProfileProvider>(
+    builder: (context, provider, child) => Scaffold(
+      body: Row(
+        children: [
+          WebSideNav(
+            selectedIndex: 4, // Profile tab
+            onTabSelected: (index) {
+              if (index == 0) Navigator.pushReplacementNamed(context, '/home');
+              if (index == 1) Navigator.pushReplacementNamed(context, '/leads');
+              if (index == 2) Navigator.pushReplacementNamed(context, '/scan');
+              if (index == 3) Navigator.pushReplacementNamed(context, '/inbox');
+              if (index == 4) Navigator.pushReplacementNamed(context, '/digital-profile');
+              if (index == 5) Navigator.pushReplacementNamed(context, '/settings');
+            },
+          ),
+          Expanded(
+            child: Scaffold(
+              body: Center(
+                child: SizedBox(
+                  width: contentWidth,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildDesktopHeader(),
                       Expanded(
-                        child: Container(
-                          color: isDark ? const Color(0xFF121212) : Colors.grey[100],
-                          child: TabBarView(
-                            controller: _tabController,
-                            children: [
-                              _buildHeaderTabContent(),
-                              const Center(child: Text('Blocks')),
-                              const Center(child: Text('Insights')),
-                              const Center(child: Text('Settings')),
-                            ],
-                          ),
+                        flex: 60,
+                        child: Column(
+                          children: [
+                            _buildDesktopHeader(),
+                            Expanded(
+                              child: Container(
+                                color: isDark ? const Color(0xFF121212) : Colors.grey[100],
+                                child: TabBarView(
+                                  controller: _tabController,
+                                  children: [
+                                    _buildHeaderTabContent(),
+                                    const Center(child: Text('Blocks')),
+                                    const Center(child: Text('Insights')),
+                                    const Center(child: Text('Settings')),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        flex: 40,
+                        child: Column(
+                          children: [
+                            _buildPreviewHeader(),
+                            const Expanded(child: DesktopPreview()),
+                          ],
                         ),
                       ),
                     ],
                   ),
                 ),
-                Expanded(
-                  flex: 40,
-                  child: Column(
-                    children: [
-                      _buildPreviewHeader(),
-                      const Expanded(child: DesktopPreview()),
-                    ],
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
-        ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildDesktopHeader() {
     return Container(

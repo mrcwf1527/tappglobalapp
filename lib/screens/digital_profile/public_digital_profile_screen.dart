@@ -73,55 +73,59 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: FutureBuilder<DocumentSnapshot>(
-        future: _profileFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: Colors.black,
+    body: FutureBuilder<DocumentSnapshot>(
+      future: _profileFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
+        if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        }
 
-          final data = snapshot.data!.data() as Map<String, dynamic>;
+        final data = snapshot.data!.data() as Map<String, dynamic>;
 
-          return Center(
-            child: SingleChildScrollView(
-              child: Container(
-                constraints: const BoxConstraints(maxWidth: 500),
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0E0E0E),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withAlpha(26),
-                      blurRadius: 10,
-                      spreadRadius: 0,
-                      offset: const Offset(0, 0),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    _buildHeader(data),
-                    const SizedBox(height: 24),
-                    _buildMainContent(data),
-                    _buildActionButtons(data),
-                    const SizedBox(height: 40),
-                  ],
-                ),
-              )
+        return Align(
+          alignment: Alignment.topCenter,
+          child: SingleChildScrollView(
+            child: Container(
+              constraints: BoxConstraints(
+                maxWidth: 500,
+                minHeight: MediaQuery.of(context).size.height
+              ),
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: const Color(0xFF0E0E0E),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withAlpha(26),
+                    blurRadius: 10,
+                    spreadRadius: 0,
+                    offset: const Offset(0, 0),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  _buildHeader(data),
+                  const SizedBox(height: 24),
+                  _buildMainContent(data),
+                  _buildActionButtons(data),
+                  const SizedBox(height: 40),
+                ],
+              ),
             ),
-          );
-        },
-      ),
-    );
-  }
+          ),
+        );
+      },
+    ),
+  );
+}
 
   Widget _buildHeader(Map<String, dynamic> data) {
     return Stack(

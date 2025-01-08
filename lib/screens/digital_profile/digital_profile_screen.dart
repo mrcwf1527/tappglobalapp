@@ -143,9 +143,12 @@ class _DigitalProfileScreenState extends State<DigitalProfileScreen> {
                                 Navigator.pop(context);
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(
-                                    builder: (context) => EditDigitalProfileScreen(profileId: profileId),
-                                  ),
+                                  PageRouteBuilder(
+                                    pageBuilder: (context, animation, secondaryAnimation) => EditDigitalProfileScreen(profileId: profileId),
+                                    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                                        return child;
+                                      },
+                                  )
                                 );
                               }
                           }
@@ -223,14 +226,15 @@ class _DigitalProfileMobileLayout extends StatelessWidget {
                   if (!context.mounted) return;
                   final provider = Provider.of<DigitalProfileProvider>(context, listen: false);
                   provider.loadProfile(profile.id);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => EditDigitalProfileScreen(
-                        profileId: profile.id,
-                      ),
-                    ),
-                  );
+                    Navigator.push(
+                      context,
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation, secondaryAnimation) => EditDigitalProfileScreen(profileId: profile.id),
+                        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                          return child;
+                        },
+                      )
+                    );
                 },
                 child: Card(
                   elevation: 4,
@@ -378,16 +382,19 @@ class _DigitalProfileDesktopLayout extends StatelessWidget {
   Widget _buildProfileCard(DigitalProfileData profile, BuildContext context) {
     return GestureDetector(
       onTap: () {
-        if (!context.mounted) return;
-        final provider = Provider.of<DigitalProfileProvider>(context, listen: false);
-        provider.loadProfile(profile.id);
+      if (!context.mounted) return;
+      final provider = Provider.of<DigitalProfileProvider>(context, listen: false);
+      provider.loadProfile(profile.id);
         Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => EditDigitalProfileScreen(profileId: profile.id),
-          ),
+            context,
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) => EditDigitalProfileScreen(profileId: profile.id),
+                transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                  return child;
+                },
+            )
         );
-      },
+    },
       child: Card(
         elevation: 4,
         child: Container(
