@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../models/social_platform.dart';
+import '../responsive_layout.dart';
 
 class SocialMediaSelector extends StatelessWidget {
   final List<String> selectedPlatformIds;
@@ -20,7 +21,9 @@ class SocialMediaSelector extends StatelessWidget {
       'line',
       'wechat',
       'zalo',
-      'kakaotalk'
+      'kakaotalk',
+      'qq',
+      'viber'
     ],
     'Social Media': [
       'facebook',
@@ -36,7 +39,10 @@ class SocialMediaSelector extends StatelessWidget {
       'bluesky',
       'weibo',
       'naver',
-      'pinterest'
+      'pinterest',
+      'red',
+      'lemon8',
+      'douyin'
     ],
     'App Stores & Dev': ['googlePlay', 'appStore', 'github', 'gitlab'],
     'Others': [
@@ -76,16 +82,132 @@ class SocialMediaSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final isDesktop = ResponsiveLayout.isDesktop(context);
     final categories = _categorizedPlatforms();
-    final nonEmptyCategories = categories.entries.toList();
-
+    
     return Dialog(
       backgroundColor: isDarkMode ? const Color(0xFF121212) : Colors.white,
       child: ConstrainedBox(
         constraints: BoxConstraints(
           maxHeight: MediaQuery.of(context).size.height * 0.8,
+          maxWidth: isDesktop ? 900 : double.infinity,
         ),
-        child: Padding(
+        child: isDesktop 
+          ? _buildDesktopLayout(context, categories, isDarkMode)
+          : _buildMobileLayout(context, categories, isDarkMode),
+      ),
+    );
+  }
+
+  Widget _buildDesktopLayout(
+    BuildContext context, 
+    Map<String, List<SocialPlatform>> categories,
+    bool isDarkMode,
+  ) {
+    if (categories.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Select Social Platform',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset(
+                      'assets/images/social_icon_illustration.png',
+                      width: 200,
+                      height: 200,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'All platforms have been added',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return DefaultTabController(
+      length: categories.length,
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Select Social Platform',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+          ),
+          TabBar(
+            tabs: categories.keys
+                .map((cat) => Tab(text: cat))
+                .toList(),
+            isScrollable: true,
+          ),
+          Expanded(
+            child: TabBarView(
+              children: categories.entries.map((category) {
+                return Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: GridView.builder(
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 4,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      childAspectRatio: 0.85,
+                    ),
+                    itemCount: category.value.length,
+                    itemBuilder: (context, i) => _buildPlatformTile(
+                      context,
+                      category.value[i],
+                      isDarkMode,
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileLayout(
+    BuildContext context,
+    Map<String, List<SocialPlatform>> categories,
+    bool isDarkMode,
+  ) {
+      final nonEmptyCategories = categories.entries.toList();
+    return Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
@@ -168,9 +290,7 @@ class SocialMediaSelector extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
+        );
   }
 
   Widget _buildPlatformTile(

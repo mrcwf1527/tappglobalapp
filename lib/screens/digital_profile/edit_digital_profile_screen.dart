@@ -99,7 +99,7 @@ class _EditDigitalProfileScreenState extends State<EditDigitalProfileScreen>
               if (index == 1) Navigator.pushReplacementNamed(context, '/leads');
               if (index == 2) Navigator.pushReplacementNamed(context, '/scan');
               if (index == 3) Navigator.pushReplacementNamed(context, '/inbox');
-              if (index == 4) Navigator.pushReplacementNamed(context, '/digital-profile');
+              if (index == 4) Navigator.pop(context);
               if (index == 5) Navigator.pushReplacementNamed(context, '/settings');
             },
           ),
@@ -121,6 +121,7 @@ class _EditDigitalProfileScreenState extends State<EditDigitalProfileScreen>
                                 color: isDark ? const Color(0xFF121212) : Colors.grey[100],
                                 child: TabBarView(
                                   controller: _tabController,
+                                  physics: const NeverScrollableScrollPhysics(),
                                   children: [
                                     _buildHeaderTabContent(),
                                     const Center(child: Text('Blocks')),

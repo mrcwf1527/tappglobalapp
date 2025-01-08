@@ -1,4 +1,5 @@
 // lib/widgets/digital_profile/desktop/profile_preview.dart
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -228,6 +229,15 @@ class _ProfilePreviewState extends State<ProfilePreview> {
       case 'address':
         url = value.startsWith('http') ? value : 'https://$value';
         break;
+      case 'red':
+        url = value.startsWith('http') ? value : 'https://$value';
+        break;
+      case 'lemon8':
+        url = value.startsWith('http') ? value : 'https://$value';
+        break;
+      case 'douyin':
+        url = value.startsWith('http') ? value : 'https://$value';
+        break;
       case 'whatsapp':
         final number = value.replaceAll('+', '');
         url = 'https://wa.me/$number';
@@ -236,50 +246,42 @@ class _ProfilePreviewState extends State<ProfilePreview> {
         url = 'https://t.me/$value';
         break;
       case 'line':
-        if (value.contains('line.me')) {
-          url = value.startsWith('http') ? value : 'https://$value';
-        } else {
-           final scaffoldMessenger = ScaffoldMessenger.of(context); // Get ScaffoldMessenger
-          await _copyToClipboard(value);
-          if (!mounted) return;
-          scaffoldMessenger.showSnackBar(
-            SnackBar(
-              content: Text('LINE ID copied to clipboard'),
-              duration: const Duration(seconds: 2),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-          return;
-        }
-        break;
       case 'wechat':
-        final scaffoldMessenger = ScaffoldMessenger.of(context); // Get ScaffoldMessenger
-        await _copyToClipboard(value);
-        if (!mounted) return;
-         scaffoldMessenger.showSnackBar(
-          SnackBar(
-            content: Text('WeChat ID copied to clipboard'),
-            duration: const Duration(seconds: 2),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-        return;
-      case 'zalo':
-        final number = value.replaceAll('+', '');
-        url = 'https://zalo.me/$number';
-        break;
+      case 'qq':
       case 'kakaotalk':
-         final scaffoldMessenger = ScaffoldMessenger.of(context); // Get ScaffoldMessenger
+        final scaffoldMessenger = ScaffoldMessenger.of(context);
         await _copyToClipboard(value);
         if (!mounted) return;
         scaffoldMessenger.showSnackBar(
           SnackBar(
-            content: Text('KakaoTalk ID copied to clipboard'),
+            content: Text('${platform['id'].toString().toUpperCase()} ID copied to clipboard'),
             duration: const Duration(seconds: 2),
             behavior: SnackBarBehavior.floating,
           ),
         );
         return;
+      case 'viber':
+        if (kIsWeb) {
+          final scaffoldMessenger = ScaffoldMessenger.of(context);
+          await _copyToClipboard(value);
+          if (!mounted) return;
+          scaffoldMessenger.showSnackBar(
+            const SnackBar(
+              content: Text('Viber number copied to clipboard'),
+              duration: Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          return;
+        } else {
+          final number = value.replaceAll('+', '');
+          url = 'viber://chat?number=$number';
+        }
+        break;
+      case 'zalo':
+        final number = value.replaceAll('+', '');
+        url = 'https://zalo.me/$number';
+        break;
       case 'facebook':
         url = 'https://$value';
         break;

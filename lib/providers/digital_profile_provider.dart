@@ -259,6 +259,33 @@ class DigitalProfileProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> deleteProfile(String profileId) async {
+    try {
+      final profile = await FirebaseFirestore.instance
+          .collection('digitalProfiles')
+          .doc(profileId)
+          .get();
+    
+      if (!profile.exists) return;
+
+      final batch = FirebaseFirestore.instance.batch();
+    
+      // Delete username reservation
+      batch.delete(FirebaseFirestore.instance
+          .collection('usernames')
+          .doc(profile.data()!['username']));
+    
+      // Delete profile
+      batch.delete(FirebaseFirestore.instance
+          .collection('digitalProfiles')
+          .doc(profileId));
+
+      await batch.commit();
+    } catch (e) {
+      throw Exception('Failed to delete profile: $e');
+    }
+  }
+
   Stream<List<DigitalProfileData>> getProfilesStream() {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) return Stream.value([]);

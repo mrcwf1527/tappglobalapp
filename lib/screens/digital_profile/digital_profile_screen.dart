@@ -221,117 +221,7 @@ class _DigitalProfileMobileLayout extends StatelessWidget {
             itemCount: profiles.length,
             itemBuilder: (context, index) {
               final profile = profiles[index];
-              return GestureDetector(
-                onTap: () {
-                  if (!context.mounted) return;
-                  final provider = Provider.of<DigitalProfileProvider>(context, listen: false);
-                  provider.loadProfile(profile.id);
-                    Navigator.push(
-                      context,
-                      PageRouteBuilder(
-                        pageBuilder: (context, animation, secondaryAnimation) => EditDigitalProfileScreen(profileId: profile.id),
-                        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                          return child;
-                        },
-                      )
-                    );
-                },
-                child: Card(
-                  elevation: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            profile.profileImageUrl?.isNotEmpty == true
-                              ? CircleAvatar(
-                                  radius: 30,
-                                  backgroundImage: NetworkImage(profile.profileImageUrl!),
-                                )
-                              : const CircleAvatar(
-                                  radius: 30,
-                                  child: Icon(Icons.person, size: 36),
-                                ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    profile.displayName ?? profile.username,
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  if (profile.jobTitle?.isNotEmpty == true) ...[
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      profile.jobTitle!,
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                  ],
-                                  if (profile.companyName?.isNotEmpty == true) ...[
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      profile.companyName!,
-                                      style: const TextStyle(fontSize: 14),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        if (profile.socialPlatforms.isNotEmpty) ...[
-                          Padding(
-                            padding: const EdgeInsets.only(left: 76),
-                            child: Wrap(
-                              spacing: 12,
-                              runSpacing: 12,
-                              children: profile.socialPlatforms.map((platform) {
-                                return platform.icon != null
-                                  ? Icon(
-                                      platform.icon, 
-                                      size: 20,
-                                      color: Colors.grey[600],
-                                    )
-                                  : platform.imagePath != null
-                                    ? SvgPicture.asset(
-                                        platform.imagePath!,
-                                        width: 20,
-                                        height: 20,
-                                        colorFilter: ColorFilter.mode(
-                                          Colors.grey[600]!,
-                                          BlendMode.srcIn,
-                                        ),
-                                      )
-                                    : const SizedBox();
-                              }).toList(),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                        ],
-                        if (profile.bio?.isNotEmpty == true)
-                          Padding(
-                            padding: const EdgeInsets.only(left: 76),
-                            child: Text(
-                              profile.bio!,
-                              style: const TextStyle(fontSize: 14),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
+              return _buildProfileCard(profile, context);
             },
           );
         },
@@ -344,6 +234,218 @@ class _DigitalProfileMobileLayout extends StatelessWidget {
           color: isDarkMode ? Colors.black : Colors.white,
         ),
       ),
+    );
+  }
+
+  Widget _buildProfileCard(DigitalProfileData profile, BuildContext context) {
+    return InkWell(
+      onTap: () {
+        final provider = Provider.of<DigitalProfileProvider>(context, listen: false);
+        provider.loadProfile(profile.id);
+        Navigator.push(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) => 
+              EditDigitalProfileScreen(profileId: profile.id),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return child;
+            },
+          )
+        );
+      },
+      child: Card(
+        elevation: 4,
+        margin: const EdgeInsets.only(bottom: 16),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  profile.profileImageUrl?.isNotEmpty == true
+                      ? CircleAvatar(
+                          radius: 30,
+                          backgroundImage: NetworkImage(profile.profileImageUrl!),
+                        )
+                      : const CircleAvatar(
+                          radius: 30,
+                          child: Icon(Icons.person, size: 36),
+                        ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          profile.displayName ?? profile.username,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        if (profile.jobTitle?.isNotEmpty == true) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            profile.jobTitle!,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                        if (profile.companyName?.isNotEmpty == true) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            profile.companyName!,
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  _buildPopupMenu(profile, context), // Moved to end
+                ],
+              ),
+              const SizedBox(height: 16),
+              if (profile.socialPlatforms.isNotEmpty) ...[
+                Padding(
+                  padding: const EdgeInsets.only(left: 76),
+                  child: Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: profile.socialPlatforms.map((platform) {
+                      return platform.icon != null
+                          ? Icon(
+                              platform.icon,
+                              size: 20,
+                              color: Colors.grey[600],
+                            )
+                          : platform.imagePath != null
+                              ? SvgPicture.asset(
+                                  platform.imagePath!,
+                                  width: 20,
+                                  height: 20,
+                                  colorFilter: ColorFilter.mode(
+                                    Colors.grey[600]!,
+                                    BlendMode.srcIn,
+                                  ),
+                                )
+                              : const SizedBox();
+                    }).toList(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+              if (profile.bio?.isNotEmpty == true)
+                Padding(
+                  padding: const EdgeInsets.only(left: 76),
+                  child: Text(
+                    profile.bio!,
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+    Widget _buildPopupMenu(DigitalProfileData profile, BuildContext context) {
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.more_vert),
+      onSelected: (String result) {
+        switch (result) {
+          case 'edit':
+             if (!context.mounted) return;
+             final provider = Provider.of<DigitalProfileProvider>(context, listen: false);
+            provider.loadProfile(profile.id);
+              Navigator.push(
+                context,
+                PageRouteBuilder(
+                  pageBuilder: (context, animation, secondaryAnimation) => EditDigitalProfileScreen(profileId: profile.id),
+                  transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                    return child;
+                  },
+                )
+              );
+            break;
+          case 'delete':
+            _showDeleteConfirmationDialog(context, profile);
+            break;
+        }
+      },
+      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+        const PopupMenuItem<String>(
+          value: 'edit',
+          child: Row(
+            children: [
+              Icon(Icons.edit),
+              SizedBox(width: 8),
+              Text('Edit'),
+            ],
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'delete',
+          child: Row(
+            children: [
+              Icon(Icons.delete, color: Colors.red),
+              SizedBox(width: 8),
+              Text('Delete', style: TextStyle(color: Colors.red)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _showDeleteConfirmationDialog(BuildContext context, DigitalProfileData profile) async {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Delete Profile'),
+          content: const Text('Are you sure you want to delete this profile?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+              onPressed: () async {
+                final provider = Provider.of<DigitalProfileProvider>(context, listen: false);
+                try {
+                  await provider.deleteProfile(profile.id);
+                  if (context.mounted) {
+                    Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Profile deleted successfully'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Failed to delete profile: ${e.toString()}'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -380,107 +482,209 @@ class _DigitalProfileDesktopLayout extends StatelessWidget {
   }
 
   Widget _buildProfileCard(DigitalProfileData profile, BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-      if (!context.mounted) return;
-      final provider = Provider.of<DigitalProfileProvider>(context, listen: false);
-      provider.loadProfile(profile.id);
-        Navigator.push(
+     return InkWell(
+        onTap: () {
+          final provider = Provider.of<DigitalProfileProvider>(context, listen: false);
+          provider.loadProfile(profile.id);
+          Navigator.push(
             context,
             PageRouteBuilder(
-              pageBuilder: (context, animation, secondaryAnimation) => EditDigitalProfileScreen(profileId: profile.id),
-                transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                  return child;
-                },
+              pageBuilder: (context, animation, secondaryAnimation) => 
+                EditDigitalProfileScreen(profileId: profile.id),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                return child;
+              },
             )
-        );
-    },
-      child: Card(
-        elevation: 4,
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              profile.profileImageUrl?.isNotEmpty == true
-                ? CircleAvatar(
-                    radius: 50,
-                    backgroundImage: NetworkImage(profile.profileImageUrl!),
-                  )
-                : const CircleAvatar(
-                    radius: 50,
-                    child: Icon(Icons.person, size: 50),
+          );
+        },
+       child: Card(
+          elevation: 4,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                 _buildPopupMenu(profile, context),
+                 const SizedBox(height: 16),
+                  profile.profileImageUrl?.isNotEmpty == true
+                      ? CircleAvatar(
+                          radius: 50,
+                          backgroundImage: NetworkImage(profile.profileImageUrl!),
+                        )
+                      : const CircleAvatar(
+                          radius: 50,
+                          child: Icon(Icons.person, size: 50),
+                        ),
+                  const SizedBox(height: 24),
+                  Text(
+                    profile.displayName ?? profile.username,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-              const SizedBox(height: 24),
-              Text(
-                profile.displayName ?? profile.username,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
+                  if (profile.jobTitle?.isNotEmpty == true) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      profile.jobTitle!,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                  if (profile.companyName?.isNotEmpty == true) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      profile.companyName!,
+                      style: const TextStyle(fontSize: 16),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                  if (profile.socialPlatforms.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: profile.socialPlatforms.map((platform) {
+                        return platform.icon != null
+                          ? Icon(platform.icon, size: 20, color: Colors.grey[600])
+                          : platform.imagePath != null
+                            ? SvgPicture.asset(
+                                platform.imagePath!,
+                                width: 20,
+                                height: 20,
+                                colorFilter: ColorFilter.mode(
+                                  Colors.grey[600]!,
+                                  BlendMode.srcIn,
+                                ),
+                              )
+                            : const SizedBox();
+                      }).toList(),
+                    ),
+                  ],
+                  if (profile.bio?.isNotEmpty == true) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      profile.bio!,
+                      style: const TextStyle(fontSize: 14),
+                      textAlign: TextAlign.center,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ],
               ),
-              if (profile.jobTitle?.isNotEmpty == true) ...[
-                const SizedBox(height: 8),
-                Text(
-                  profile.jobTitle!,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-              if (profile.companyName?.isNotEmpty == true) ...[
-                const SizedBox(height: 4),
-                Text(
-                  profile.companyName!,
-                  style: const TextStyle(fontSize: 16),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-              if (profile.socialPlatforms.isNotEmpty) ...[
-                const SizedBox(height: 24),
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: profile.socialPlatforms.map((platform) {
-                    return platform.icon != null
-                      ? Icon(platform.icon, size: 20, color: Colors.grey[600])
-                      : platform.imagePath != null
-                        ? SvgPicture.asset(
-                            platform.imagePath!,
-                            width: 20,
-                            height: 20,
-                            colorFilter: ColorFilter.mode(
-                              Colors.grey[600]!,
-                              BlendMode.srcIn,
-                            ),
-                          )
-                        : const SizedBox();
-                  }).toList(),
-                ),
-              ],
-              if (profile.bio?.isNotEmpty == true) ...[
-                const SizedBox(height: 16),
-                Text(
-                  profile.bio!,
-                  style: const TextStyle(fontSize: 14),
-                  textAlign: TextAlign.center,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ],
           ),
         ),
-      ),
+     );
+  }
+
+  Widget _buildPopupMenu(DigitalProfileData profile, BuildContext context) {
+    return Align(
+      alignment: Alignment.topRight, // Changed from topLeft
+      child:  PopupMenuButton<String>(
+          icon: const Icon(Icons.more_vert),
+          onSelected: (String result) {
+            switch (result) {
+              case 'edit':
+                if (!context.mounted) return;
+                final provider = Provider.of<DigitalProfileProvider>(context, listen: false);
+                provider.loadProfile(profile.id);
+                  Navigator.push(
+                    context,
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) => EditDigitalProfileScreen(profileId: profile.id),
+                        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                          return child;
+                        },
+                    )
+                  );
+                break;
+              case 'delete':
+                _showDeleteConfirmationDialog(context, profile);
+                break;
+            }
+          },
+          itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+            const PopupMenuItem<String>(
+              value: 'edit',
+               child: Row(
+                children: [
+                  Icon(Icons.edit),
+                  SizedBox(width: 8),
+                  Text('Edit'),
+                ],
+              ),
+            ),
+            PopupMenuItem<String>(
+              value: 'delete',
+              child: Row(
+                children: [
+                  Icon(Icons.delete, color: Colors.red),
+                  SizedBox(width: 8),
+                  Text('Delete', style: TextStyle(color: Colors.red)),
+                ],
+              ),
+            ),
+          ],
+        ),
+    );
+  }
+  
+  Future<void> _showDeleteConfirmationDialog(BuildContext context, DigitalProfileData profile) async {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Delete Profile'),
+          content: const Text('Are you sure you want to delete this profile?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+              onPressed: () async {
+                final provider = Provider.of<DigitalProfileProvider>(context, listen: false);
+                try {
+                  await provider.deleteProfile(profile.id);
+                  if (context.mounted) {
+                    Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Profile deleted successfully'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Failed to delete profile: ${e.toString()}'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
-   @override
+  @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final provider = Provider.of<DigitalProfileProvider>(context, listen: false);

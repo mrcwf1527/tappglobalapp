@@ -73,6 +73,21 @@ class AppTheme {
       backgroundColor: Color(0xFFF5F5F5),
       elevation: 0,
     ),
+    tabBarTheme: TabBarTheme(
+      labelColor: Colors.black,
+      unselectedLabelColor: Colors.grey[600],
+      indicatorColor: Colors.black,
+      dividerColor: Colors.transparent,
+      labelPadding: const EdgeInsets.symmetric(horizontal: 16),
+      labelStyle: const TextStyle(
+        fontWeight: FontWeight.w600,
+        fontSize: 14,
+      ),
+      unselectedLabelStyle: const TextStyle(
+        fontWeight: FontWeight.normal,
+        fontSize: 14,
+      ),
+    ),
   );
 
   static ThemeData darkTheme = ThemeData(
@@ -139,6 +154,21 @@ class AppTheme {
     dividerTheme: DividerThemeData(
       color: Colors.grey[800],
       thickness: 1,
+    ),
+    tabBarTheme: TabBarTheme(
+      labelColor: Colors.white,
+      unselectedLabelColor: Colors.grey[400],
+      indicatorColor: Colors.white,
+      dividerColor: Colors.transparent,
+      labelPadding: const EdgeInsets.symmetric(horizontal: 16),
+      labelStyle: const TextStyle(
+        fontWeight: FontWeight.w600,
+        fontSize: 14,
+      ),
+      unselectedLabelStyle: const TextStyle(
+        fontWeight: FontWeight.normal,
+        fontSize: 14,
+      ),
     ),
   );
 }

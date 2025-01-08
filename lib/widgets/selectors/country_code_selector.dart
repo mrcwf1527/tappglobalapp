@@ -1,6 +1,7 @@
 // lib/widgets/selectors/country_code_selector.dart
 // Under TAPP! Global Flutter Project
 import 'package:flutter/material.dart';
+import '../responsive_layout.dart';
 import '../../models/country_code.dart';
 
 class CountryCodeSelectorButton extends StatelessWidget {
@@ -29,7 +30,7 @@ class CountryCodeSelectorButton extends StatelessWidget {
       },
       child: Container(
         height: height,
-        width: 50,
+        width: ResponsiveLayout.isDesktop(context) ? 300 : 50,
         padding: const EdgeInsets.symmetric(horizontal: 8),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
@@ -87,45 +88,48 @@ class _CountrySearchDialogState extends State<CountrySearchDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Search country',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
+      child: Container( // Add this container
+        constraints: const BoxConstraints(maxWidth: 500),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search country',
+                  prefixIcon: const Icon(Icons.search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                onChanged: _filterCountries,
+              ),
+              const SizedBox(height: 16),
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.5,
+                ),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: _filteredCountries.length,
+                  itemBuilder: (context, index) {
+                    final country = _filteredCountries[index];
+                    return ListTile(
+                      leading: country.getFlagWidget(
+                        width: 24,
+                        height: 16,
+                      ),
+                      title: Text(country.name),
+                      subtitle: Text(country.dialCode),
+                      onTap: () => Navigator.pop(context, country),
+                    );
+                  },
                 ),
               ),
-              onChanged: _filterCountries,
-            ),
-            const SizedBox(height: 16),
-            ConstrainedBox(
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.5,
-              ),
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: _filteredCountries.length,
-                itemBuilder: (context, index) {
-                  final country = _filteredCountries[index];
-                  return ListTile(
-                    leading: country.getFlagWidget(
-                      width: 24,
-                      height: 16,
-                    ),
-                    title: Text(country.name),
-                    subtitle: Text(country.dialCode),
-                    onTap: () => Navigator.pop(context, country),
-                  );
-                },
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

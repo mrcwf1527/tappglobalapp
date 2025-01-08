@@ -285,7 +285,7 @@ Widget build(BuildContext context) {
         );
 
         return InkWell(
-          onTap: () => _launchSocialLink(platform),
+          onTap: () => _launchSocialLink(platform, context),
           child: socialPlatform.imagePath != null
               ? SvgPicture.asset(
                   socialPlatform.imagePath!,
@@ -306,7 +306,8 @@ Widget build(BuildContext context) {
     );
   }
 
-  Future<void> _launchSocialLink(Map<String, dynamic> platform) async {
+  Future<void> _launchSocialLink(Map<String, dynamic> platform, BuildContext context) async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
     String url = '';
     final value = platform['value'];
     
@@ -328,6 +329,15 @@ Widget build(BuildContext context) {
       case 'address':
         url = value.startsWith('http') ? value : 'https://$value';
         break;
+      case 'red':
+        url = value.startsWith('http') ? value : 'https://$value';
+        break;
+      case 'lemon8':
+        url = value.startsWith('http') ? value : 'https://$value';
+        break;
+      case 'douyin':
+        url = value.startsWith('http') ? value : 'https://$value';
+        break;
       case 'whatsapp':
         final number = value.replaceAll('+', '');
         url = 'https://wa.me/$number';
@@ -341,24 +351,43 @@ Widget build(BuildContext context) {
         } else {
           await _copyToClipboard(value);
           if (!mounted) return;
-          _showCopiedSnackbar(context, 'LINE ID copied to clipboard');
+          scaffoldMessenger.showSnackBar(
+            const SnackBar(content: Text('LINE ID copied to clipboard'))
+          );
           return;
         }
         break;
       case 'wechat':
+      case 'qq':
+      case 'kakaotalk':
         await _copyToClipboard(value);
-        if (!mounted) return;
-        _showCopiedSnackbar(context, 'WeChat ID copied to clipboard');
-        return;
+        if (!mounted) return; 
+        scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text('${platform['id'].toString().toUpperCase()} ID copied to clipboard'))
+        );
+    return;
+      case 'viber':
+        if (kIsWeb) {
+          final scaffoldMessenger = ScaffoldMessenger.of(context);
+          await _copyToClipboard(value);
+          if (!mounted) return;
+          scaffoldMessenger.showSnackBar(
+            const SnackBar(
+              content: Text('Viber number copied to clipboard'),
+              duration: Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          return;
+        } else {
+          final number = value.replaceAll('+', '');
+          url = 'viber://chat?number=$number';
+        }
+        break;
       case 'zalo':
         final number = value.replaceAll('+', '');
         url = 'https://zalo.me/$number';
         break;
-      case 'kakaotalk':
-        await _copyToClipboard(value);
-        if (!mounted) return;
-        _showCopiedSnackbar(context, 'KakaoTalk ID copied to clipboard');
-        return;
       case 'facebook':
         url = 'https://$value';
         break;
@@ -460,17 +489,7 @@ Widget build(BuildContext context) {
   Future<void> _copyToClipboard(String text) async {
     await Clipboard.setData(ClipboardData(text: text));
   }
-
-  void _showCopiedSnackbar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-
+  
   Widget _buildActionButtons(Map<String, dynamic> data) {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -501,7 +520,7 @@ Widget build(BuildContext context) {
               const SizedBox(height: 16),
               if (data['phone'] != null)
                 OutlinedButton.icon(
-                  onPressed: () => _launchSocialLink({'id': 'phone', 'value': data['phone']}),
+                  onPressed: () => _launchSocialLink({'id': 'phone', 'value': data['phone']}, context),
                   icon: const Icon(Icons.phone),
                   label: const Text('Call me'),
                   style: OutlinedButton.styleFrom(
@@ -516,7 +535,7 @@ Widget build(BuildContext context) {
               const SizedBox(height: 16),
               if (data['email'] != null)
                 OutlinedButton.icon(
-                  onPressed: () => _launchSocialLink({'id': 'email', 'value': data['email']}),
+                  onPressed: () => _launchSocialLink({'id': 'email', 'value': data['email']}, context),
                   icon: const Icon(Icons.email),
                   label: const Text('Email me'),
                   style: OutlinedButton.styleFrom(
