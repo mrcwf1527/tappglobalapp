@@ -90,30 +90,32 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
           final data = snapshot.data!.data() as Map<String, dynamic>;
 
           return Center(
-            child: Container(
-              constraints: const BoxConstraints(maxWidth: 500),
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: const Color(0xFF0E0E0E),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withAlpha(26),
-                    blurRadius: 10,
-                    spreadRadius: 0,
-                    offset: const Offset(0, 0),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  _buildHeader(data),
-                  const SizedBox(height: 24),
-                  _buildMainContent(data),
-                  _buildActionButtons(data),
-                  const SizedBox(height: 40),
-                ],
-              ),
+            child: SingleChildScrollView(
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 500),
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0E0E0E),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(26),
+                      blurRadius: 10,
+                      spreadRadius: 0,
+                      offset: const Offset(0, 0),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    _buildHeader(data),
+                    const SizedBox(height: 24),
+                    _buildMainContent(data),
+                    _buildActionButtons(data),
+                    const SizedBox(height: 40),
+                  ],
+                ),
+              )
             ),
           );
         },
