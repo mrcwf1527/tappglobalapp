@@ -7,6 +7,7 @@ import '../../providers/digital_profile_provider.dart';
 import 'edit_digital_profile_screen.dart';
 import 'dart:async';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../widgets/responsive_layout.dart';
 
 class DigitalProfileScreen extends StatefulWidget {
   const DigitalProfileScreen({super.key});
@@ -163,9 +164,12 @@ class _DigitalProfileScreenState extends State<DigitalProfileScreen> {
   }
 
   @override
-Widget build(BuildContext context) {
-  return _DigitalProfileMobileLayout(showUsernameDialog: _showUsernameDialog);
-}
+  Widget build(BuildContext context) {
+    return ResponsiveLayout(
+      mobileLayout: _DigitalProfileMobileLayout(showUsernameDialog: _showUsernameDialog),
+      desktopLayout: _DigitalProfileDesktopLayout(showUsernameDialog: _showUsernameDialog),
+    );
+  }
 }
 
 class _DigitalProfileMobileLayout extends StatelessWidget {
@@ -218,11 +222,7 @@ class _DigitalProfileMobileLayout extends StatelessWidget {
                 onTap: () {
                   if (!context.mounted) return;
                   final provider = Provider.of<DigitalProfileProvider>(context, listen: false);
-  
-                  // Preload profile data
                   provider.loadProfile(profile.id);
-  
-                  // Navigate immediately
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -339,6 +339,301 @@ class _DigitalProfileMobileLayout extends StatelessWidget {
           Icons.add,
           color: isDarkMode ? Colors.black : Colors.white,
         ),
+      ),
+    );
+  }
+}
+
+class _DigitalProfileDesktopLayout extends StatelessWidget {
+  final VoidCallback showUsernameDialog;
+  static const double sideNavWidth = 250.0;
+  
+  const _DigitalProfileDesktopLayout({required this.showUsernameDialog});
+
+  double _getCardWidth(BuildContext context) {
+    final totalWidth = MediaQuery.of(context).size.width - sideNavWidth;
+    final padding = 48.0;
+    final spacing = 24.0;
+    
+    if (totalWidth >= 2310) return (totalWidth - padding - spacing * 4) / 5;
+    if (totalWidth >= 1670) return (totalWidth - padding - spacing * 3) / 4;
+    if (totalWidth >= 1030) return (totalWidth - padding - spacing * 2) / 3;
+    if (totalWidth >= 774) return (totalWidth - padding - spacing) / 2;
+    return totalWidth - padding;
+  }
+
+  List<DigitalProfileData> _filterProfiles(List<DigitalProfileData> profiles, String query) {
+    if (query.isEmpty) return profiles;
+    
+    query = query.toLowerCase();
+    return profiles.where((profile) {
+      return (profile.displayName?.toLowerCase().contains(query) ?? false) ||
+             (profile.jobTitle?.toLowerCase().contains(query) ?? false) ||
+             (profile.companyName?.toLowerCase().contains(query) ?? false) ||
+             (profile.bio?.toLowerCase().contains(query) ?? false) ||
+             (profile.location?.toLowerCase().contains(query) ?? false);
+    }).toList();
+  }
+
+  Widget _buildProfileCard(DigitalProfileData profile, BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        if (!context.mounted) return;
+        final provider = Provider.of<DigitalProfileProvider>(context, listen: false);
+        provider.loadProfile(profile.id);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => EditDigitalProfileScreen(profileId: profile.id),
+          ),
+        );
+      },
+      child: Card(
+        elevation: 4,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              profile.profileImageUrl?.isNotEmpty == true
+                ? CircleAvatar(
+                    radius: 50,
+                    backgroundImage: NetworkImage(profile.profileImageUrl!),
+                  )
+                : const CircleAvatar(
+                    radius: 50,
+                    child: Icon(Icons.person, size: 50),
+                  ),
+              const SizedBox(height: 24),
+              Text(
+                profile.displayName ?? profile.username,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              if (profile.jobTitle?.isNotEmpty == true) ...[
+                const SizedBox(height: 8),
+                Text(
+                  profile.jobTitle!,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+              if (profile.companyName?.isNotEmpty == true) ...[
+                const SizedBox(height: 4),
+                Text(
+                  profile.companyName!,
+                  style: const TextStyle(fontSize: 16),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+              if (profile.socialPlatforms.isNotEmpty) ...[
+                const SizedBox(height: 24),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: profile.socialPlatforms.map((platform) {
+                    return platform.icon != null
+                      ? Icon(platform.icon, size: 20, color: Colors.grey[600])
+                      : platform.imagePath != null
+                        ? SvgPicture.asset(
+                            platform.imagePath!,
+                            width: 20,
+                            height: 20,
+                            colorFilter: ColorFilter.mode(
+                              Colors.grey[600]!,
+                              BlendMode.srcIn,
+                            ),
+                          )
+                        : const SizedBox();
+                  }).toList(),
+                ),
+              ],
+              if (profile.bio?.isNotEmpty == true) ...[
+                const SizedBox(height: 16),
+                Text(
+                  profile.bio!,
+                  style: const TextStyle(fontSize: 14),
+                  textAlign: TextAlign.center,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+   @override
+  Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final provider = Provider.of<DigitalProfileProvider>(context, listen: false);
+    final searchController = TextEditingController();
+    final searchNotifier = ValueNotifier<String>('');
+
+    return Scaffold(
+      body: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: isDarkMode ? Colors.grey[800]! : Colors.grey[200]!,
+                ),
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: searchController,
+                    onChanged: (value) => searchNotifier.value = value,
+                    decoration: InputDecoration(
+                      hintText: 'Search by name, job, company, bio or location...',
+                      prefixIcon: Padding(
+                        padding: const EdgeInsets.only(left: 12),
+                        child: const Icon(Icons.search),
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    minWidth: 180,
+                    maxWidth: 180,
+                    minHeight: 48,
+                    maxHeight: 48,
+                  ),
+                  child: ElevatedButton.icon(
+                    onPressed: showUsernameDialog,
+                    icon: Icon(
+                      Icons.add,
+                      size: 20,
+                      color: isDarkMode ? Colors.black : Colors.white,
+                    ),
+                    label: const Text('Add New Profile'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isDarkMode ? const Color(0xFFD9D9D9) : Colors.black,
+                      foregroundColor: isDarkMode ? Colors.black : Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: StreamBuilder<List<DigitalProfileData>>(
+              stream: provider.getProfilesStream(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                return ValueListenableBuilder<String>(
+                  valueListenable: searchNotifier,
+                  builder: (context, searchQuery, _) {
+                    final allProfiles = snapshot.data ?? [];
+                    final filteredProfiles = _filterProfiles(allProfiles, searchQuery);
+                    
+                    if (filteredProfiles.isEmpty) {
+                      if (allProfiles.isEmpty) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Image.asset(
+                                'assets/images/digital_profile_illustration.png',
+                                width: 200, height: 200,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Create your first digital profile',
+                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  color: isDarkMode ? const Color(0xFFD9D9D9) : Colors.black,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.search_off,
+                              size: 64,
+                              color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No profiles match your search',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    return Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final cardWidth = _getCardWidth(context);
+                          final cardsPerRow = ((constraints.maxWidth + 24) / (cardWidth + 24)).floor();
+                          
+                          return Wrap(
+                            spacing: 24,
+                            runSpacing: 24,
+                            children: List.generate((filteredProfiles.length / cardsPerRow).ceil(), (rowIndex) {
+                              final rowStart = rowIndex * cardsPerRow;
+                              final rowEnd = (rowStart + cardsPerRow).clamp(0, filteredProfiles.length);
+                              final rowProfiles = filteredProfiles.sublist(rowStart, rowEnd);
+                              
+                              return IntrinsicHeight(
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: rowProfiles.map((profile) =>
+                                    SizedBox(
+                                      width: cardWidth,
+                                      child: _buildProfileCard(profile, context),
+                                    ),
+                                  ).toList(),
+                                ),
+                              );
+                            }).toList(),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

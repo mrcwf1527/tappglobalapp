@@ -8,6 +8,7 @@ import 'digital_profile/digital_profile_screen.dart';
 import 'inbox_screen.dart';
 import '../widgets/responsive_layout.dart';
 import '../widgets/navigation/bottom_nav_bar.dart';
+import '../widgets/navigation/web_side_nav.dart';
 import '../widgets/navigation/app_drawer.dart';
 import '../services/auth_service.dart';
 
@@ -44,16 +45,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onItemTapped(int index) {
-    if (index == -1) {
-      _handleSignOut();
-      return;
-    }
-
-    if (index == 12) {
-      Navigator.pushNamed(context, '/settings');
-      return;
-    }
-
     setState(() => _selectedIndex = index);
   }
 
@@ -64,14 +55,65 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    if (!_initialized) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
+  Widget _buildDesktopLayout() {
+    return Scaffold(
+      body: Row(
+        children: [
+          WebSideNav(
+            selectedIndex: _selectedIndex,
+            onTabSelected: _onItemTapped,
+          ),
+          Expanded(
+            child: Column(
+              children: [
+                _buildDesktopAppBar(),
+                Expanded(
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: _buildBody(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
+  Widget _buildDesktopAppBar() {
+    return Container(
+      height: 64,
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      decoration: BoxDecoration(
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF191919)
+            : const Color(0xFFF5F5F5),
+        border: Border(
+          bottom: BorderSide(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.grey[850]!
+                : Colors.grey[300]!,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          Text(
+            appBarTitle,
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const Spacer(),
+          IconButton(
+            icon: const Icon(Icons.notifications_outlined),
+            onPressed: () {},
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileLayout() {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).brightness == Brightness.dark
@@ -97,6 +139,20 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  @override
+  Widget build(BuildContext context) {
+    if (!_initialized) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    return ResponsiveLayout(
+      mobileLayout: _buildMobileLayout(),
+      desktopLayout: _buildDesktopLayout(),
+    );
+  }
+
   String get appBarTitle {
     return switch (_selectedIndex) {
       0 => 'TAPP!',
@@ -107,7 +163,6 @@ class _HomeScreenState extends State<HomeScreen> {
       _ => 'TAPP!'
     };
   }
-
 
   Widget _buildBody() {
     return KeyedSubtree(
@@ -147,23 +202,19 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildQuickStats() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return GridView.count(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: ResponsiveLayout.isMobile(context) ? 2 : 4,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: 1.2,
-          children: [
-            _buildStatCard('Total Leads', '124', Icons.people),
-            _buildStatCard('Scanned Today', '8', Icons.qr_code_scanner),
-            _buildStatCard('Unread Messages', '3', Icons.mail),
-            _buildStatCard('Profile Views', '45', Icons.visibility),
-          ],
-        );
-      },
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: MediaQuery.of(context).size.width >= 1024 ? 4 : 2,
+      crossAxisSpacing: 16,
+      mainAxisSpacing: 16,
+      childAspectRatio: 1.2,
+      children: [
+        _buildStatCard('Total Leads', '124', Icons.people),
+        _buildStatCard('Scanned Today', '8', Icons.qr_code_scanner),
+        _buildStatCard('Unread Messages', '3', Icons.mail),
+        _buildStatCard('Profile Views', '45', Icons.visibility),
+      ],
     );
   }
 
