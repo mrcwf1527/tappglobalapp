@@ -1,21 +1,20 @@
 // lib/main.dart
 // Under TAPP! Global Flutter Project
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:universal_html/html.dart' as html;
+import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'firebase_options.dart';
 import 'config/theme.dart';
 import 'config/routes.dart';
-import 'firebase_options.dart';
-import 'screens/auth_screen.dart';
 import 'providers/theme_provider.dart';
 import 'providers/digital_profile_provider.dart';
+import 'screens/auth_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/digital_profile/public_digital_profile_screen.dart';
-import 'package:universal_html/html.dart' as html;
-
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

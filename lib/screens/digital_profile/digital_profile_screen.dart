@@ -1,12 +1,12 @@
 // lib/screens/digital_profile/digital_profile_screen.dart
 // Under TAPP! Global Flutter Project
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import '../../providers/digital_profile_provider.dart';
-import 'edit_digital_profile_screen.dart';
-import 'dart:async';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'edit_digital_profile_screen.dart';
+import '../../providers/digital_profile_provider.dart';
 import '../../widgets/responsive_layout.dart';
 
 class DigitalProfileScreen extends StatefulWidget {

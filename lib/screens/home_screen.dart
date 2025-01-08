@@ -1,11 +1,11 @@
 // lib/screens/home_screen.dart
 // Under TAPP! Global Flutter Project
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'leads_screen.dart';
 import 'scan_screen.dart';
-import 'digital_profile/digital_profile_screen.dart';
 import 'inbox_screen.dart';
+import 'digital_profile/digital_profile_screen.dart';
 import '../widgets/responsive_layout.dart';
 import '../widgets/navigation/bottom_nav_bar.dart';
 import '../widgets/navigation/web_side_nav.dart';

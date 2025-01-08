@@ -1,11 +1,11 @@
 // lib/widgets/digital_profile/desktop/desktop_preview.dart
 // Under TAPP! Global Flutter Project
+import 'dart:ui_web' as ui_web;
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:web/web.dart' as web;
 import 'package:provider/provider.dart';
 import '../../../providers/digital_profile_provider.dart';
-import 'package:web/web.dart' as web;
-import 'dart:ui' as ui;
-import 'package:flutter/foundation.dart';
 
 class DesktopPreview extends StatefulWidget {
   const DesktopPreview({super.key});
@@ -27,8 +27,8 @@ class _DesktopPreviewState extends State<DesktopPreview> {
 
     // Register the view factory using platformViewRegistry
     if (kIsWeb) {
-      // ignore: undefined_prefixed_name
-      ui.platformViewRegistry.registerViewFactory(
+      // Use the new platformViewRegistry from ui_web
+      ui_web.platformViewRegistry.registerViewFactory(
         'preview-iframe',
         (int viewId) => _iframeElement,
       );
@@ -58,7 +58,7 @@ class _DesktopPreviewState extends State<DesktopPreview> {
               borderRadius: BorderRadius.circular(32),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withAlpha((0.1 * 255).toInt()),
                   blurRadius: 8,
                 ),
               ],

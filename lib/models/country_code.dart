@@ -1,7 +1,7 @@
 // lib/models/country_code.dart
 // Under TAPP! Global Flutter Project
-import 'package:country_flags/country_flags.dart';
 import 'package:flutter/material.dart';
+import 'package:country_flags/country_flags.dart';
 
 class CountryCode {
   final String name;

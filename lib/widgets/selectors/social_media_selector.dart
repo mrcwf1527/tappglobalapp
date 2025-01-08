@@ -2,7 +2,7 @@
 // Under TAPP! Global Flutter Project
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:tappglobalapp/models/social_platform.dart';
+import '../../models/social_platform.dart';
 
 class SocialMediaSelector extends StatelessWidget {
   final List<String> selectedPlatformIds;

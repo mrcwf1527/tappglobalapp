@@ -1,10 +1,10 @@
 // lib/widgets/digital_profile/profile_form.dart
 // Under TAPP! Global Flutter Project
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../providers/digital_profile_provider.dart';
-import 'dart:async';
 
 class ProfileForm extends StatefulWidget {
   const ProfileForm({super.key});

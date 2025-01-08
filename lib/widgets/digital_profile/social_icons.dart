@@ -3,14 +3,14 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:phone_numbers_parser/phone_numbers_parser.dart';
-import 'package:provider/provider.dart';
-import '../../../../models/social_platform.dart';
 import '../selectors/social_media_selector.dart';
-import '../../models/country_code.dart';
 import '../selectors/country_code_selector.dart';
+import '../../models/country_code.dart';
+import '../../models/social_platform.dart';
 import '../../providers/digital_profile_provider.dart';
 
 class SocialIcons extends StatefulWidget {

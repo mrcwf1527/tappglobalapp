@@ -2,14 +2,14 @@
 // Under TAPP! Global Flutter Project
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'tabs/header_tab.dart';
 import '../../providers/digital_profile_provider.dart';
 import '../../widgets/navigation/web_side_nav.dart';
 import '../../widgets/responsive_layout.dart';
-import 'tabs/header_tab.dart';
 import '../../widgets/digital_profile/desktop/desktop_preview.dart';
 import '../../widgets/digital_profile/desktop/desktop_tabs.dart';
 import '../../widgets/digital_profile/desktop/layout_switcher.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class EditDigitalProfileScreen extends StatefulWidget {
   final String profileId;

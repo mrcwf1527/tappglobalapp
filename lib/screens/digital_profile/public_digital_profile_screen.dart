@@ -1,14 +1,14 @@
 // lib/screens/digital_profile/public_digital_profile_screen.dart
 // Under TAPP! Global Flutter Project
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:universal_html/html.dart' as html;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:universal_html/html.dart' as html;
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:tappglobalapp/models/social_platform.dart';
-import 'package:flutter/services.dart';
+import '../../models/social_platform.dart';
 
 class PublicProfileScreen extends StatefulWidget {
   final String username;
@@ -45,31 +45,59 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   }
 
   Future<void> _trackView() async {
-    final usernameDoc = await FirebaseFirestore.instance
-        .collection('usernames')
-        .doc(widget.username)
-        .get();
+    try {
+      final usernameDoc = await FirebaseFirestore.instance
+          .collection('usernames')
+          .doc(widget.username)
+          .get();
 
-    if (!usernameDoc.exists) return;
+      if (!usernameDoc.exists) {
+        debugPrint('Username document does not exist for ${widget.username}');
+        return;
+      }
 
-    final profileId = usernameDoc.get('profileId');
+      final profileId = usernameDoc.get('profileId');
+      debugPrint('Profile ID: $profileId');
+
+       final historyRef = FirebaseFirestore.instance
+          .collection('profileViewHistory')
+          .doc();
+
+      Map<String, dynamic> historyEntry = {
+        'timestamp': FieldValue.serverTimestamp(),
+        'ip': '000',
+      };
+      if (kIsWeb) {
+        historyEntry['referrer'] = html.window.location.href;
+      }
+
+      await historyRef.set({
+        'profileId': profileId,
+        ...historyEntry
+      });
+
+
     final viewsRef = FirebaseFirestore.instance
-        .collection('profileViews')
-        .doc(profileId);
+          .collection('profileViews')
+          .doc(profileId);
 
-    Map<String, dynamic> historyEntry = {
-      'timestamp': FieldValue.serverTimestamp(),
-      'ip': '000',
-    };
-    if (kIsWeb) {
-      historyEntry['referrer'] = html.window.location.href;
+    final docSnapshot = await viewsRef.get();
+          if (!docSnapshot.exists) {
+        await viewsRef.set({
+            'views': 1,
+            'lastViewed': FieldValue.serverTimestamp(),
+          });
+           debugPrint('Profile view tracked successfully for profileId: $profileId and document was created');
+      } else {
+           await viewsRef.update({
+            'views': FieldValue.increment(1),
+            'lastViewed': FieldValue.serverTimestamp(),
+          });
+         debugPrint('Profile view tracked successfully for profileId: $profileId and document was updated');
+      }
+    } catch (e) {
+      debugPrint('Error tracking profile view: $e');
     }
-
-    await viewsRef.update({
-      'views': FieldValue.increment(1),
-      'lastViewed': FieldValue.serverTimestamp(),
-      'viewHistory': FieldValue.arrayUnion([historyEntry]),
-    });
   }
 
   @override

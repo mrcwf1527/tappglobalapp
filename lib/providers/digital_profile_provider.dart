@@ -1,9 +1,9 @@
 // lib/providers/digital_profile_provider.dart
 // Under TAPP! Global Flutter Project
 import 'package:flutter/material.dart';
-import '../models/social_platform.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../models/social_platform.dart';
 
 class SocialPlatformData {
   final String id;
@@ -20,7 +20,7 @@ class SocialPlatformData {
         'id': id,
         'value': value,
         'sequence': sequence,
-      };
+  };
 }
 
 class DigitalProfileData {
