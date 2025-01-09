@@ -16,7 +16,8 @@ class LayoutSelectorModal extends StatefulWidget {
     required this.onLayoutSelected,
   });
 
-  static show(BuildContext context, ProfileLayout currentLayout, Function(ProfileLayout) onLayoutSelected) {
+  static show(BuildContext context, ProfileLayout currentLayout,
+      Function(ProfileLayout) onLayoutSelected) {
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -45,7 +46,7 @@ class _LayoutSelectorModalState extends State<LayoutSelectorModal> {
     _currentPage = _layouts.indexOf(widget.currentLayout);
     _pageController = PageController(
       initialPage: _currentPage,
-      viewportFraction: 1.0, // Changed viewportFraction to 1.0
+      viewportFraction: 1.0,
     );
   }
 
@@ -111,7 +112,7 @@ class _LayoutSelectorModalState extends State<LayoutSelectorModal> {
             duration: const Duration(milliseconds: 300),
             scale: isCurrentPage ? 1.0 : 0.9,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0), // Added padding for spacing
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: _LayoutPreview(
                 layout: _layouts[index],
                 isSelected: widget.currentLayout == _layouts[index],
@@ -151,12 +152,12 @@ class _LayoutSelectorModalState extends State<LayoutSelectorModal> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: _currentPage == index
-        ? Theme.of(context).brightness == Brightness.light 
-          ? Theme.of(context).primaryColor
-          : const Color(0xFFD4D4D4)
-        : Theme.of(context).brightness == Brightness.light
-          ? Colors.grey
-          : Colors.grey[800],
+                        ? Theme.of(context).brightness == Brightness.light
+                            ? Theme.of(context).primaryColor
+                            : const Color(0xFFD4D4D4)
+                        : Theme.of(context).brightness == Brightness.light
+                            ? Colors.grey
+                            : Colors.grey[800],
                   ),
                 ),
               ),
@@ -175,13 +176,13 @@ class _LayoutSelectorModalState extends State<LayoutSelectorModal> {
           const SizedBox(height: 16),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-            backgroundColor: Theme.of(context).brightness == Brightness.light 
-              ? Colors.black 
-              : const Color(0xFFD4D4D4),
-            foregroundColor: Theme.of(context).brightness == Brightness.light 
-              ? Colors.white 
-              : Colors.black,
-          ),
+              backgroundColor: Theme.of(context).brightness == Brightness.light
+                  ? Colors.black
+                  : const Color(0xFFD4D4D4),
+              foregroundColor: Theme.of(context).brightness == Brightness.light
+                  ? Colors.white
+                  : Colors.black,
+            ),
             onPressed: () {
               widget.onLayoutSelected(_layouts[_currentPage]);
               Navigator.of(context).pop();
@@ -207,393 +208,393 @@ class _LayoutPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-  final screenWidth = MediaQuery.of(context).size.width;
-  return Container(
-    margin: const EdgeInsets.symmetric(vertical: 16),
-    width: screenWidth * 0.6, // This will make the width 60% of screen width
-    child: AspectRatio(
-      aspectRatio: 9/19,  // Keep the existing aspect ratio
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: Colors.transparent,
-            width: isSelected ? 2 : 1,
-          ),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          children: [
-            Expanded(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: _buildPreviewContent(),
-              ),
+    final screenWidth = MediaQuery.of(context).size.width;
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 16),
+      width: screenWidth * 0.6,
+      child: AspectRatio(
+        aspectRatio: 9/19,
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: Colors.transparent,
+              width: isSelected ? 2 : 1,
             ),
-            Padding(
-              padding: const EdgeInsets.all(8),
-              child: Text(
-                layout.name.toUpperCase(),
-                style: TextStyle(
-                  color: Theme.of(context).brightness == Brightness.light 
-                    ? Colors.black 
-                    : Colors.white,
-                  fontWeight: FontWeight.bold,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            children: [
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: _buildPreviewContent(),
                 ),
               ),
-            ),
-          ],
+              Padding(
+                padding: const EdgeInsets.all(8),
+                child: Text(
+                  layout.name.toUpperCase(),
+                  style: TextStyle(
+                    color: Theme.of(context).brightness == Brightness.light 
+                      ? Colors.black 
+                      : Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildPreviewContent() {
- return Consumer<DigitalProfileProvider>(
-   builder: (context, provider, child) {
-     final data = provider.profileData.toMap();
+    return Consumer<DigitalProfileProvider>(
+      builder: (context, provider, child) {
+        final data = provider.profileData.toMap();
 
-     switch (layout) {
-       case ProfileLayout.classic:
-         return Container(
-           color: const Color(0xFF0E0E0E),
-           padding: const EdgeInsets.symmetric(horizontal: 10),
-           child: Column(
-             mainAxisAlignment: MainAxisAlignment.start,
-             children: [
-               const SizedBox(height: 40),
-               Stack(
-                 clipBehavior: Clip.none,
-                 alignment: Alignment.center,
-                 children: [
-                   Container(
-                     decoration: BoxDecoration(
-                       shape: BoxShape.circle,
-                       border: Border.all(color: Colors.white, width: 1),
-                     ),
-                     child: CircleAvatar(
-                       radius: 30,
-                       backgroundImage: data['profileImageUrl'] != null
-                           ? NetworkImage(data['profileImageUrl'])
-                           : null,
-                       child: data['profileImageUrl'] == null
-                           ? const Icon(Icons.person, size: 30)
-                           : null,
-                     ),
-                   ),
-                   if (data['companyImageUrl'] != null)
-                     Positioned(
-                       bottom: -6,
-                       right: -12,
-                       child: Container(
-                         decoration: BoxDecoration(
-                           shape: BoxShape.circle,
-                           border: Border.all(color: Colors.white, width: 1),
-                         ),
-                         child: CircleAvatar(
-                           radius: 12,
-                           backgroundImage: NetworkImage(data['companyImageUrl']),
-                           backgroundColor: Colors.white,
-                         ),
-                       ),
-                     ),
-                 ],
-               ),
-               const SizedBox(height: 20),
-               Text(
-                 data['displayName'] ?? '',
-                 style: const TextStyle(
-                   color: Colors.white,
-                   fontSize: 12,
-                   fontWeight: FontWeight.w600,
-                 ),
-                 textAlign: TextAlign.center,
-               ),
-               const SizedBox(height: 6),
-               Text(
-                 '${data['jobTitle'] ?? ''} at ${data['companyName'] ?? ''}',
-                 style: const TextStyle(color: Colors.white70, fontSize: 10),
-                 textAlign: TextAlign.center,
-               ),
-               if (data['location'] != null)
-                 Padding(
-                   padding: const EdgeInsets.only(top: 4),
-                   child: Wrap(
-                     alignment: WrapAlignment.center,
-                     crossAxisAlignment: WrapCrossAlignment.center,
-                     children: [
-                       const Icon(Icons.location_on, color: Colors.white70, size: 10),
-                       const SizedBox(width: 2),
-                       Text(
-                         data['location'],
-                         style: const TextStyle(color: Colors.white70, fontSize: 10),
-                       ),
-                     ],
-                   ),
-                 ),
-               if (data['bio'] != null)
-                 Padding(
-                   padding: const EdgeInsets.only(top: 8),
-                   child: Text(
-                     data['bio'],
-                     textAlign: TextAlign.center,
-                     style: const TextStyle(color: Colors.white70, fontSize: 10),
-                   ),
-                 ),
-               const SizedBox(height: 6),
-               if (data['socialPlatforms'] != null)
-                 Padding(
-                   padding: const EdgeInsets.only(top: 8),
-                   child: _buildSocialIcons(data['socialPlatforms'] ?? []),
-                 ),
-             ],
-           ),
-         );
-
-       case ProfileLayout.portrait:
-         return Container(
-           width: 180,
-           color: const Color(0xFF0E0E0E),
-           child: Stack(
-             children: [
-               Align(
-                 alignment: Alignment.topCenter,
-                 child: ConstrainedBox(
-                   constraints: const BoxConstraints(
-                     maxWidth: 180,
-                     maxHeight: 250,
-                   ),
-                   child: data['profileImageUrl'] != null
-                       ? Image.network(
-                           data['profileImageUrl'],
-                           fit: BoxFit.contain,
-                         )
-                       : Container(color: Colors.grey[900]),
-                 ),
-               ),
-               Positioned(
-                 top: 250,
-                 left: 0,
-                 right: 0,
-                 child: Padding(
-                   padding: const EdgeInsets.symmetric(horizontal: 10),
-                   child: Column(
-                     children: [
-                       const SizedBox(height: 10),
-                       Text(
-                         data['displayName'] ?? '',
-                         style: const TextStyle(
-                           color: Colors.white,
-                           fontSize: 12,
-                           fontWeight: FontWeight.w600,
-                         ),
-                         textAlign: TextAlign.center,
-                       ),
-                       const SizedBox(height: 6),
-                       Text(
-                         '${data['jobTitle'] ?? ''} at ${data['companyName'] ?? ''}',
-                         style: const TextStyle(color: Colors.white70, fontSize: 10),
-                         textAlign: TextAlign.center,
-                       ),
-                       if (data['location'] != null)
-                         Padding(
-                           padding: const EdgeInsets.only(top: 4),
-                           child: Wrap(
-                             alignment: WrapAlignment.center,
-                             crossAxisAlignment: WrapCrossAlignment.center,
-                             children: [
-                               const Icon(Icons.location_on, color: Colors.white70, size: 10),
-                               const SizedBox(width: 2),
-                               Text(
-                                 data['location'],
-                                 style: const TextStyle(color: Colors.white70, fontSize: 10),
-                               ),
-                             ],
-                           ),
-                         ),
-                       if (data['bio'] != null)
-                         Padding(
-                           padding: const EdgeInsets.only(top: 8),
-                           child: Text(
-                             data['bio'],
-                             textAlign: TextAlign.center,
-                             style: const TextStyle(color: Colors.white70, fontSize: 10),
-                           ),
-                         ),
-                       const SizedBox(height: 6),
-                       if (data['socialPlatforms'] != null)
-                         Padding(
-                           padding: const EdgeInsets.only(top: 8),
-                           child: _buildSocialIcons(data['socialPlatforms'] ?? []),
-                         ),
-                     ],
-                   ),
-                 ),
-               ),
-             ],
-           ),
-         );
-
-       case ProfileLayout.banner:
-         return Container(
-           width: 180,
-           color: const Color(0xFF0E0E0E),
-           child: Stack(
-             clipBehavior: Clip.none,
-             children: [
-               if (data['bannerImageUrl'] != null)
-                 Positioned(
-                   top: 0,
-                   left: 0,
-                   right: 0,
-                   height: 120,
-                   child: Center(
-                     child: ConstrainedBox(
-                       constraints: const BoxConstraints(
-                         maxWidth: 180,
-                       ),
-                       child: Image.network(
-                         data['bannerImageUrl'],
-                         fit: BoxFit.cover,
-                       ),
-                     ),
-                   ),
-                 ),
-               Positioned(
-                 top: 88,
-                 left: 0,
-                 right: 0,
-                 child: Padding(
-                   padding: const EdgeInsets.symmetric(horizontal: 10),
-                   child: Column(
-                     children: [
-                       Stack(
-                         clipBehavior: Clip.none,
-                         alignment: Alignment.center,
-                         children: [
-                           Container(
-                             decoration: BoxDecoration(
-                               shape: BoxShape.circle,
-                               border: Border.all(color: Colors.white, width: 1),
-                             ),
-                             child: CircleAvatar(
-                               radius: 30,
-                               backgroundImage: data['profileImageUrl'] != null
-                                   ? NetworkImage(data['profileImageUrl'])
-                                   : null,
-                               child: data['profileImageUrl'] == null
-                                   ? const Icon(Icons.person, size: 30)
-                                   : null,
-                             ),
-                           ),
-                           if (data['companyImageUrl'] != null)
-                             Positioned(
-                               bottom: 0,
-                               right: -12,
-                               child: Container(
-                                 decoration: BoxDecoration(
-                                   shape: BoxShape.circle,
-                                   border: Border.all(color: Colors.white, width: 1),
-                                 ),
-                                 child: CircleAvatar(
-                                   radius: 12,
-                                   backgroundImage: NetworkImage(data['companyImageUrl']),
-                                   backgroundColor: Colors.white,
-                                 ),
-                               ),
-                             ),
-                         ],
-                       ),
-                       const SizedBox(height: 20),
-                       Text(
-                         data['displayName'] ?? '',
-                         style: const TextStyle(
-                           color: Colors.white,
-                           fontSize: 12,
-                           fontWeight: FontWeight.w600,
-                         ),
-                         textAlign: TextAlign.center,
-                       ),
-                       const SizedBox(height: 4),
-                       Text(
-                         '${data['jobTitle'] ?? ''} at ${data['companyName'] ?? ''}',
-                         style: const TextStyle(color: Colors.white70, fontSize: 10),
-                         textAlign: TextAlign.center,
-                       ),
-                       if (data['location'] != null)
-                         Padding(
-                           padding: const EdgeInsets.only(top: 4),
-                           child: Wrap(
-                             alignment: WrapAlignment.center,
-                             crossAxisAlignment: WrapCrossAlignment.center,
-                             children: [
-                               const Icon(Icons.location_on, color: Colors.white70, size: 10),
-                               const SizedBox(width: 2),
-                               Text(
-                                 data['location'],
-                                 style: const TextStyle(color: Colors.white70, fontSize: 10),
-                               ),
-                             ],
-                           ),
-                         ),
-                       if (data['bio'] != null)
-                         Padding(
-                           padding: const EdgeInsets.only(top: 4),
-                           child: Text(
-                             data['bio'],
-                             textAlign: TextAlign.center,
-                             style: const TextStyle(color: Colors.white70, fontSize: 10),
-                           ),
-                         ),
-                       const SizedBox(height: 4),
-                       if (data['socialPlatforms'] != null)
-                         Padding(
-                           padding: const EdgeInsets.only(top: 4),
-                           child: _buildSocialIcons(data['socialPlatforms'] ?? []),
-                         ),
-                     ],
-                   ),
-                 ),
-               ),
-             ],
-           ),
-         );
-     }
-   },
- );
-}
-
-Widget _buildSocialIcons(List<dynamic> platforms) {
-  return Wrap(
-    spacing: 8,
-    runSpacing: 8,
-    alignment: WrapAlignment.center,
-    children: platforms.map<Widget>((platform) {
-      final socialPlatform = SocialPlatforms.platforms.firstWhere(
-        (p) => p.id == platform['id'],
-        orElse: () => SocialPlatform(
-          id: platform['id'],
-          name: platform['name'],
-          icon: FontAwesomeIcons.link,
-        ),
-      );
-
-      return socialPlatform.imagePath != null
-          ? SvgPicture.asset(
-              socialPlatform.imagePath!,
-              width: 15,
-              height: 15,
-              colorFilter: const ColorFilter.mode(
-                Colors.white,
-                BlendMode.srcIn,
+        switch (layout) {
+          case ProfileLayout.classic:
+            return Container(
+              color: const Color(0xFF0E0E0E),
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 40),
+                  Stack(
+                    clipBehavior: Clip.none,
+                    alignment: Alignment.center,
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 1),
+                        ),
+                        child: CircleAvatar(
+                          radius: 30,
+                          backgroundImage: data['profileImageUrl'] != null
+                              ? NetworkImage(data['profileImageUrl'])
+                              : null,
+                          child: data['profileImageUrl'] == null
+                              ? const Icon(Icons.person, size: 30)
+                              : null,
+                        ),
+                      ),
+                      if (data['companyImageUrl'] != null)
+                        Positioned(
+                          bottom: -6,
+                          right: -12,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 1),
+                            ),
+                            child: CircleAvatar(
+                              radius: 12,
+                              backgroundImage: NetworkImage(data['companyImageUrl']),
+                              backgroundColor: Colors.white,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    data['displayName'] ?? '',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '${data['jobTitle'] ?? ''} at ${data['companyName'] ?? ''}',
+                    style: const TextStyle(color: Colors.white70, fontSize: 10),
+                    textAlign: TextAlign.center,
+                  ),
+                  if (data['location'] != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Wrap(
+                        alignment: WrapAlignment.center,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          const Icon(Icons.location_on, color: Colors.white70, size: 10),
+                          const SizedBox(width: 2),
+                          Text(
+                            data['location'],
+                            style: const TextStyle(color: Colors.white70, fontSize: 10),
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (data['bio'] != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        data['bio'],
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.white70, fontSize: 10),
+                      ),
+                    ),
+                  const SizedBox(height: 6),
+                  if (data['socialPlatforms'] != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: _buildSocialIcons(data['socialPlatforms'] ?? []),
+                    ),
+                ],
               ),
-            )
-          : FaIcon(
-              socialPlatform.icon ?? FontAwesomeIcons.link,
-              color: Colors.white,
-              size: 15,
             );
-    }).toList(),
-  );
-}
+
+          case ProfileLayout.portrait:
+            return Container(
+              width: 180,
+              color: const Color(0xFF0E0E0E),
+              child: Stack(
+                children: [
+                  Align(
+                    alignment: Alignment.topCenter,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        maxWidth: 180,
+                        maxHeight: 250,
+                      ),
+                      child: data['profileImageUrl'] != null
+                          ? Image.network(
+                              data['profileImageUrl'],
+                              fit: BoxFit.contain,
+                            )
+                          : Container(color: Colors.grey[900]),
+                    ),
+                  ),
+                  Positioned(
+                    top: 250,
+                    left: 0,
+                    right: 0,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 10),
+                          Text(
+                            data['displayName'] ?? '',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            '${data['jobTitle'] ?? ''} at ${data['companyName'] ?? ''}',
+                            style: const TextStyle(color: Colors.white70, fontSize: 10),
+                            textAlign: TextAlign.center,
+                          ),
+                          if (data['location'] != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Wrap(
+                                alignment: WrapAlignment.center,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  const Icon(Icons.location_on, color: Colors.white70, size: 10),
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    data['location'],
+                                    style: const TextStyle(color: Colors.white70, fontSize: 10),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          if (data['bio'] != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: Text(
+                                data['bio'],
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(color: Colors.white70, fontSize: 10),
+                              ),
+                            ),
+                          const SizedBox(height: 6),
+                          if (data['socialPlatforms'] != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: _buildSocialIcons(data['socialPlatforms'] ?? []),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+
+          case ProfileLayout.banner:
+            return Container(
+              width: 180,
+              color: const Color(0xFF0E0E0E),
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  if (data['bannerImageUrl'] != null)
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: 120,
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(
+                            maxWidth: 180,
+                          ),
+                          child: Image.network(
+                            data['bannerImageUrl'],
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                    ),
+                  Positioned(
+                    top: 88,
+                    left: 0,
+                    right: 0,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: Column(
+                        children: [
+                          Stack(
+                            clipBehavior: Clip.none,
+                            alignment: Alignment.center,
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white, width: 1),
+                                ),
+                                child: CircleAvatar(
+                                  radius: 30,
+                                  backgroundImage: data['profileImageUrl'] != null
+                                      ? NetworkImage(data['profileImageUrl'])
+                                      : null,
+                                  child: data['profileImageUrl'] == null
+                                      ? const Icon(Icons.person, size: 30)
+                                      : null,
+                                ),
+                              ),
+                              if (data['companyImageUrl'] != null)
+                                Positioned(
+                                  bottom: 0,
+                                  right: -12,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: Colors.white, width: 1),
+                                    ),
+                                    child: CircleAvatar(
+                                      radius: 12,
+                                      backgroundImage: NetworkImage(data['companyImageUrl']),
+                                      backgroundColor: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            data['displayName'] ?? '',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${data['jobTitle'] ?? ''} at ${data['companyName'] ?? ''}',
+                            style: const TextStyle(color: Colors.white70, fontSize: 10),
+                            textAlign: TextAlign.center,
+                          ),
+                          if (data['location'] != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Wrap(
+                                alignment: WrapAlignment.center,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  const Icon(Icons.location_on, color: Colors.white70, size: 10),
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    data['location'],
+                                    style: const TextStyle(color: Colors.white70, fontSize: 10),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          if (data['bio'] != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Text(
+                                data['bio'],
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(color: Colors.white70, fontSize: 10),
+                              ),
+                            ),
+                          const SizedBox(height: 4),
+                          if (data['socialPlatforms'] != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: _buildSocialIcons(data['socialPlatforms'] ?? []),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+        }
+      },
+    );
+  }
+
+  Widget _buildSocialIcons(List<dynamic> platforms) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      alignment: WrapAlignment.center,
+      children: platforms.map<Widget>((platform) {
+        final socialPlatform = SocialPlatforms.platforms.firstWhere(
+          (p) => p.id == platform['id'],
+          orElse: () => SocialPlatform(
+            id: platform['id'],
+            name: platform['name'],
+            icon: FontAwesomeIcons.link,
+          ),
+        );
+
+        return socialPlatform.imagePath != null
+            ? SvgPicture.asset(
+                socialPlatform.imagePath!,
+                width: 15,
+                height: 15,
+                colorFilter: const ColorFilter.mode(
+                  Colors.white,
+                  BlendMode.srcIn,
+                ),
+              )
+            : FaIcon(
+                socialPlatform.icon ?? FontAwesomeIcons.link,
+                color: Colors.white,
+                size: 15,
+              );
+      }).toList(),
+    );
+  }
 }

@@ -38,24 +38,28 @@ class _HeaderTabState extends State<HeaderTab> {
                   children: [
                     Expanded(
                       child: ProfileImageUpload(
-                        currentImageUrl:
-                            context.watch<DigitalProfileProvider>().profileData.profileImageUrl,
+                        currentImageUrl: context
+                            .watch<DigitalProfileProvider>()
+                            .profileData
+                            .profileImageUrl,
                         onImageUploaded: (url) {
-                          context.read<DigitalProfileProvider>().updateProfile(
-                                profileImageUrl: url,
-                              );
+                          context
+                              .read<DigitalProfileProvider>()
+                              .updateProfile(profileImageUrl: url);
                         },
                       ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
                       child: CompanyImageUpload(
-                        currentImageUrl:
-                            context.watch<DigitalProfileProvider>().profileData.companyImageUrl,
+                        currentImageUrl: context
+                            .watch<DigitalProfileProvider>()
+                            .profileData
+                            .companyImageUrl,
                         onImageUploaded: (url) {
-                          context.read<DigitalProfileProvider>().updateProfile(
-                                companyImageUrl: url,
-                              );
+                          context
+                              .read<DigitalProfileProvider>()
+                              .updateProfile(companyImageUrl: url);
                         },
                       ),
                     ),
@@ -63,12 +67,14 @@ class _HeaderTabState extends State<HeaderTab> {
                 ),
                 const SizedBox(height: 24),
                 BannerUpload(
-                  currentImageUrl:
-                      context.watch<DigitalProfileProvider>().profileData.bannerImageUrl,
+                  currentImageUrl: context
+                      .watch<DigitalProfileProvider>()
+                      .profileData
+                      .bannerImageUrl,
                   onImageUploaded: (url) {
-                    context.read<DigitalProfileProvider>().updateProfile(
-                          bannerImageUrl: url,
-                        );
+                    context
+                        .read<DigitalProfileProvider>()
+                        .updateProfile(bannerImageUrl: url);
                   },
                 ),
                 const SizedBox(height: 24),
@@ -80,7 +86,7 @@ class _HeaderTabState extends State<HeaderTab> {
             ),
           ),
         );
-      }
+      },
     );
   }
 }
