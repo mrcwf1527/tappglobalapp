@@ -21,7 +21,7 @@ class _ProfilePreviewState extends State<ProfilePreview> {
   Widget build(BuildContext context) {
     return Consumer<DigitalProfileProvider>(
       builder: (context, provider, _) {
-        final data = provider.profileData.toMap(); // Changed data type casting
+        final data = provider.profileData.toMap();
         return Center(
           child: Container(
             constraints: const BoxConstraints(maxWidth: 375, maxHeight: 812),
@@ -38,15 +38,18 @@ class _ProfilePreviewState extends State<ProfilePreview> {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(32),
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    _buildHeader(data),
-                    const SizedBox(height: 24),
-                    _buildMainContent(data),
-                    _buildActionButtons(data),
-                    const SizedBox(height: 40),
-                  ],
+              child: SizedBox(
+                height: 812, // Fixed height for phone ratio
+                child: SingleChildScrollView( // Enable scroll if content overflows
+                  child: Column(
+                    children: [
+                      _buildHeader(data),
+                      const SizedBox(height: 24),
+                      _buildMainContent(data),
+                      _buildActionButtons(data),
+                      const SizedBox(height: 40),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -78,7 +81,7 @@ class _ProfilePreviewState extends State<ProfilePreview> {
         children: [
           const SizedBox(height: 120),
           Positioned(
-            bottom: -60, // Added to match banner layout spacing
+            bottom: -60,
             child: Stack(
               clipBehavior: Clip.none,
               alignment: Alignment.center,
@@ -101,7 +104,7 @@ class _ProfilePreviewState extends State<ProfilePreview> {
   Widget _buildPortraitHeader(Map<String, dynamic> data) {
     return SizedBox(
       width: double.infinity,
-      height: 500, // Adjust height as needed
+      height: 500,
       child: data['profileImageUrl'] != null
           ? Image.network(
               data['profileImageUrl'],
@@ -121,7 +124,6 @@ class _ProfilePreviewState extends State<ProfilePreview> {
   }
 
   Widget _buildBannerHeader(Map<String, dynamic> data) {
-    // Current implementation remains the same
     return Stack(
       clipBehavior: Clip.none,
       alignment: Alignment.center,
@@ -196,9 +198,7 @@ class _ProfilePreviewState extends State<ProfilePreview> {
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         children: [
-          // Adjust top spacing based on layout
           SizedBox(height: layout == ProfileLayout.portrait ? 24 : 80),
-          // Rest of the content remains the same
           Text(
             data['displayName'] ?? '',
             style: const TextStyle(
@@ -307,7 +307,7 @@ class _ProfilePreviewState extends State<ProfilePreview> {
       case 'address':
         url = value.startsWith('http') ? value : 'https://$value';
         break;
-      case 'red':
+       case 'red':
         url = value.startsWith('http') ? value : 'https://$value';
         break;
       case 'lemon8':
@@ -369,7 +369,7 @@ class _ProfilePreviewState extends State<ProfilePreview> {
       case 'linkedin':
         url = 'https://$value';
         break;
-      case 'tiktok':
+       case 'tiktok':
         url = 'https://tiktok.com/@$value';
         break;
       case 'threads':
@@ -384,16 +384,16 @@ class _ProfilePreviewState extends State<ProfilePreview> {
       case 'tumblr':
         url = 'https://tumblr.com/$value';
         break;
-      case 'linkedin_company':
+       case 'linkedin_company':
         url = 'https://$value';
         break;
       case 'mastodon':
         url = 'https://mastodon.social/@$value';
         break;
-      case 'bluesky':
+       case 'bluesky':
         url = 'https://$value';
         break;
-      case 'pinterest':
+       case 'pinterest':
         url = 'https://pinterest.com/$value';
         break;
       case 'appStore':
@@ -417,7 +417,7 @@ class _ProfilePreviewState extends State<ProfilePreview> {
       case 'steam':
         url = 'https://steamcommunity.com/id/$value';
         break;
-      case 'reddit':
+       case 'reddit':
         url = 'https://reddit.com/user/$value';
         break;
       case 'googleReviews':
@@ -426,7 +426,7 @@ class _ProfilePreviewState extends State<ProfilePreview> {
       case 'shopee':
         url = 'https://$value';
         break;
-      case 'lazada':
+       case 'lazada':
         url = 'https://$value';
         break;
       case 'amazon':
@@ -444,7 +444,7 @@ class _ProfilePreviewState extends State<ProfilePreview> {
       case 'googlePlay':
         url = 'https://$value';
         break;
-       case 'weibo':
+      case 'weibo':
         url = 'https://$value';
         break;
       case 'naver':

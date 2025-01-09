@@ -93,7 +93,7 @@ class AppTheme {
   static ThemeData darkTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
-    scaffoldBackgroundColor: const Color(0xFF0E0E0E),
+    scaffoldBackgroundColor: const Color(0xFF191919),
     colorScheme: ColorScheme.dark(
       primary: Colors.white,
       onPrimary: Colors.black,

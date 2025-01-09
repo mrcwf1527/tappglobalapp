@@ -34,8 +34,6 @@ class _HeaderTabState extends State<HeaderTab> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 8),
-                _buildUrlTextField(),
-                const SizedBox(height: 24),
                 Row(
                   children: [
                     Expanded(
@@ -83,48 +81,6 @@ class _HeaderTabState extends State<HeaderTab> {
           ),
         );
       }
-    );
-  }
-
-  Widget _buildUrlTextField() {
-    return Consumer<DigitalProfileProvider>(
-      builder: (context, provider, child) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TextFormField(
-            controller: TextEditingController(text: provider.profileData.username),
-            enabled: false,
-            style: TextStyle(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.white70
-                  : Colors.black54,
-              fontSize: 16,
-            ),
-            decoration: InputDecoration(
-              labelText: 'URL',
-              prefixText: 'https://l.tappglobal.app/',
-              prefixStyle: TextStyle(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.white70
-                    : Colors.black54,
-                fontSize: 16,
-              ),
-              filled: true,
-              fillColor: Theme.of(context).colorScheme.surface,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Username cannot be changed after creation',
-            style: TextStyle(
-              fontSize: 12,
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.white60
-                  : Colors.black45,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

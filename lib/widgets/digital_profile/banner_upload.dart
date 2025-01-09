@@ -186,7 +186,7 @@ class _BannerUploadState extends State<BannerUpload> {
     );
   }
 
-  @override
+    @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -194,18 +194,21 @@ class _BannerUploadState extends State<BannerUpload> {
         const Text('Banner Image',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
         const SizedBox(height: 8),
-        AspectRatio(
-          aspectRatio: 2.6,
-          child: InkWell(
-            onTap: () => _showImageSourceDialog(),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.grey[900]
-                    : Colors.grey[200],
-                borderRadius: BorderRadius.circular(8),
+       ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600, maxHeight: 230),
+          child: AspectRatio(
+            aspectRatio: 2.6,
+            child: InkWell(
+              onTap: () => _showImageSourceDialog(),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.grey[900]
+                      : Colors.grey[200],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: _buildContent(),
               ),
-              child: _buildContent(),
             ),
           ),
         ),
@@ -213,7 +216,7 @@ class _BannerUploadState extends State<BannerUpload> {
     );
   }
 
-  Widget _buildContent() {
+    Widget _buildContent() {
     if (_isLoading) {
       return Center(
         child: CircularProgressIndicator(
@@ -225,11 +228,14 @@ class _BannerUploadState extends State<BannerUpload> {
     if (widget.currentImageUrl != null) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(8),
-        child: Image.network(
-          widget.currentImageUrl!,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _buildPlaceholder(),
-        ),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600, maxHeight: 230),
+          child: Image.network(
+            widget.currentImageUrl!,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => _buildPlaceholder(),
+          ),
+        )
       );
     }
 

@@ -5,56 +5,78 @@ import '../../../providers/digital_profile_provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../models/social_platform.dart';
+import '../../responsive_layout.dart';
+import '../mobile/layout_selector_modal.dart';
 
 class LayoutSwitcher extends StatelessWidget {
   const LayoutSwitcher({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Consumer<DigitalProfileProvider>(
-      builder: (context, provider, _) {
-        return Card(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Layout:',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    _buildLayoutPreview(
-                      context,
-                      'Classic',
-                      ProfileLayout.classic,
-                      provider,
-                    ),
-                    const SizedBox(width: 16),
-                    _buildLayoutPreview(
-                      context,
-                      'Portrait',
-                      ProfileLayout.portrait,
-                      provider,
-                    ),
-                    const SizedBox(width: 16),
-                    _buildLayoutPreview(
-                      context,
-                      'Banner',
-                      ProfileLayout.banner,
-                      provider,
-                    ),
-                  ],
-                ),
-              ],
-            ),
+Widget build(BuildContext context) {
+  return Consumer<DigitalProfileProvider>(
+    builder: (context, provider, _) {
+      if (ResponsiveLayout.isDesktop(context)) {
+        // Keep existing desktop layout code
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Layout:',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  _buildLayoutPreview(
+                    context,
+                    'Classic',
+                    ProfileLayout.classic,
+                    provider,
+                  ),
+                  const SizedBox(width: 16),
+                  _buildLayoutPreview(
+                    context,
+                    'Portrait',
+                    ProfileLayout.portrait,
+                    provider,
+                  ),
+                  const SizedBox(width: 16),
+                  _buildLayoutPreview(
+                    context,
+                    'Banner',
+                    ProfileLayout.banner,
+                    provider,
+                  ),
+                ],
+              ),
+            ],
           ),
         );
-      },
-    );
-  }
+      }
+
+      // Mobile layout
+      return ListTile(
+        title: const Text('Layout'),
+        subtitle: Text(
+          provider.selectedLayout.name.toUpperCase(),
+          style: TextStyle(
+            color: Theme.of(context).brightness == Brightness.light 
+    ? Colors.black
+    : Colors.white,
+          ),
+        ),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => LayoutSelectorModal.show(
+          context,
+          provider.selectedLayout,
+          provider.setLayout,
+        ),
+      );
+    },
+  );
+}
 
   Widget _buildLayoutPreview(
     BuildContext context,

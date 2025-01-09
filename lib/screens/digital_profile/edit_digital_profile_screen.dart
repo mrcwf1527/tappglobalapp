@@ -2,7 +2,6 @@
 // Under TAPP! Global Flutter Project
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'tabs/header_tab.dart';
 import '../../providers/digital_profile_provider.dart';
 import '../../widgets/navigation/web_side_nav.dart';
@@ -72,7 +71,7 @@ class _EditDigitalProfileScreenState extends State<EditDigitalProfileScreen>
         body: TabBarView(
           controller: _tabController,
           children: [
-            const HeaderTab(),
+            _buildHeaderTabContent(isMobile: true), // Pass isMobile as true
             const Center(child: Text('Blocks')),
             const Center(child: Text('Insights')),
             const Center(child: Text('Settings')),
@@ -118,12 +117,12 @@ class _EditDigitalProfileScreenState extends State<EditDigitalProfileScreen>
                             _buildDesktopHeader(),
                             Expanded(
                               child: Container(
-                                color: isDark ? const Color(0xFF121212) : Colors.grey[100],
+                                color: isDark ? const Color(0xFF191919) : Colors.grey[100],
                                 child: TabBarView(
                                   controller: _tabController,
                                   physics: const NeverScrollableScrollPhysics(),
                                   children: [
-                                    _buildHeaderTabContent(),
+                                    _buildHeaderTabContent(isMobile: false), // Pass isMobile as false
                                     const Center(child: Text('Blocks')),
                                     const Center(child: Text('Insights')),
                                     const Center(child: Text('Settings')),
@@ -138,7 +137,6 @@ class _EditDigitalProfileScreenState extends State<EditDigitalProfileScreen>
                         flex: 40,
                         child: Column(
                           children: [
-                            _buildPreviewHeader(),
                             const Expanded(child: DesktopPreview()),
                           ],
                         ),
@@ -183,37 +181,60 @@ class _EditDigitalProfileScreenState extends State<EditDigitalProfileScreen>
     );
   }
 
-  Widget _buildPreviewHeader() {
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          TextButton.icon(
-            onPressed: () async {
-              final username = context.read<DigitalProfileProvider>().profileData.username;
-              final url = Uri.parse('http://localhost:57997/$username');
-              if (await canLaunchUrl(url)) {
-                await launchUrl(url);
-              }
-            },
-            icon: const Icon(Icons.open_in_new, size: 18),
-            label: const Text('Preview Digital Profile'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeaderTabContent() {
+  Widget _buildHeaderTabContent({required bool isMobile}) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          LayoutSwitcher(),
-          SizedBox(height: 24),
-          HeaderTab(),
+        children: [
+          if (isMobile) _buildUrlTextField(), // Conditionally render on mobile
+          if (isMobile) const SizedBox(height: 24),
+          const LayoutSwitcher(),
+          const SizedBox(height: 24),
+          const HeaderTab(),
+        ],
+      ),
+    );
+  }
+   Widget _buildUrlTextField() {
+    return Consumer<DigitalProfileProvider>(
+      builder: (context, provider, child) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 24),
+          TextFormField(
+            controller: TextEditingController(text: provider.profileData.username),
+            enabled: false,
+            style: TextStyle(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white70
+                  : Colors.black54,
+              fontSize: 16,
+            ),
+            decoration: InputDecoration(
+              labelText: 'URL',
+              prefixText: 'https://l.tappglobal.app/',
+              prefixStyle: TextStyle(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white70
+                    : Colors.black54,
+                fontSize: 16,
+              ),
+               contentPadding: const EdgeInsets.only(top: 20, bottom: 10, left: 16, right: 16), //Added this line
+              filled: true,
+              fillColor: Theme.of(context).colorScheme.surface,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Username cannot be changed after creation',
+            style: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white60
+                  : Colors.black45,
+            ),
+          ),
         ],
       ),
     );
