@@ -1,5 +1,5 @@
 // lib/widgets/selectors/country_code_selector.dart
-// Under TAPP! Global Flutter Project
+// Country selection interface for phone numbers, Displays country flags and dial codes, Implements country search functionality
 import 'package:flutter/material.dart';
 import '../responsive_layout.dart';
 import '../../models/country_code.dart';

@@ -1,5 +1,5 @@
 // lib/widgets/digital_profile/desktop/desktop_tabs.dart
-// Under TAPP! Global Flutter Project
+// Manages tab navigation for desktop profile editor, Handles tab switching between Header, Blocks, Insights, Settings, Implements tab styling and indicators
 import 'package:flutter/material.dart';
 
 class DesktopTabs extends StatelessWidget {

@@ -1,5 +1,5 @@
 // lib/widgets/navigation/bottom_nav_bar.dart
-// Under TAPP! Global Flutter Project
+// Navigation Components: Mobile bottom navigation
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 

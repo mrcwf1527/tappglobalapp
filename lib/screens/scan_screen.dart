@@ -1,5 +1,5 @@
 // lib/screens/scan_screen.dart
-// Under TAPP! Global Flutter Project
+// Dummy scan screen design with no functionality
 import 'package:flutter/material.dart';
 
 class ScanScreen extends StatelessWidget {

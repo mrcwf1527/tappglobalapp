@@ -1,5 +1,5 @@
 // lib/screens/home_screen.dart
-// Under TAPP! Global Flutter Project
+// Dummy home screen design with no functionality
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'leads_screen.dart';

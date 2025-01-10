@@ -1,4 +1,5 @@
 // lib/widgets/digital_profile/desktop/layout_switcher.dart
+// Desktop interface for switching between profile layouts, Shows side-by-side layout previews, Handles layout selection and persistence
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../providers/digital_profile_provider.dart';

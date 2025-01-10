@@ -1,5 +1,5 @@
 // lib/config/theme.dart
-// Under TAPP! Global Flutter Project
+// Defines app-wide theme configurations, Sets up light/dark theme variants, Configures colors, typography, component styles
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 

@@ -1,5 +1,5 @@
 // lib/models/social_platform.dart
-// Under TAPP! Global Flutter Project
+// Social media platform configurations, URL validation and formatting, Platform-specific icon management
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 

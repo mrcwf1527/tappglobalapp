@@ -1,5 +1,5 @@
 // lib/services/auth_service.dart
-// Under TAPP! Global Flutter Project
+// Handles user authentication flows, Supports email/password, Google, Apple Sign-in, Manages user profile creation and updates
 import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';

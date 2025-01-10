@@ -1,5 +1,5 @@
 // lib/screens/inbox_screen.dart
-// Under TAPP! Global Flutter Project
+// Dummy inbox screen design with no functionality
 import 'package:flutter/material.dart';
 
 class InboxScreen extends StatelessWidget {

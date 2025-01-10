@@ -1,5 +1,5 @@
 // lib/screens/settings_screen.dart
-// Under TAPP! Global Flutter Project
+// Dummy settings screen design with no functionality
 import 'package:flutter/material.dart';
 
 class SettingsScreen extends StatelessWidget {

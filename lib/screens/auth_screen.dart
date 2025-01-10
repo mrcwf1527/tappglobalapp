@@ -1,5 +1,5 @@
 // lib/screens/auth_screen.dart
-// Under TAPP! Global Flutter Project
+// Auth Screens: Main authentication screen
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';

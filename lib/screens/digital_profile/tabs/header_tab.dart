@@ -1,5 +1,5 @@
 // lib/screens/digital_profile/tabs/header_tab.dart
-// Under TAPP! Global Flutter Project
+// Profile header editing interface, Manages profile/company images and banner, Handles profile information form and social links
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../providers/digital_profile_provider.dart';

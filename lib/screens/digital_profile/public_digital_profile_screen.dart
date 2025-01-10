@@ -1,5 +1,5 @@
 // lib/screens/digital_profile/public_digital_profile_screen.dart
-// Under TAPP! Global Flutter Project
+// Profile Management: Public digital profile view
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;

@@ -1,4 +1,5 @@
 // lib/widgets/digital_profile/mobile/layout_selector_modal.dart
+// Mobile interface for selecting profile layouts, Shows profile layout previews in a modal, Handles layout selection and updates
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';

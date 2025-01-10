@@ -1,5 +1,5 @@
 // lib/widgets/selectors/social_media_selector.dart
-// Under TAPP! Global Flutter Project
+// Modal for adding/selecting social platforms, Groups platforms by categories, Handles platform validation and formatting
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../models/social_platform.dart';

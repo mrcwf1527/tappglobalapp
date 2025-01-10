@@ -1,5 +1,5 @@
 // lib/screens/digital_profile/edit_digital_profile_screen.dart
-// Under TAPP! Global Flutter Project
+// Profile Management: Digital profile editing interface
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';

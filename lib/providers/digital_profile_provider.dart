@@ -1,5 +1,5 @@
 // lib/providers/digital_profile_provider.dart
-// Under TAPP! Global Flutter Project
+// Central state management for digital profiles, Handles CRUD operations for profiles, Manages profile layouts and social platforms, Implements real-time updates with Firestore
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';

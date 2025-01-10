@@ -1,4 +1,5 @@
 // lib/widgets/digital_profile/desktop/profile_preview.dart
+// Real-time profile preview component, Displays profile data in selected layout, Handles social media link interactions
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

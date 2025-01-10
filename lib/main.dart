@@ -1,5 +1,5 @@
 // lib/main.dart
-// Under TAPP! Global Flutter Project
+// Entry point of the application, Initializes Firebase, environment variables, and state management, Sets up theme and routing configuration, Handles authentication state changes
 import 'package:flutter/material.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:provider/provider.dart';

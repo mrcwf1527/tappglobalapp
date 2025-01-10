@@ -1,5 +1,5 @@
 // lib/widgets/digital_profile/profile_form.dart
-// Under TAPP! Global Flutter Project
+// Profile Components: Profile information form
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

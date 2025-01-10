@@ -1,5 +1,5 @@
 // lib/firebase_options.dart
-// Under TAPP! Global Flutter Project
+// Manages Firebase configuration for different platforms (Web, iOS, Android), Loads environment variables for Firebase credentials, Provides platform-specific Firebase initialization options
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -37,7 +37,7 @@ class DefaultFirebaseOptions {
   }
 
   static final FirebaseOptions web = FirebaseOptions(
-    apiKey: const String.fromEnvironment('FIREBASE_API_KEY_WEB'),
+    apiKey: dotenv.env['FIREBASE_API_KEY_WEB'] ?? '',
     appId: '1:756432671303:web:24bc8e4592dc32c0651762',
     messagingSenderId: '756432671303',
     projectId: 'tappglobal-app',

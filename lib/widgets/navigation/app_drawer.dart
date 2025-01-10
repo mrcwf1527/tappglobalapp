@@ -1,5 +1,5 @@
 // lib/widgets/navigation/app_drawer.dart
-// Under TAPP! Global Flutter Project
+// Navigation Components: Mobile side menu
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';

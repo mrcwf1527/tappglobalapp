@@ -1,7 +1,7 @@
 // lib/config/routes.dart
-// Under TAPP! Global Flutter Project
+// Manages application routing and navigation, Handles custom URL paths for public profiles, Implements route transitions and error handling, Supports web-specific routing logic
 import 'package:flutter/material.dart';
-import 'package:universal_html/html.dart' as html; // Added import for accessing browser info
+import 'package:universal_html/html.dart' as html;
 import '../screens/auth_screen.dart';
 import '../screens/forgot_password_screen.dart';
 import '../screens/home_screen.dart';

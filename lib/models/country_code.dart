@@ -1,5 +1,5 @@
 // lib/models/country_code.dart
-// Under TAPP! Global Flutter Project
+// Country data representation, Phone number formatting, Country flag display logic
 import 'package:flutter/material.dart';
 import 'package:country_flags/country_flags.dart';
 

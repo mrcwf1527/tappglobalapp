@@ -1,5 +1,5 @@
 // lib/widgets/digital_profile/banner_upload.dart
-// Under TAPP! Global Flutter Project
+// Profile Components:  Banner image management
 import 'dart:io';
 import 'package:flutter/foundation.dart' show Uint8List, kIsWeb;
 import 'package:flutter/material.dart';

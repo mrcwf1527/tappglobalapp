@@ -1,5 +1,5 @@
 // lib/providers/theme_provider.dart
-// Under TAPP! Global Flutter Project
+// Manages application-wide theme settings, Handles light/dark mode preferences, Persists theme settings using SharedPreferences
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

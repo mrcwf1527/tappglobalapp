@@ -1,5 +1,5 @@
 // lib/screens/digital_profile/digital_profile_screen.dart
-// Under TAPP! Global Flutter Project
+// Profile Management: Main digital profile listing/management
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

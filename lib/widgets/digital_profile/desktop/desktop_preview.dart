@@ -1,5 +1,5 @@
 // lib/widgets/digital_profile/desktop/desktop_preview.dart
-// Under TAPP! Global Flutter Project
+// Shows real-time preview of digital profile on desktop, Implements sharing functionality, Displays QR code for profile sharing
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';

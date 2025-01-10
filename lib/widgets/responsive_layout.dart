@@ -1,5 +1,5 @@
 // lib/widgets/responsive_layout.dart
-// Under TAPP! Global Flutter Project
+// Implements responsive design patterns, Handles different layouts for mobile, tablet, desktop, Provides utility methods for screen size detection
 import 'package:flutter/material.dart';
 
 class ResponsiveLayout extends StatelessWidget {

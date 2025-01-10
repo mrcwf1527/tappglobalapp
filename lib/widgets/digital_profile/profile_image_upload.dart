@@ -1,5 +1,5 @@
 // lib/widgets/digital_profile/profile_image_upload.dart
-// Under TAPP! Global Flutter Project
+// Profile Components: Profile photo management
 import 'dart:io';
 import 'package:flutter/foundation.dart' show Uint8List, kIsWeb;
 import 'package:flutter/material.dart';
