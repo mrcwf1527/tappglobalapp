@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'tabs/blocks_tab.dart';
 import 'tabs/header_tab.dart';
 import '../../providers/digital_profile_provider.dart';
 import '../../widgets/navigation/web_side_nav.dart';
@@ -78,7 +79,7 @@ class _EditDigitalProfileScreenState extends State<EditDigitalProfileScreen>
           controller: _tabController,
           children: [
             _buildHeaderTabContent(isMobile: true),
-            const Center(child: Text('Blocks')),
+            const BlocksTab(),
             const Center(child: Text('Insights')),
             const Center(child: Text('Settings')),
           ],

@@ -257,7 +257,7 @@ class _SocialIconsState extends State<SocialIcons> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  Icons.add_circle_outline,
+                  FontAwesomeIcons.plus,
                   color: Theme.of(context).brightness == Brightness.dark 
                     ? Colors.black 
                     : Colors.white,
