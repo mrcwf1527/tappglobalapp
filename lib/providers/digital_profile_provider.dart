@@ -271,6 +271,14 @@ class DigitalProfileProvider extends ChangeNotifier {
 
   Future<void> loadProfile(String profileId) async {
     try {
+      // Clear existing profile data first
+      _profileData = DigitalProfileData(
+        id: '',
+        userId: '',
+        username: '',
+      );
+      notifyListeners();
+      
       final doc = await FirebaseFirestore.instance
           .collection('digitalProfiles')
           .doc(profileId)

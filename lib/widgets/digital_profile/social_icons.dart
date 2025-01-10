@@ -292,7 +292,7 @@ class _SocialIconsState extends State<SocialIcons> {
 
       return Container(
         key: ValueKey(platform.id),
-        padding: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.symmetric(vertical: 8),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -439,7 +439,7 @@ class _SocialIconsState extends State<SocialIcons> {
     if (platform.id == 'email') {
       return Container(
         key: ValueKey(platform.id),
-        padding: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.symmetric(vertical: 8),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -516,7 +516,7 @@ class _SocialIconsState extends State<SocialIcons> {
     // Other social platforms
     return Container(
       key: ValueKey(platform.id),
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [

@@ -29,6 +29,7 @@ class _CompanyImageUploadState extends State<CompanyImageUpload> {
   Uint8List? _imageBytes;
   Uint8List? _croppedBytes;
   bool _isLoading = false;
+  bool _isCropping = false;
   double _uploadProgress = 0.0;
 
   Future<void> _pickImage(ImageSource source) async {
@@ -57,63 +58,80 @@ class _CompanyImageUploadState extends State<CompanyImageUpload> {
 
     showDialog(
       context: context,
-      builder: (context) => Dialog(
-        backgroundColor: isDarkMode ? const Color(0xFF121212) : Colors.white,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.close,
-                        color: isDarkMode ? Colors.white : Colors.black),
-                    onPressed: () {
-                      _imageBytes = null;
-                      Navigator.pop(context);
-                    },
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(
-              height: 400,
-              width: 400,
-              child: Crop(
-                image: _imageBytes!,
-                controller: cropController,
-                aspectRatio: 1,
-                baseColor: isDarkMode ? const Color(0xFF121212) : Colors.white,
-                maskColor:
-                    (isDarkMode ? Colors.white : Colors.black).withAlpha(153),
-                onCropped: (result) {
-                  switch (result) {
-                    case CropSuccess(:final croppedImage):
-                      setState(() => _croppedBytes = croppedImage);
-                      Navigator.pop(context);
-                      _uploadImage();
-                    case CropFailure():
-                      _showErrorDialog('Failed to crop image');
-                  }
-                },
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: ElevatedButton(
-                onPressed: () => cropController.crop(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      isDarkMode ? const Color(0xFFD9D9D9) : Colors.black,
-                  foregroundColor: isDarkMode ? Colors.black : Colors.white,
-                  minimumSize: const Size(double.infinity, 50),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => Dialog(
+          backgroundColor: isDarkMode ? const Color(0xFF121212) : Colors.white,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.close,
+                          color: isDarkMode ? Colors.white : Colors.black),
+                      onPressed: () {
+                        _imageBytes = null;
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ],
                 ),
-                child: const Text('Crop'),
               ),
-            ),
-          ],
+              SizedBox(
+                height: 400,
+                width: 400,
+                child: Crop(
+                  image: _imageBytes!,
+                  controller: cropController,
+                  aspectRatio: 1,
+                  baseColor: isDarkMode ? const Color(0xFF121212) : Colors.white,
+                  maskColor:
+                      (isDarkMode ? Colors.white : Colors.black).withAlpha(153),
+                  onCropped: (result) {
+                    switch (result) {
+                      case CropSuccess(:final croppedImage):
+                        setState(() => _croppedBytes = croppedImage);
+                        Navigator.pop(context);
+                        _uploadImage();
+                      case CropFailure():
+                        _showErrorDialog('Failed to crop image');
+                    }
+                  },
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ElevatedButton(
+                  onPressed: _isCropping ? null : () async {
+                    setDialogState(() => _isCropping = true);
+                    cropController.crop();
+                    if (mounted) setDialogState(() => _isCropping = false);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        isDarkMode ? const Color(0xFFD9D9D9) : Colors.black,
+                    foregroundColor: isDarkMode ? Colors.black : Colors.white,
+                    minimumSize: const Size(double.infinity, 50),
+                  ),
+                  child: _isCropping
+                      ? SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              isDarkMode ? Colors.black : Colors.white,
+                            ),
+                          ),
+                        )
+                      : const Text('Crop'),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
