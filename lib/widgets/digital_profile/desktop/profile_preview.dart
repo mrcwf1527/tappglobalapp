@@ -106,21 +106,19 @@ class _ProfilePreviewState extends State<ProfilePreview> {
     return SizedBox(
       width: double.infinity,
       height: 500,
-      child: data['profileImageUrl'] != null
+      child: data['profileImageUrl'] != null && data['profileImageUrl'].isNotEmpty
           ? Image.network(
               data['profileImageUrl'],
               width: double.infinity,
               height: double.infinity,
               fit: BoxFit.cover,
             )
-          : Container(
-              color: Colors.grey[900],
-              child: const Icon(
-                Icons.person,
-                size: 120,
-                color: Colors.white54,
+          : Image.asset(
+              'assets/images/empty_profile_image.png',
+              width: double.infinity,
+              height: double.infinity,
+              fit: BoxFit.cover,
               ),
-            ),
     );
   }
 
@@ -131,13 +129,17 @@ class _ProfilePreviewState extends State<ProfilePreview> {
       children: [
         AspectRatio(
           aspectRatio: 2 / 1,
-          child: data['bannerImageUrl'] != null
+          child: data['bannerImageUrl'] != null && data['bannerImageUrl'].isNotEmpty
               ? Image.network(
                   data['bannerImageUrl'],
                   width: double.infinity,
                   fit: BoxFit.cover,
                 )
-              : Container(color: Colors.grey[900]),
+              : Image.asset(
+                  'assets/images/empty_banner_image.png',
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
         ),
         Positioned(
           bottom: -60,
@@ -168,12 +170,10 @@ class _ProfilePreviewState extends State<ProfilePreview> {
       ),
       child: CircleAvatar(
         radius: radius,
-        backgroundImage: data['profileImageUrl'] != null
+        backgroundImage: data['profileImageUrl'] != null && data['profileImageUrl'].isNotEmpty
             ? NetworkImage(data['profileImageUrl'])
-            : null,
-        child: data['profileImageUrl'] == null
-            ? Icon(Icons.person, size: radius)
-            : null,
+            : AssetImage('assets/images/empty_profile_image.png') as ImageProvider,
+        backgroundColor: Colors.white,
       ),
     );
   }
@@ -186,7 +186,9 @@ class _ProfilePreviewState extends State<ProfilePreview> {
       ),
       child: CircleAvatar(
         radius: radius,
-        backgroundImage: NetworkImage(data['companyImageUrl']),
+        backgroundImage: data['companyImageUrl'] != null && data['companyImageUrl'].isNotEmpty
+            ? NetworkImage(data['companyImageUrl'])
+            : AssetImage('assets/images/empty_company_image.png') as ImageProvider,
         backgroundColor: Colors.white,
       ),
     );
@@ -212,14 +214,26 @@ class _ProfilePreviewState extends State<ProfilePreview> {
           Wrap(
             alignment: WrapAlignment.center,
             children: [
-              Text(
-                '${data['jobTitle'] ?? ''} at ${data['companyName'] ?? ''}',
-                style: const TextStyle(color: Colors.white70, fontSize: 16),
-                textAlign: TextAlign.center,
-              ),
+              if (data['jobTitle'] != null && data['jobTitle'].isNotEmpty) ...[
+                Text(
+                  data['jobTitle'],
+                  style: const TextStyle(color: Colors.white70, fontSize: 16),
+                  textAlign: TextAlign.center,
+                ),
+                if (data['companyName'] != null && data['companyName'].isNotEmpty) ...[
+                  Text(
+                    ' at ',
+                    style: const TextStyle(color: Colors.white70, fontSize: 16),
+                  ),
+                  Text(
+                    data['companyName'],
+                    style: const TextStyle(color: Colors.white70, fontSize: 16),
+                  ),
+                ],
+              ],
             ],
           ),
-          if (data['location'] != null) ...[
+          if (data['location'] != null && data['location'].isNotEmpty) ...[
             const SizedBox(height: 8),
             Wrap(
               alignment: WrapAlignment.center,

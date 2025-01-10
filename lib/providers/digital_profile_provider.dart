@@ -57,7 +57,7 @@ class DigitalProfileData {
     this.socialPlatforms = const [],
     this.createdAt,
     this.updatedAt,
-    this.layout = ProfileLayout.banner, // Default layout value
+    this.layout = ProfileLayout.classic, // Default layout value
   });
 
   Map<String, dynamic> toMap() {

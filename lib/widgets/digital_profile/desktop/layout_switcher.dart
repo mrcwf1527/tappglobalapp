@@ -147,30 +147,29 @@ Widget build(BuildContext context) {
                     ),
                     child: CircleAvatar(
                       radius: 30,
-                      backgroundImage: data['profileImageUrl'] != null
+                      backgroundImage: data['profileImageUrl'] != null && data['profileImageUrl'].isNotEmpty
                           ? NetworkImage(data['profileImageUrl'])
-                          : null,
-                      child: data['profileImageUrl'] == null
-                          ? const Icon(Icons.person, size: 30)
-                          : null,
+                          : AssetImage('assets/images/empty_profile_image.png') as ImageProvider,
+                      backgroundColor: Colors.white,
                     ),
                   ),
-                  if (data['companyImageUrl'] != null)
-                    Positioned(
-                      bottom: -6,
-                      right: -12,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 1),
-                        ),
-                        child: CircleAvatar(
-                          radius: 12,
-                          backgroundImage: NetworkImage(data['companyImageUrl']),
+                  Positioned(
+                    bottom: 0,
+                    right: -12,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 1),
+                      ),
+                      child: CircleAvatar(
+                        radius: 12,
+                          backgroundImage: data['companyImageUrl'] != null && data['companyImageUrl'].isNotEmpty
+                              ? NetworkImage(data['companyImageUrl'])
+                              : AssetImage('assets/images/empty_company_image.png') as ImageProvider,
                           backgroundColor: Colors.white,
-                        ),
                       ),
                     ),
+                  ),
                 ],
               ),
               const SizedBox(height: 20),
@@ -185,11 +184,11 @@ Widget build(BuildContext context) {
               ),
               const SizedBox(height: 6),
               Text(
-                '${data['jobTitle'] ?? ''} at ${data['companyName'] ?? ''}',
+                '${data['jobTitle'] != null && data['jobTitle'].isNotEmpty ? data['jobTitle'] : ''}${(data['jobTitle'] != null && data['jobTitle'].isNotEmpty && data['companyName'] != null && data['companyName'].isNotEmpty) ? ' at ' : ''}${data['companyName'] != null && data['companyName'].isNotEmpty ? data['companyName'] : ''}',
                 style: const TextStyle(color: Colors.white70, fontSize: 10),
                 textAlign: TextAlign.center,
               ),
-               if (data['location'] != null)
+              if (data['location'] != null && data['location'].isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top:4),
                   child: Wrap(
@@ -239,12 +238,15 @@ Widget build(BuildContext context) {
                 child: Center(
                   child: SizedBox(
                     height: 250,
-                    child: data['profileImageUrl'] != null
+                    child: data['profileImageUrl'] != null && data['profileImageUrl'].isNotEmpty
                         ? Image.network(
                             data['profileImageUrl'],
                             fit: BoxFit.fitHeight,
                           )
-                        : Container(color: Colors.grey[900]),
+                        : Image.asset(
+                            'assets/images/empty_profile_image.png',
+                            fit: BoxFit.fitHeight,
+                        ),
                   ),
                 ),
               ),
@@ -266,11 +268,11 @@ Widget build(BuildContext context) {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      '${data['jobTitle'] ?? ''} at ${data['companyName'] ?? ''}',
+                      '${data['jobTitle'] != null && data['jobTitle'].isNotEmpty ? data['jobTitle'] : ''}${(data['jobTitle'] != null && data['jobTitle'].isNotEmpty && data['companyName'] != null && data['companyName'].isNotEmpty) ? ' at ' : ''}${data['companyName'] != null && data['companyName'].isNotEmpty ? data['companyName'] : ''}',
                       style: const TextStyle(color: Colors.white70, fontSize: 10),
                       textAlign: TextAlign.center,
                     ),
-                     if (data['location'] != null)
+                    if (data['location'] != null && data['location'].isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top:4),
                       child: Wrap(
@@ -319,10 +321,15 @@ Widget build(BuildContext context) {
                   left: 0,
                   right: 0,
                   height: 120, // Set a fixed height for the banner image
-                  child: Image.network(
-                    data['bannerImageUrl'],
-                    fit: BoxFit.cover,
-                  ),
+                  child: data['bannerImageUrl'] != null && data['bannerImageUrl'].isNotEmpty
+                      ? Image.network(
+                          data['bannerImageUrl'],
+                          fit: BoxFit.cover,
+                        )
+                      : Image.asset(
+                          'assets/images/empty_banner_image.png',
+                          fit: BoxFit.cover,
+                      ),
                 ),
               Positioned(
                 top: 88, // Adjusted top position of the content.
@@ -334,38 +341,36 @@ Widget build(BuildContext context) {
                       clipBehavior: Clip.none,
                       alignment: Alignment.center,
                       children: [
-                         Container(
+                        Container(
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(color: Colors.white, width: 1),
                           ),
                           child: CircleAvatar(
                             radius: 30, // Adjusted avatar radius
-                            backgroundImage: data['profileImageUrl'] != null
+                            backgroundImage: data['profileImageUrl'] != null && data['profileImageUrl'].isNotEmpty
                                 ? NetworkImage(data['profileImageUrl'])
-                                : null,
-                                child: data['profileImageUrl'] == null
-                                ? const Icon(Icons.person, size: 30)
-                                : null,
+                                : AssetImage('assets/images/empty_profile_image.png') as ImageProvider,
+                            backgroundColor: Colors.white,
                           ),
-                         ),
-                        if (data['companyImageUrl'] != null)
-                          Positioned(
-                            bottom: 0,
-                            right: -12,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white, width: 1),
-                              ),
-                              child: CircleAvatar(
-                                radius: 12, // Adjusted company logo radius
-                                backgroundImage:
-                                    NetworkImage(data['companyImageUrl']),
-                                backgroundColor: Colors.white,
-                              ),
+                        ),
+                        Positioned(
+                          bottom: 0,
+                          right: -12,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 1),
+                            ),
+                            child: CircleAvatar(
+                              radius: 12, // Adjusted company logo radius
+                              backgroundImage: data['companyImageUrl'] != null && data['companyImageUrl'].isNotEmpty
+                                  ? NetworkImage(data['companyImageUrl'])
+                                  : AssetImage('assets/images/empty_company_image.png') as ImageProvider,
+                              backgroundColor: Colors.white,
                             ),
                           ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 20),
@@ -380,12 +385,11 @@ Widget build(BuildContext context) {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${data['jobTitle'] ?? ''} at ${data['companyName'] ?? ''}',
-                      style:
-                          const TextStyle(color: Colors.white70, fontSize: 10),
-                           textAlign: TextAlign.center,
+                      '${data['jobTitle'] != null && data['jobTitle'].isNotEmpty ? data['jobTitle'] : ''}${(data['jobTitle'] != null && data['jobTitle'].isNotEmpty && data['companyName'] != null && data['companyName'].isNotEmpty) ? ' at ' : ''}${data['companyName'] != null && data['companyName'].isNotEmpty ? data['companyName'] : ''}',
+                      style: const TextStyle(color: Colors.white70, fontSize: 10),
+                      textAlign: TextAlign.center,
                     ),
-                     if (data['location'] != null)
+                    if (data['location'] != null && data['location'].isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top:4),
                       child: Wrap(
