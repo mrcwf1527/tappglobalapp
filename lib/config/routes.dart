@@ -1,6 +1,7 @@
 // lib/config/routes.dart
 // Under TAPP! Global Flutter Project
 import 'package:flutter/material.dart';
+import 'package:universal_html/html.dart' as html; // Added import for accessing browser info
 import '../screens/auth_screen.dart';
 import '../screens/forgot_password_screen.dart';
 import '../screens/home_screen.dart';
@@ -24,6 +25,18 @@ class AppRoutes {
   static const String digitalProfile = '/digital-profile';
   static const String settings = '/settings';
   static const String editDigitalProfile = '/edit-digital-profile';
+
+  // Add known profile domains // Added list of domains for public profiles
+  static final List<String> profileDomains = [
+    'tappglobal-app-profile.web.app',
+    'tappglobal-app-profile.firebaseapp.com',
+    'page.tappglobal.app'
+  ];
+
+  // Checks if the current host is one of the profile domains // Added function to check if the current domain is a profile domain
+  static bool isProfileDomain(String host) {
+    return profileDomains.any((domain) => host.contains(domain));
+  }
 
   static PageRoute _buildRoute(Widget page) {
     return PageRouteBuilder(
@@ -57,7 +70,22 @@ class AppRoutes {
   }
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
-    // Handle existing routes first
+    final host = html.window.location.host; // Get the current host from the browser
+    final path = settings.name ?? '';
+
+    // Handle profile domains // Added logic to handle routing for profile domains
+    if (isProfileDomain(host)) {
+      final uri = Uri.parse(path);
+      if (uri.pathSegments.isNotEmpty) {
+        return _buildRoute(PublicProfileScreen(username: uri.pathSegments[0]));
+      }
+      // Show 404 or redirect if no username provided // Added fallback if no username is provided in the profile domain
+      return _buildRoute(const Scaffold(
+        body: Center(child: Text('Profile not found')),
+      ));
+    }
+
+    // Handle existing routes first // Existing logic to handle main app routes
     final builder = _routes[settings.name];
     if (builder != null) {
       return _buildRoute(builder(navigatorKey.currentContext!));
@@ -69,7 +97,7 @@ class AppRoutes {
       ));
     }
 
-    // Then handle username paths
+    // Then handle username paths on main domain // Existing logic to handle username paths on the main domain
     final uri = Uri.tryParse(settings.name ?? '');
 
     if (uri != null && uri.pathSegments.isNotEmpty) {

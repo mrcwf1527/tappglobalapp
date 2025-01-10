@@ -1,5 +1,18 @@
 {
   "projects": {
     "default": "tappglobal-app"
-  }
+  },
+  "targets": {
+    "tappglobal-app": {
+      "hosting": {
+        "app": [
+          "tappglobal-app"
+        ],
+        "profile": [
+          "tappglobal-app-profile"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }

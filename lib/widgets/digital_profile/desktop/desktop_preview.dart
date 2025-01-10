@@ -13,7 +13,7 @@ class DesktopPreview extends StatelessWidget {
   const DesktopPreview({super.key});
 
   Future<void> _copyLink(BuildContext context, String username) async {
-    final link = 'http://localhost:50000/$username';
+    final link = 'https://tappglobal-app-profile.web.app/$username';
     await Clipboard.setData(ClipboardData(text: link));
 
     if (!context.mounted) return;
@@ -39,7 +39,7 @@ class DesktopPreview extends StatelessWidget {
                 OutlinedButton.icon(
                   onPressed: () async {
                     final url = Uri.parse(
-                        'http://localhost:50000/${provider.profileData.username}');
+                        'https://tappglobal-app-profile.web.app/${provider.profileData.username}');
                     await launchUrl(url);
                   },
                   icon: FaIcon(
@@ -173,7 +173,7 @@ class ShareDialog extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             BorderedQRView(
-              data: 'https://l.tappglobal.app/$username',
+              data: 'https://tappglobal-app-profile.web.app/$username',
               profileImageUrl: profileImageUrl,
             ),
             const SizedBox(height: 24),
@@ -182,7 +182,7 @@ class ShareDialog extends StatelessWidget {
               'Copy Link',
               FontAwesomeIcons.copy,
               () => _copyLink(context),
-              subtitle: 'https://l.tappglobal.app/$username',
+              subtitle: 'https://tappglobal-app-profile.web.app/$username',
             ),
             _buildOption(
               context,
@@ -250,7 +250,7 @@ class ShareDialog extends StatelessWidget {
   }
 
   Future<void> _copyLink(BuildContext context) async {
-    final link = 'https://l.tappglobal.app/$username';
+    final link = 'https://tappglobal-app-profile.web.app/$username';
     await Clipboard.setData(ClipboardData(text: link));
     if (!context.mounted) return;
     Navigator.of(context).pop();

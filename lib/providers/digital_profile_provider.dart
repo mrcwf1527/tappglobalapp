@@ -363,4 +363,9 @@ extension DigitalProfileDataExtension on DigitalProfileData {
       layout: layout ?? this.layout, // Include layout in copyWith
     );
   }
+  
+  String getPublicProfileUrl(String username) {
+    // Use custom domain when ready, fallback to Firebase hosting
+    return 'https://tappglobal-app-profile.web.app/$username';
+  }
 }

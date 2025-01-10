@@ -37,7 +37,7 @@ class DefaultFirebaseOptions {
   }
 
   static final FirebaseOptions web = FirebaseOptions(
-    apiKey: dotenv.env['FIREBASE_API_KEY_WEB'] ?? '',
+    apiKey: const String.fromEnvironment('FIREBASE_API_KEY_WEB'),
     appId: '1:756432671303:web:24bc8e4592dc32c0651762',
     messagingSenderId: '756432671303',
     projectId: 'tappglobal-app',

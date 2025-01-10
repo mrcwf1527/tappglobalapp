@@ -258,7 +258,7 @@ class _EditDigitalProfileScreenState extends State<EditDigitalProfileScreen>
               IconButton(
                 onPressed: () async {
                   final url = Uri.parse(
-                      'http://localhost:50000/${provider.profileData.username}');
+                      'https://tappglobal-app-profile.web.app/${provider.profileData.username}');
                   await launchUrl(url);
                 },
                 icon: FaIcon(
@@ -270,7 +270,7 @@ class _EditDigitalProfileScreenState extends State<EditDigitalProfileScreen>
               IconButton(
                 onPressed: () async {
                   final link =
-                      'http://localhost:50000/${provider.profileData.username}';
+                      'https://tappglobal-app-profile.web.app/${provider.profileData.username}';
                   await Clipboard.setData(ClipboardData(text: link));
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -356,7 +356,7 @@ class ShareProfileSheet extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
                 BorderedQRView(
-                  data: 'https://l.tappglobal.app/$username',
+                  data: 'https://tappglobal-app-profile.web.app/$username',
                   profileImageUrl: profileImageUrl,
                 ),
                 const SizedBox(height: 24),
@@ -418,7 +418,7 @@ class ShareProfileSheet extends StatelessWidget {
 
   Future<void> _shareProfile(BuildContext context) async {
     final text =
-        'Hi I\'m $displayName, here\'s my digital profile: https://l.tappglobal.app/$username';
+        'Hi I\'m $displayName, here\'s my digital profile: https://tappglobal-app-profile.web.app/$username';
     await Share.share(text);
   }
 
