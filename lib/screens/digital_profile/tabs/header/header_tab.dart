@@ -1,13 +1,13 @@
-// lib/screens/digital_profile/tabs/header_tab.dart
+// lib/screens/digital_profile/tabs/header/header_tab.dart
 // Profile header editing interface, Manages profile/company images and banner, Handles profile information form and social links
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../providers/digital_profile_provider.dart';
-import '../../../widgets/digital_profile/banner_upload.dart';
-import '../../../widgets/digital_profile/company_image_upload.dart';
-import '../../../widgets/digital_profile/profile_form.dart';
-import '../../../widgets/digital_profile/profile_image_upload.dart';
-import '../../../widgets/digital_profile/social_icons.dart';
+import '../../../../providers/digital_profile_provider.dart';
+import '../../../../widgets/digital_profile/banner_upload.dart';
+import '../../../../widgets/digital_profile/company_image_upload.dart';
+import '../../../../widgets/digital_profile/profile_form.dart';
+import '../../../../widgets/digital_profile/profile_image_upload.dart';
+import '../../../../widgets/digital_profile/social_icons.dart';
 
 class HeaderTab extends StatefulWidget {
   const HeaderTab({super.key});

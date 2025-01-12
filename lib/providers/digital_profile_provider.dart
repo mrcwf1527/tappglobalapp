@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/social_platform.dart';
+import '../models/block.dart'; // Import Block model
+import 'package:firebase_storage/firebase_storage.dart';
+import 'dart:typed_data';
 
 enum ProfileLayout { classic, portrait, banner }
 
@@ -41,6 +44,7 @@ class DigitalProfileData {
   DateTime? createdAt;
   DateTime? updatedAt;
   ProfileLayout layout; // Added layout property
+  List<Block> blocks; // Added blocks property
 
   DigitalProfileData({
     required this.id,
@@ -58,6 +62,7 @@ class DigitalProfileData {
     this.createdAt,
     this.updatedAt,
     this.layout = ProfileLayout.classic, // Default layout value
+    this.blocks = const [], // Initialize blocks
   });
 
   Map<String, dynamic> toMap() {
@@ -77,6 +82,7 @@ class DigitalProfileData {
           createdAt != null ? Timestamp.fromDate(createdAt!) : FieldValue.serverTimestamp(),
       'updatedAt': Timestamp.fromDate(DateTime.now()),
       'layout': layout.name, // Include layout in toMap
+      'blocks': blocks.map((b) => b.toMap()).toList(), // Include blocks in toMap
     };
   }
 
@@ -104,6 +110,9 @@ class DigitalProfileData {
               (e) => e.name == map['layout'],
               orElse: () => ProfileLayout.banner)
           : ProfileLayout.banner,
+          blocks: (map['blocks'] as List?)
+          ?.map((b) => Block.fromMap(b))
+          .toList() ?? [], // Add blocks to fromMap
     );
   }
 }
@@ -161,6 +170,7 @@ class DigitalProfileProvider extends ChangeNotifier {
       createdAt: _profileData.createdAt,
       updatedAt: _profileData.updatedAt,
       layout: _profileData.layout, // Keep existing layout
+      blocks: _profileData.blocks, // Keep existing blocks
     );
     _isDirty = true;
     notifyListeners();
@@ -206,6 +216,7 @@ class DigitalProfileProvider extends ChangeNotifier {
       companyImageUrl: "",
       bannerImageUrl: "",
       socialPlatforms: [],
+      blocks: [], // Initialize blocks
     );
 
     final usernameRef = FirebaseFirestore.instance.collection('usernames').doc(username);
@@ -333,6 +344,38 @@ class DigitalProfileProvider extends ChangeNotifier {
             .map((doc) => DigitalProfileData.fromMap(doc.id, doc.data()))
             .toList());
   }
+    void updateBlocks(List<Block> blocks) {
+    _profileData.blocks = blocks;
+    _isDirty = true;
+
+    FirebaseFirestore.instance
+        .collection('digitalProfiles')
+        .doc(_profileData.id)
+        .update({
+      'blocks': blocks.map((b) => b.toMap()).toList()
+    });
+
+    notifyListeners();
+  }
+
+  Future<String> uploadBlockImage(Uint8List imageBytes, String blockId) async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) throw Exception('User not logged in');
+
+    final ref = FirebaseStorage.instance
+        .ref()
+        .child('users')
+        .child(userId)
+        .child('blocks/$blockId/${DateTime.now().millisecondsSinceEpoch}.jpg');
+
+    final metadata = SettableMetadata(
+      contentType: 'image/jpeg',
+      customMetadata: {'block-id': blockId},
+    );
+
+    await ref.putData(imageBytes, metadata);
+    return await ref.getDownloadURL();
+  }
 }
 
 extension DigitalProfileDataExtension on DigitalProfileData {
@@ -352,6 +395,7 @@ extension DigitalProfileDataExtension on DigitalProfileData {
     DateTime? createdAt,
     DateTime? updatedAt,
     ProfileLayout? layout, // Add layout to copyWith
+    List<Block>? blocks, // Add blocks to copyWith
   }) {
     return DigitalProfileData(
       id: id ?? this.id,
@@ -369,6 +413,7 @@ extension DigitalProfileDataExtension on DigitalProfileData {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       layout: layout ?? this.layout, // Include layout in copyWith
+      blocks: blocks ?? this.blocks, // Include blocks in copyWith
     );
   }
   
