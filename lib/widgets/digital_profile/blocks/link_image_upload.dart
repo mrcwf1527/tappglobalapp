@@ -1,4 +1,5 @@
 // lib/widgets/digital_profile/blocks/link_image_upload.dart
+// Component for handling thumbnail image uploads for website links. Integrates with Firebase Storage and provides visual feedback during upload process.
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';

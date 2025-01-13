@@ -1,4 +1,5 @@
-// lib/screens/digital_profile/edit_block_screen.dart
+// lib/screens/digital_profile/tabs/blocks/edit_block_screen.dart
+// Detailed block editing interface with three tabs (Links, Layouts, Settings). Manages block properties, content arrangement, layout options, and visibility settings. Includes specialized editors for different block types.
 import 'package:flutter/material.dart';
 import '../../../../models/block.dart';
 import '../../../../utils/debouncer.dart';
@@ -21,6 +22,7 @@ class _EditBlockScreenState extends State<EditBlockScreen> with SingleTickerProv
   late TabController _tabController;
   final TextEditingController _blockNameController = TextEditingController();
   final _debouncer = Debouncer();
+  bool _isDeleted = false;
 
   @override
   void initState() {
@@ -31,6 +33,7 @@ class _EditBlockScreenState extends State<EditBlockScreen> with SingleTickerProv
 
   @override
   void dispose() {
+    _tabController.removeListener(() {});
     _tabController.dispose();
     _blockNameController.dispose();
     _debouncer.dispose();
@@ -62,32 +65,34 @@ class _EditBlockScreenState extends State<EditBlockScreen> with SingleTickerProv
   void _showDeleteConfirmation(BuildContext context, VoidCallback onConfirm) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text("Delete Block"),
-          content: const Text("Are you sure you want to delete this block?"),
-          actions: <Widget>[
-            TextButton(
-              child: const Text("Cancel"),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            TextButton(
-              child: const Text("Delete", style: TextStyle(color: Colors.red)),
-              onPressed: () {
-                onConfirm();
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text("Delete Block"),
+        content: const Text("Are you sure you want to delete this block?"),
+        actions: <Widget>[
+          TextButton(
+            child: const Text("Cancel"),
+            onPressed: () => Navigator.of(dialogContext).pop(),
+          ),
+          TextButton(
+            child: const Text("Delete", style: TextStyle(color: Colors.red)),
+            onPressed: () {
+              setState(() => _isDeleted = true);
+              onConfirm();
+              Navigator.of(dialogContext).pop();
+            },
+          ),
+        ],
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    return Scaffold(
+    return GestureDetector(
+    onTap: () => FocusScope.of(context).unfocus(),
+    child: Scaffold(
       appBar: AppBar(
         title: Text('Edit ${_getBlockTitle(widget.block.type)}'),
         leading: IconButton(
@@ -99,6 +104,15 @@ class _EditBlockScreenState extends State<EditBlockScreen> with SingleTickerProv
         builder: (context, provider, _) {
           final blockIndex = provider.profileData.blocks
               .indexWhere((b) => b.id == widget.block.id);
+
+          if (blockIndex == -1 || _isDeleted) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted && Navigator.canPop(context)) {
+                Navigator.pop(context);
+              }
+            });
+            return const SizedBox();
+          }
 
           return Column(
             children: [
@@ -131,10 +145,7 @@ class _EditBlockScreenState extends State<EditBlockScreen> with SingleTickerProv
                               provider.updateBlocks([
                                 for (var b in provider.profileData.blocks)
                                   if (b.id == widget.block.id)
-                                    b.copyWith(
-                                      blockName: value,
-                                      sequence: b.sequence,
-                                    )
+                                    Block.fromMap({...b.toMap(), 'blockName': value})
                                   else
                                     b
                               ]);
@@ -179,7 +190,6 @@ class _EditBlockScreenState extends State<EditBlockScreen> with SingleTickerProv
                         final blocks = [...provider.profileData.blocks];
                         blocks.removeAt(blockIndex);
                         provider.updateBlocks(blocks);
-                        Navigator.pop(context);
                       }),
                     ),
                   ],
@@ -208,16 +218,33 @@ class _EditBlockScreenState extends State<EditBlockScreen> with SingleTickerProv
                     ),
                     // Layouts Tab
                    _LayoutsTab(
-                      onLayoutChanged: (layout) {
-                        // TODO: Implement layout change
+                      onLayoutChanged: (layout, aspectRatio) {
+                         provider.updateBlocks([
+                            for (var b in provider.profileData.blocks)
+                            if (b.id == widget.block.id)
+                                b.copyWith(
+                                layout: layout,
+                                aspectRatio: aspectRatio,
+                                sequence: b.sequence,
+                                )
+                            else
+                                b
+                            ]);
                       },
+                      block: widget.block,
                     ),
                     // Settings Tab
                     _SettingsTab(
                       block: widget.block,
-                      onUpdate: (updated) {
-                        // TODO: Implement settings update
-                      },
+                       onUpdate: (updated) {
+                          provider.updateBlocks([
+                            for (var b in provider.profileData.blocks)
+                              if (b.id == widget.block.id)
+                                updated
+                              else
+                                b
+                          ]);
+                        },
                     ),
                   ],
                 ),
@@ -226,9 +253,10 @@ class _EditBlockScreenState extends State<EditBlockScreen> with SingleTickerProv
           );
         },
       ),
+    ),
     );
   }
-
+  
   Widget _buildEditor(int blockIndex, DigitalProfileProvider provider) {
     Widget blockEditor;
     switch (widget.block.type) {
@@ -244,7 +272,7 @@ class _EditBlockScreenState extends State<EditBlockScreen> with SingleTickerProv
             final blocks = [...provider.profileData.blocks];
             blocks.removeAt(blockIndex);
             provider.updateBlocks(blocks);
-            Navigator.pop(context);
+            Navigator.maybePop(context);
           },
         );
       case BlockType.image:
@@ -259,7 +287,7 @@ class _EditBlockScreenState extends State<EditBlockScreen> with SingleTickerProv
             final blocks = [...provider.profileData.blocks];
             blocks.removeAt(blockIndex);
             provider.updateBlocks(blocks);
-            Navigator.pop(context);
+            Navigator.maybePop(context);
           },
         );
       case BlockType.youtube:
@@ -274,17 +302,12 @@ class _EditBlockScreenState extends State<EditBlockScreen> with SingleTickerProv
             final blocks = [...provider.profileData.blocks];
             blocks.removeAt(blockIndex);
             provider.updateBlocks(blocks);
-            Navigator.pop(context);
+            Navigator.maybePop(context);
           },
         );
     }
     return blockEditor;
   }
-}
-
-enum BlockLayout {
-  classic,
-  carousel
 }
 
 class AspectRatioOption {
@@ -300,9 +323,13 @@ class AspectRatioOption {
 }
 
 class _LayoutsTab extends StatefulWidget {
-  final Function(String) onLayoutChanged;
+  final Function(BlockLayout, String?) onLayoutChanged;
+  final Block block;
 
-  const _LayoutsTab({required this.onLayoutChanged});
+  const _LayoutsTab({
+    required this.onLayoutChanged,
+    required this.block,
+  });
 
   @override
   State<_LayoutsTab> createState() => _LayoutsTabState();
@@ -310,7 +337,15 @@ class _LayoutsTab extends StatefulWidget {
 
 class _LayoutsTabState extends State<_LayoutsTab> {
   BlockLayout selectedLayout = BlockLayout.classic;
-  String selectedAspectRatio = '1:1';
+  String selectedAspectRatio = '16:9';
+  TextAlign selectedAlignment = TextAlign.center;
+  
+  @override
+  void initState() {
+    super.initState();
+    selectedLayout = widget.block.layout;
+    selectedAspectRatio = widget.block.aspectRatio ?? '16:9';
+  }
   
   final List<AspectRatioOption> aspectRatios = const [
     AspectRatioOption(value: '1:1', label: '1:1 Square', ratio: 1),
@@ -319,40 +354,6 @@ class _LayoutsTabState extends State<_LayoutsTab> {
     AspectRatioOption(value: '3:1', label: '3:1 Horizontal', ratio: 3),
     AspectRatioOption(value: '2:3', label: '2:3 Vertical', ratio: 0.66),
   ];
-
-  void _showAspectRatioModal() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) => SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: aspectRatios.map((option) => InkWell(
-            onTap: () => _selectAspectRatio(option.value),
-            child: Container(
-              color: selectedAspectRatio == option.value 
-                ? Colors.blue.withOpacity(0.1)
-                : null,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                children: [
-                  _buildAspectRatioIcon(option.ratio),
-                  const SizedBox(width: 12),
-                  Text(option.label),
-                  const Spacer(),
-                  if (selectedAspectRatio == option.value)
-                    const Icon(Icons.check, color: Colors.blue),
-                ],
-              ),
-            ),
-          )).toList(),
-        ),
-      ),
-    );
-  }
 
   Widget _buildAspectRatioIcon(double ratio) {
     return Container(
@@ -375,12 +376,60 @@ class _LayoutsTabState extends State<_LayoutsTab> {
     );
   }
 
-  void _selectAspectRatio(String ratio) {
-    setState(() {
-      selectedAspectRatio = ratio;
-    });
-    Navigator.pop(context);
+  void _showAspectRatioModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: aspectRatios.map((option) => InkWell(
+            onTap: () {
+              setState(() {
+                selectedAspectRatio = option.value;
+              });
+              widget.onLayoutChanged(selectedLayout, option.value);
+              Navigator.pop(context);
+            },
+            child: Container(
+              color: selectedAspectRatio == option.value 
+                ? Colors.blue.withAlpha((0.1 * 255).toInt())
+                : null,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  _buildAspectRatioIcon(option.ratio),
+                  const SizedBox(width: 12),
+                  Text(option.label),
+                  const Spacer(),
+                  if (selectedAspectRatio == option.value)
+                    const Icon(Icons.check, color: Colors.blue),
+                ],
+              ),
+            ),
+          )).toList(),
+        ),
+      ),
+    );
   }
+
+  void _updateTextAlignment(TextAlignment alignment) {
+    final provider = Provider.of<DigitalProfileProvider>(context, listen: false);
+    provider.updateBlocks([
+      for (var b in provider.profileData.blocks)
+        if (b.id == widget.block.id)
+          b.copyWith(
+            textAlignment: alignment,
+            sequence: b.sequence,
+          )
+        else
+          b
+    ]);
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -406,7 +455,7 @@ class _LayoutsTabState extends State<_LayoutsTab> {
                   isSelected: selectedLayout == BlockLayout.classic,
                   onTap: () => setState(() {
                     selectedLayout = BlockLayout.classic;
-                    widget.onLayoutChanged('classic');
+                    widget.onLayoutChanged(BlockLayout.classic, null);
                   }),
                 ),
               ),
@@ -418,87 +467,100 @@ class _LayoutsTabState extends State<_LayoutsTab> {
                   isSelected: selectedLayout == BlockLayout.carousel,
                   onTap: () => setState(() {
                     selectedLayout = BlockLayout.carousel;
-                    widget.onLayoutChanged('carousel');
+                    widget.onLayoutChanged(BlockLayout.carousel, selectedAspectRatio);
                   }),
                 ),
               ),
             ],
           ),
           
-          if (selectedLayout == BlockLayout.carousel) ...[
+          // Show aspect ratio only for image blocks in carousel layout
+          if (widget.block.type == BlockType.image && selectedLayout == BlockLayout.carousel) ...[
             const SizedBox(height: 24),
-            const Text(
-              'Aspect Ratio',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            InkWell(
-              onTap: _showAspectRatioModal,
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade300),
-                  borderRadius: BorderRadius.circular(8),
+             Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Aspect Ratio',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
-                child: Row(
-                  children: [
-                    _buildAspectRatioIcon(
-                      aspectRatios.firstWhere(
-                        (opt) => opt.value == selectedAspectRatio
-                      ).ratio
+                const SizedBox(height: 16),
+                InkWell(
+                  onTap: () => _showAspectRatioModal(context),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    const SizedBox(width: 12),
-                    Text(aspectRatios.firstWhere(
-                      (opt) => opt.value == selectedAspectRatio
-                    ).label),
-                    const Spacer(),
-                    const Icon(Icons.keyboard_arrow_down),
-                  ],
+                    child: Row(
+                      children: [
+                        _buildAspectRatioIcon(
+                          aspectRatios.firstWhere((opt) => opt.value == selectedAspectRatio).ratio
+                        ),
+                        const SizedBox(width: 12),
+                        Text(aspectRatios.firstWhere((opt) => opt.value == selectedAspectRatio).label),
+                        const Spacer(),
+                        const Icon(Icons.keyboard_arrow_down),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
           ],
           
-          const SizedBox(height: 24),
-          const Text(
-            'Text alignment',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+          // Show text alignment only for website blocks
+          if (widget.block.type == BlockType.website) ...[
+            const SizedBox(height: 24),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Text alignment',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    _AlignmentOption(
+                      icon: Icons.format_align_left,
+                      isSelected: selectedAlignment == TextAlign.left,
+                      onTap: () {
+                         setState(() => selectedAlignment = TextAlign.left);
+                        _updateTextAlignment(TextAlignment.left);
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                    _AlignmentOption(
+                      icon: Icons.format_align_center,
+                      isSelected: selectedAlignment == TextAlign.center,
+                      onTap: () {
+                        setState(() => selectedAlignment = TextAlign.center);
+                         _updateTextAlignment(TextAlignment.center);
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                    _AlignmentOption(
+                      icon: Icons.format_align_right,
+                      isSelected: selectedAlignment == TextAlign.right,
+                      onTap: () {
+                        setState(() => selectedAlignment = TextAlign.right);
+                        _updateTextAlignment(TextAlignment.right);
+                      },
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              _AlignmentOption(
-                icon: Icons.format_align_left,
-                isSelected: false,
-                onTap: () {},
-              ),
-              const SizedBox(width: 8),
-              _AlignmentOption(
-                icon: Icons.format_align_center,
-                isSelected: true,
-                onTap: () {},
-              ),
-              const SizedBox(width: 8),
-              _AlignmentOption(
-                icon: Icons.format_align_right,
-                isSelected: false,
-                onTap: () {},
-              ),
-            ],
-          ),
+          ],
         ],
       ),
     );
   }
 }
 
-class _SettingsTab extends StatelessWidget {
+class _SettingsTab extends StatefulWidget {
   final Block block;
   final Function(Block) onUpdate;
 
@@ -508,7 +570,35 @@ class _SettingsTab extends StatelessWidget {
   });
 
   @override
+  State<_SettingsTab> createState() => _SettingsTabState();
+  
+}
+
+class _SettingsTabState extends State<_SettingsTab> {
+  late TextEditingController _titleController;
+  late TextEditingController _descriptionController;
+  late bool _isCollapsed;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController(text: widget.block.title);
+    _descriptionController = TextEditingController(text: widget.block.description);
+    _isCollapsed = widget.block.isCollapsed ?? false;
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final provider = Provider.of<DigitalProfileProvider>(context, listen: false);
+    final blockIndex = provider.profileData.blocks
+              .indexWhere((b) => b.id == widget.block.id);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -530,30 +620,28 @@ class _SettingsTab extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           TextField(
+            controller: _titleController,
             decoration: const InputDecoration(
               hintText: 'Title',
               border: OutlineInputBorder(),
             ),
-            controller: TextEditingController(text: block.blockName),
             onChanged: (value) {
-              onUpdate(block.copyWith(
-                blockName: value,
-                sequence: block.sequence,
-              ));
+                final updatedBlock = {...provider.profileData.blocks[blockIndex].toMap()};
+                updatedBlock['title'] = value;
+                widget.onUpdate(Block.fromMap(updatedBlock));
             },
           ),
           const SizedBox(height: 16),
           TextField(
+            controller: _descriptionController,
             decoration: const InputDecoration(
               hintText: 'Description',
               border: OutlineInputBorder(),
             ),
-            controller: TextEditingController(text: block.description),
-            onChanged: (value) {
-              onUpdate(block.copyWith(
-                description: value,
-                sequence: block.sequence,
-              ));
+             onChanged: (value) {
+                final updatedBlock = {...provider.profileData.blocks[blockIndex].toMap()};
+                updatedBlock['description'] = value;
+                widget.onUpdate(Block.fromMap(updatedBlock));
             },
           ),
           const SizedBox(height: 24),
@@ -571,8 +659,17 @@ class _SettingsTab extends StatelessWidget {
                 child: _VisibilityOption(
                   title: 'EXPOSED',
                   icon: Icons.view_agenda,
-                  isSelected: true,
-                  onTap: () {},
+                  isSelected: !_isCollapsed,
+                  onTap: () {
+                    setState(() {
+                      _isCollapsed = false;
+                    });
+                    final updatedBlock = widget.block.copyWith(
+                      isCollapsed: false,
+                      sequence: widget.block.sequence,
+                    );
+                    widget.onUpdate(updatedBlock);
+                  },
                 ),
               ),
               const SizedBox(width: 8),
@@ -580,8 +677,17 @@ class _SettingsTab extends StatelessWidget {
                 child: _VisibilityOption(
                   title: 'COLLAPSED',
                   icon: Icons.view_headline,
-                  isSelected: false,
-                  onTap: () {},
+                  isSelected: _isCollapsed,
+                  onTap: () {
+                    setState(() {
+                      _isCollapsed = true;
+                    });
+                    final updatedBlock = widget.block.copyWith(
+                      isCollapsed: true,
+                      sequence: widget.block.sequence,
+                    );
+                    widget.onUpdate(updatedBlock);
+                  }
                 ),
               ),
             ],

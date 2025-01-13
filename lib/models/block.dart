@@ -1,4 +1,5 @@
 // lib/models/block.dart
+// Core data model for content blocks in digital profiles. Defines BlockType (website/image/youtube), BlockLayout (classic/carousel), and TextAlignment enums. Contains Block class for managing block properties and BlockContent class for individual content items within blocks. Includes serialization/deserialization logic for Firestore integration.
 
 enum BlockType {
   website,
@@ -9,6 +10,12 @@ enum BlockType {
 enum BlockLayout {
   classic,
   carousel
+}
+
+enum TextAlignment {
+  left,
+  center,
+  right
 }
 
 class Block {
@@ -22,6 +29,8 @@ class Block {
   final bool? isVisible;
   final BlockLayout layout;
   final String? aspectRatio;  // Only used when layout is carousel
+  final TextAlignment? textAlignment;
+  final bool? isCollapsed;
 
   Block({
     required this.id,
@@ -34,6 +43,8 @@ class Block {
     this.isVisible,
     this.layout = BlockLayout.classic,
     this.aspectRatio,
+    this.textAlignment,
+    this.isCollapsed = false,
   });
 
   Map<String, dynamic> toMap() => {
@@ -47,6 +58,8 @@ class Block {
     'isVisible': isVisible,
     'layout': layout.name,
     'aspectRatio': aspectRatio,
+    'textAlignment': textAlignment?.name,
+    'isCollapsed': isCollapsed,
   };
 
   factory Block.fromMap(Map<String, dynamic> map) {
@@ -64,6 +77,11 @@ class Block {
         orElse: () => BlockLayout.classic
       ) : BlockLayout.classic,
       aspectRatio: map['aspectRatio'],
+      textAlignment: map['textAlignment'] != null ? TextAlignment.values.firstWhere(
+        (e) => e.name == map['textAlignment'],
+        orElse: () => TextAlignment.left,
+      ) : null,
+      isCollapsed: map['isCollapsed'] ?? false,
     );
   }
 
@@ -78,6 +96,8 @@ class Block {
     bool? isVisible,
     BlockLayout? layout,
     String? aspectRatio,
+    TextAlignment? textAlignment,
+    bool? isCollapsed,
   }) => Block(
     id: id ?? this.id,
     type: type ?? this.type,
@@ -89,6 +109,8 @@ class Block {
     isVisible: isVisible ?? this.isVisible,
     layout: layout ?? this.layout,
     aspectRatio: aspectRatio ?? this.aspectRatio,
+    textAlignment: textAlignment ?? this.textAlignment,
+    isCollapsed: isCollapsed ?? this.isCollapsed,
   );
 }
 

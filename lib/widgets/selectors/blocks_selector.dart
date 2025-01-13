@@ -1,4 +1,5 @@
 // lib/widgets/selectors/blocks_selector.dart
+// Dialog widget for selecting content block types. Shows options for Website Links, Image Gallery, and YouTube Videos with icons and descriptions. Supports both light/dark themes and returns selected BlockType to parent widget. Used when adding new blocks to digital profiles.
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../models/block.dart';

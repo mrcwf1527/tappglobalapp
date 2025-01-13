@@ -1,4 +1,5 @@
 // lib/widgets/digital_profile/blocks/image_block.dart
+// Widget for managing image galleries. Handles image upload to Firebase Storage, displays image previews, supports reordering, and manages image visibility settings.
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';

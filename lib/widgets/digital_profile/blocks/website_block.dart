@@ -1,4 +1,5 @@
 // lib/widgets/digital_profile/blocks/website_block.dart
+// Widget for managing website link collections. Features title, subtitle, and URL inputs, thumbnail image upload, visibility toggle, and analytics integration.
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../models/block.dart';
@@ -70,10 +71,32 @@ class _WebsiteBlockState extends State<WebsiteBlock> {
   }
 
   void _removeLink(int index) {
-    setState(() {
-      _contents.removeAt(index);
-    });
-    _updateBlock();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Link'),
+        content: const Text('Are you sure you want to delete this link? All associated analytics will be deleted.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              setState(() {
+                _contents.removeAt(index);
+              });
+              _updateBlock();
+            },
+            child: Text(
+              'Delete',
+              style: TextStyle(color: Colors.red[700]),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _reorderLinks(int oldIndex, int newIndex) {
@@ -371,32 +394,9 @@ class _LinkCard extends StatelessWidget {
                               Text('Delete', style: TextStyle(color: Colors.red[700])),
                             ],
                           ),
-                          onTap: () => Future.delayed(
-                            const Duration(seconds: 0),
-                            () => showDialog(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                title: const Text('Delete Link'),
-                                content: const Text('Are you sure you want to delete this link? All associated analytics will be deleted.'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context),
-                                    child: const Text('Cancel'),
-                                  ),
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.pop(context);
-                                      onDelete();
-                                    },
-                                    child: Text(
-                                      'Delete',
-                                      style: TextStyle(color: Colors.red[700]),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
+                          onTap: () {
+                            onDelete();
+                          },
                         ),
                       ],
                     ),

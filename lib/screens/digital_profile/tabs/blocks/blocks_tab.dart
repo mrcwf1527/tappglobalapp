@@ -1,4 +1,5 @@
-// lib/screens/digital_profile/tabs/blocks_tab.dart
+// lib/screens/digital_profile/tabs/blocks/blocks_tab.dart
+// Main interface for managing content blocks. Implements reorderable list of blocks with drag-and-drop functionality. Handles block creation, visibility toggling, editing, and deletion. Uses DigitalProfileProvider for state management.
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -39,14 +40,7 @@ class BlocksTab extends StatelessWidget {
               );
 
               if (selectedType != null) {
-                final newBlock = Block(
-                  id: DateTime.now().millisecondsSinceEpoch.toString(),
-                  type: selectedType,
-                  blockName: '',
-                  contents: [],
-                  sequence: provider.profileData.blocks.length + 1,
-                  isVisible: true,
-                );
+                final newBlock = createNewBlock(selectedType, provider.profileData.blocks.length + 1);
                 provider.updateBlocks([...provider.profileData.blocks, newBlock]);
               }
             },
@@ -226,5 +220,47 @@ class BlocksTab extends StatelessWidget {
       '/edit-block',
       arguments: block,
     );
+  }
+
+  Block createNewBlock(BlockType type, int sequence) {
+    switch (type) {
+      case BlockType.website:
+        return Block(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          type: type,
+          blockName: '',
+          title: '',
+          description: '',
+          contents: [],
+          sequence: sequence,
+          isVisible: true,
+          textAlignment: TextAlignment.center,
+        );
+        
+      case BlockType.image:
+        return Block(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          type: type,
+          blockName: '',
+          title: '',
+          description: '',
+          contents: [],
+          sequence: sequence,
+          isVisible: true,
+          aspectRatio: '16:9',
+        );
+        
+      case BlockType.youtube:
+        return Block(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          type: type,
+          blockName: '',
+          title: '',
+          description: '',
+          contents: [],
+          sequence: sequence,
+          isVisible: true,
+        );
+    }
   }
 }
