@@ -3,7 +3,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../models/block.dart';
-import '../../../utils/debouncer.dart';
 import 'link_image_upload.dart';
 
 class WebsiteBlock extends StatefulWidget {
@@ -24,7 +23,6 @@ class WebsiteBlock extends StatefulWidget {
 
 class _WebsiteBlockState extends State<WebsiteBlock> {
   late List<BlockContent> _contents;
-  final _debouncer = Debouncer();
   late bool _isVisible;
 
   @override
@@ -34,21 +32,14 @@ class _WebsiteBlockState extends State<WebsiteBlock> {
     _isVisible = widget.block.isVisible ?? true;
   }
 
-  @override
-  void dispose() {
-    _debouncer.dispose();
-    super.dispose();
-  }
 
   void _updateBlock() {
-    _debouncer.run(() {
-      final updatedBlock = widget.block.copyWith(
-        contents: _contents,
-        sequence: widget.block.sequence,
-        isVisible: _isVisible,
-      );
-      widget.onBlockUpdated(updatedBlock);
-    });
+    final updatedBlock = widget.block.copyWith(
+      contents: _contents,
+      sequence: widget.block.sequence,
+      isVisible: _isVisible,
+    );
+    widget.onBlockUpdated(updatedBlock);
   }
 
   void _addLink() {
@@ -167,16 +158,13 @@ class _WebsiteBlockState extends State<WebsiteBlock> {
   }
 }
 
-class _LinkCard extends StatelessWidget {
+class _LinkCard extends StatefulWidget {
   final BlockContent content;
   final Function(BlockContent) onUpdate;
   final VoidCallback onDelete;
   final int index;
-  final FocusNode _titleFocus = FocusNode();
-  final FocusNode _subtitleFocus = FocusNode();
-  final FocusNode _urlFocus = FocusNode();
 
-  _LinkCard({
+  const _LinkCard({
     super.key,
     required this.content,
     required this.onUpdate,
@@ -184,6 +172,22 @@ class _LinkCard extends StatelessWidget {
     required this.index,
   });
 
+  @override
+  State<_LinkCard> createState() => _LinkCardState();
+}
+
+class _LinkCardState extends State<_LinkCard> {
+  final FocusNode _titleFocus = FocusNode();
+  final FocusNode _subtitleFocus = FocusNode();
+  final FocusNode _urlFocus = FocusNode();
+
+  @override
+  void dispose() {
+    _titleFocus.dispose();
+    _subtitleFocus.dispose();
+    _urlFocus.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -204,7 +208,7 @@ class _LinkCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             ReorderableDragStartListener(
-              index: index,
+              index: widget.index,
               child: GestureDetector(
                 onTapDown: (_) {
                   _titleFocus.unfocus();
@@ -229,7 +233,7 @@ class _LinkCard extends StatelessWidget {
                 children: [
                   TextFormField(
                     focusNode: _titleFocus,
-                    initialValue: content.title,
+                    initialValue: widget.content.title,
                     decoration: InputDecoration(
                       hintText: 'Title (required)',
                       hintStyle: TextStyle(
@@ -255,12 +259,12 @@ class _LinkCard extends StatelessWidget {
                       filled: true,
                       contentPadding: const EdgeInsets.symmetric(vertical: 8.0),
                     ),
-                    onChanged: (value) => onUpdate(content.copyWith(title: value)),
+                    onChanged: (value) => widget.onUpdate(widget.content.copyWith(title: value)),
                   ),
                   const SizedBox(height: 8),
                   TextFormField(
                     focusNode: _subtitleFocus,
-                    initialValue: content.subtitle,
+                    initialValue: widget.content.subtitle,
                     decoration: InputDecoration(
                       hintText: 'Subtitle (optional)',
                       hintStyle: TextStyle(
@@ -286,7 +290,7 @@ class _LinkCard extends StatelessWidget {
                       filled: true,
                       contentPadding: const EdgeInsets.symmetric(vertical: 8.0),
                     ),
-                    onChanged: (value) => onUpdate(content.copyWith(subtitle: value)),
+                    onChanged: (value) => widget.onUpdate(widget.content.copyWith(subtitle: value)),
                   ),
                   const SizedBox(height: 8),
                   Row(
@@ -296,7 +300,7 @@ class _LinkCard extends StatelessWidget {
                       Expanded(
                         child: TextFormField(
                           focusNode: _urlFocus,
-                          initialValue: content.url,
+                          initialValue: widget.content.url,
                           decoration: InputDecoration(
                             hintText: 'example.com',
                             hintStyle: TextStyle(
@@ -322,7 +326,7 @@ class _LinkCard extends StatelessWidget {
                             filled: true,
                             contentPadding: const EdgeInsets.symmetric(vertical: 8.0),
                           ),
-                          onChanged: (value) => onUpdate(content.copyWith(url: value)),
+                          onChanged: (value) => widget.onUpdate(widget.content.copyWith(url: value)),
                         ),
                       ),
                     ],
@@ -334,9 +338,9 @@ class _LinkCard extends StatelessWidget {
             Column(
               children: [
                 LinkImageUpload(
-                  currentImageUrl: content.imageUrl,
-                  linkId: content.id,
-                  onImageUploaded: (url) => onUpdate(content.copyWith(imageUrl: url)),
+                  currentImageUrl: widget.content.imageUrl,
+                  linkId: widget.content.id,
+                  onImageUploaded: (url) => widget.onUpdate(widget.content.copyWith(imageUrl: url)),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -345,8 +349,8 @@ class _LinkCard extends StatelessWidget {
                     Transform.scale(
                       scale: 0.7,
                       child: Switch(
-                        value: content.isVisible,
-                        onChanged: (value) => onUpdate(content.copyWith(isVisible: value)),
+                        value: widget.content.isVisible,
+                        onChanged: (value) => widget.onUpdate(widget.content.copyWith(isVisible: value)),
                         activeColor: isDarkMode ? Colors.white : Colors.black,
                         activeTrackColor: isDarkMode ? const Color(0xFF121212) : Colors.white,
                         inactiveThumbColor: isDarkMode ? Colors.white : Colors.black,
@@ -371,7 +375,21 @@ class _LinkCard extends StatelessWidget {
                             ],
                           ),
                           onTap: () {
-                            // TODO: Implement analytics
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text('Coming Soon!'),
+                                  content: const Text('Analytics feature will be available in future updates. Stay tuned!'),
+                                  actions: [
+                                    TextButton(
+                                      child: const Text('OK'),
+                                      onPressed: () => Navigator.pop(context),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            });
                           },
                         ),
                         PopupMenuItem(
@@ -383,7 +401,21 @@ class _LinkCard extends StatelessWidget {
                             ],
                           ),
                           onTap: () {
-                            // TODO: Implement animation settings
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text('Coming Soon!'),
+                                  content: const Text('Animation settings will be available in future updates. Stay tuned!'),
+                                  actions: [
+                                    TextButton(
+                                      child: const Text('OK'),
+                                      onPressed: () => Navigator.pop(context),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            });
                           },
                         ),
                         PopupMenuItem(
@@ -395,7 +427,7 @@ class _LinkCard extends StatelessWidget {
                             ],
                           ),
                           onTap: () {
-                            onDelete();
+                            widget.onDelete();
                           },
                         ),
                       ],

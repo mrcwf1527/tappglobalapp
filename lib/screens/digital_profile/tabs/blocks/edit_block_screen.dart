@@ -356,22 +356,37 @@ class _LayoutsTabState extends State<_LayoutsTab> {
   ];
 
   Widget _buildAspectRatioIcon(double ratio) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final containerSize = 32.0;
+
     return Container(
-      width: 32,
-      height: 32,
+      width: containerSize,
+      height: containerSize,  // Fixed height
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade400),
+        border: Border.all(
+          color: isDarkMode ? Colors.grey.shade600 : Colors.grey.shade300,
+          width: 1,
+        ),
         borderRadius: BorderRadius.circular(4),
       ),
       padding: const EdgeInsets.all(4),
-      child: AspectRatio(
-        aspectRatio: ratio,
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.grey.shade400,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final maxWidth = constraints.maxWidth;
+          final width = ratio >= 1 ? maxWidth : maxWidth * ratio;
+          final height = ratio >= 1 ? maxWidth / ratio : maxWidth;
+        
+          return Center(
+            child: Container(
+              width: width,
+              height: height,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade400,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -379,38 +394,51 @@ class _LayoutsTabState extends State<_LayoutsTab> {
   void _showAspectRatioModal(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.background, // Dark in dark mode
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (context) => SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: aspectRatios.map((option) => InkWell(
-            onTap: () {
-              setState(() {
-                selectedAspectRatio = option.value;
-              });
-              widget.onLayoutChanged(selectedLayout, option.value);
-              Navigator.pop(context);
-            },
-            child: Container(
-              color: selectedAspectRatio == option.value 
-                ? Colors.blue.withAlpha((0.1 * 255).toInt())
-                : null,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                children: [
-                  _buildAspectRatioIcon(option.ratio),
-                  const SizedBox(width: 12),
-                  Text(option.label),
-                  const Spacer(),
-                  if (selectedAspectRatio == option.value)
-                    const Icon(Icons.check, color: Colors.blue),
-                ],
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.background,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            children: aspectRatios.map((option) => InkWell(
+              onTap: () {
+                setState(() {
+                  selectedAspectRatio = option.value;
+                });
+                widget.onLayoutChanged(selectedLayout, option.value);
+                Navigator.pop(context);
+              },
+              child: Container(
+                color: selectedAspectRatio == option.value 
+                  ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+                  : null,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  children: [
+                    _buildAspectRatioIcon(option.ratio),
+                    const SizedBox(width: 12),
+                    Text(
+                      option.label,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onBackground,
+                      ),
+                    ),
+                    const Spacer(),
+                    if (selectedAspectRatio == option.value)
+                      Icon(
+                        Icons.check,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                  ],
+                ),
               ),
-            ),
-          )).toList(),
+            )).toList(),
+          ),
         ),
       ),
     );
@@ -430,9 +458,9 @@ class _LayoutsTabState extends State<_LayoutsTab> {
     ]);
   }
 
-
   @override
   Widget build(BuildContext context) {
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -490,7 +518,10 @@ class _LayoutsTabState extends State<_LayoutsTab> {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
+                      border: Border.all(
+                        color: Colors.grey.shade600,  // Same as unselected layout
+                        width: 1,  // Same as unselected layout
+                      ),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
@@ -720,7 +751,9 @@ class _LayoutOption extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           border: Border.all(
-            color: isSelected ? Colors.black : Colors.grey.shade300,
+            color: isSelected 
+              ? Theme.of(context).colorScheme.onBackground  // White in dark mode
+              : Colors.grey.shade600,  // Darker grey in dark mode
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(8),
@@ -730,7 +763,9 @@ class _LayoutOption extends StatelessWidget {
             Icon(
               icon,
               size: 24,
-              color: isSelected ? Colors.black : Colors.grey,
+              color: isSelected 
+                ? Theme.of(context).colorScheme.onBackground  // White in dark mode
+                : Colors.grey.shade600,  // Darker grey in dark mode
             ),
             const SizedBox(height: 8),
             Text(
@@ -738,7 +773,9 @@ class _LayoutOption extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                color: isSelected ? Colors.black : Colors.grey,
+                color: isSelected 
+                  ? Theme.of(context).colorScheme.onBackground  // White in dark mode
+                  : Colors.grey.shade600,  // Darker grey in dark mode
               ),
             ),
           ],
@@ -761,6 +798,8 @@ class _AlignmentOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -769,15 +808,21 @@ class _AlignmentOption extends StatelessWidget {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           border: Border.all(
-            color: isSelected ? Colors.black : Colors.grey.shade300,
+            color: isDarkMode 
+              ? (isSelected ? Colors.white : Colors.grey.shade600)
+              : (isSelected ? Colors.black : Colors.grey.shade600),
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(8),
-          color: isSelected ? Colors.black : Colors.transparent,
+          color: isDarkMode
+            ? (isSelected ? Colors.white : Colors.transparent)
+            : (isSelected ? Colors.black : Colors.transparent),
         ),
         child: Icon(
           icon,
-          color: isSelected ? Colors.white : Colors.black,
+          color: isDarkMode
+            ? (isSelected ? Color(0xFF121212) : Colors.grey.shade600)
+            : (isSelected ? Colors.white : Colors.black),
         ),
       ),
     );
@@ -799,13 +844,17 @@ class _VisibilityOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           border: Border.all(
-            color: isSelected ? Colors.black : Colors.grey.shade300,
+            color: isDarkMode
+              ? (isSelected ? Colors.white : Colors.grey.shade600)
+              : (isSelected ? Colors.black : Colors.grey.shade300),
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(8),
@@ -815,13 +864,19 @@ class _VisibilityOption extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade300),
+                border: Border.all(
+                  color: isDarkMode
+                    ? Colors.grey.shade600
+                    : Colors.grey.shade300,
+                ),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
                 icon,
                 size: 24,
-                color: isSelected ? Colors.black : Colors.grey,
+                color: isDarkMode
+                  ? (isSelected ? Colors.white : Colors.grey.shade600)
+                  : (isSelected ? Colors.black : Colors.grey),
               ),
             ),
             const SizedBox(height: 8),
@@ -830,7 +885,9 @@ class _VisibilityOption extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                color: isSelected ? Colors.black : Colors.grey,
+                color: isDarkMode
+                  ? (isSelected ? Colors.white : Colors.grey.shade600)
+                  : (isSelected ? Colors.black : Colors.grey),
               ),
             ),
           ],
