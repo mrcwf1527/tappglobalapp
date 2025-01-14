@@ -12,6 +12,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 import '../../../models/block.dart';
 import '../../../models/country_code.dart';
+import '../../../models/social_platform.dart';
 import '../../../providers/digital_profile_provider.dart';
 import '../../selectors/country_code_selector.dart';
 import 'package:phone_numbers_parser/phone_numbers_parser.dart';
@@ -63,6 +64,8 @@ class _ContactBlockState extends State<ContactBlock> {
 
   void _initializeContacts() {
     final content = widget.block.contents.firstOrNull;
+    final provider = Provider.of<DigitalProfileProvider>(context, listen: false);
+    final profileData = provider.profileData;
 
     // If content exists but fields are empty, it's a new block
     final isNewBlock = content == null || 
@@ -72,35 +75,53 @@ class _ContactBlockState extends State<ContactBlock> {
 
     if (isNewBlock) {
       // New block - pull data from digital profile
-      final provider = Provider.of<DigitalProfileProvider>(context, listen: false);
-      final profileData = provider.profileData;
+      try {
+        final phones = _extractPhoneNumbers(profileData.socialPlatforms);
+        final emails = _extractEmails(profileData.socialPlatforms);
 
-      final newContent = BlockContent(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        title: '',
-        url: '',
-        firstName: profileData.displayName,
-        jobTitle: profileData.jobTitle,
-        companyName: profileData.companyName,
-        metadata: {
-          'phones': [],
-          'emails': [],
+        final newContent = BlockContent(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          title: '',
+          url: '',
+          firstName: profileData.displayName,
+          jobTitle: profileData.jobTitle,
+          companyName: profileData.companyName,
+          metadata: {
+            'phones': [],
+            'emails': [],
+          }
+        );
+
+        // Update UI first
+        setState(() {
+          _firstNameController.text = profileData.displayName ?? '';
+          _jobTitleController.text = profileData.jobTitle ?? '';
+          _companyNameController.text = profileData.companyName ?? '';
+
+          // Initialize phone controllers
+          for (var phone in phones) {
+            final id = phone['id'] as String;
+            final dialCode = phone['dialCode'] as String;
+            final number = _stripCountryCode(phone['number'] as String, dialCode);
+            _phoneControllers[id] = TextEditingController(text: number);
+            _countryNotifiers[id] = ValueNotifier(
+              CountryCodes.findByCode(phone['countryCode']) ?? CountryCodes.getDefault()
+            );
+          }
+
+          for (var email in emails) {
+            final id = email['id'] as String;
+            _emailControllers[id] = TextEditingController(text: email['address']);
+          }
+        });
+
+        _updateBlock(newContent);
+
+        if (profileData.profileImageUrl?.isNotEmpty == true) {
+          _processProfileImage(profileData.profileImageUrl!, newContent.id);
         }
-      );
-
-      // Update UI first
-      setState(() {
-        _firstNameController.text = profileData.displayName ?? '';
-        _jobTitleController.text = profileData.jobTitle ?? '';
-        _companyNameController.text = profileData.companyName ?? '';
-      });
-
-      // Then update block
-      _updateBlock(newContent);
-
-      // If profile image exists, process it
-      if (profileData.profileImageUrl?.isNotEmpty == true) {
-        _processProfileImage(profileData.profileImageUrl!, newContent.id);
+      } catch (e) {
+        debugPrint('Error initializing contacts: $e');
       }
       return;
     }
@@ -129,6 +150,13 @@ class _ContactBlockState extends State<ContactBlock> {
         _emailControllers[id] = TextEditingController(text: email['address']);
       }
     });
+  }
+
+  String _stripCountryCode(String phoneNumber, String dialCode) {
+    if (phoneNumber.startsWith(dialCode)) {
+      return phoneNumber.substring(dialCode.length).trim();
+    }
+    return phoneNumber;
   }
 
   Future<void> _processProfileImage(String sourceUrl, String contentId) async {
@@ -182,6 +210,49 @@ class _ContactBlockState extends State<ContactBlock> {
       if (mounted) {
         setState(() => _isUploading = false);
       }
+    }
+  }
+
+  List<Map<String, dynamic>> _extractPhoneNumbers(List<SocialPlatform> platforms) {
+    final phoneOrder = ['phone', 'sms', 'whatsapp', 'viber', 'zalo'];
+    final phones = <Map<String, dynamic>>[];
+  
+    for (var platformId in phoneOrder) {
+      // Changed to handle orElse case differently
+      try {
+        final platform = platforms.firstWhere(
+          (p) => p.id == platformId && p.value != null && p.value!.isNotEmpty,
+        );
+    
+        phones.add({
+          'id': DateTime.now().millisecondsSinceEpoch.toString(),
+          'number': platform.value!,
+          'countryCode': 'MY',
+          'dialCode': '+60',
+          'isPrimary': phones.isEmpty
+        });
+      } catch (e) {
+        // Skip if platform not found
+        continue;
+      }
+    }
+  
+    return phones;
+  }
+
+  List<Map<String, dynamic>> _extractEmails(List<SocialPlatform> platforms) {
+    try {
+      final emailPlatform = platforms.firstWhere(
+        (p) => p.id == 'email' && p.value != null && p.value!.isNotEmpty,
+      );
+  
+      return [{
+        'id': DateTime.now().millisecondsSinceEpoch.toString(),
+        'address': emailPlatform.value!,
+        'isPrimary': true
+      }];
+    } catch (e) {
+      return [];
     }
   }
 
@@ -716,6 +787,11 @@ Future<void> _handleCroppedImage(Uint8List croppedBytes) async {
     required int index,
     required bool isDarkMode,
   }) {
+    // Set initial stripped value
+    if (controller.text.startsWith(countryNotifier.value.dialCode)) {
+      controller.text = _stripCountryCode(controller.text, countryNotifier.value.dialCode);
+    }
+
     return Container(
       key: key,
       margin: const EdgeInsets.only(bottom: 8),
@@ -747,14 +823,35 @@ Future<void> _handleCroppedImage(Uint8List croppedBytes) async {
                 ),
                 prefixText: '${countryNotifier.value.dialCode} ',
               ),
-              onChanged: (value) => _debouncer.run(() => _updateContent()),
+              onChanged: (value) => _debouncer.run(() {
+                // Save with country code
+                final fullNumber = '${countryNotifier.value.dialCode}$value';
+                final currentPhones = _phoneControllers.entries.map((entry) {
+                  final id = entry.key;
+                  final controller = entry.value;
+                  final countryCode = _countryNotifiers[id]!.value;
+                  return {
+                    'id': id,
+                    'number': id == id ? fullNumber : '${countryCode.dialCode}${controller.text}',
+                    'countryCode': countryCode.code,
+                    'dialCode': countryCode.dialCode,
+                    'isPrimary': _phoneControllers.keys.first == id,
+                  };
+                }).toList();
+
+                _updateContent(metadata: {
+                  ...widget.block.contents.first.metadata ?? {},
+                  'phones': currentPhones,
+                });
+              }),
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Phone number is required';
                 }
                 try {
+                  final fullNumber = '${countryNotifier.value.dialCode}$value';
                   final phoneNumber = PhoneNumber.parse(
-                    value,
+                    fullNumber,
                     destinationCountry: IsoCode.values.firstWhere(
                       (code) => code.name == countryNotifier.value.code.toUpperCase()
                     ),

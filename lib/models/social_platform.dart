@@ -29,7 +29,7 @@ class SocialPlatform {
   const SocialPlatform({
     required this.id,
     required this.name,
-    this.icon,
+    this.icon = FontAwesomeIcons.link,
     this.imagePath,
     this.placeholder,
     this.prefix,
