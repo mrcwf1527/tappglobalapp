@@ -305,7 +305,7 @@ class _DigitalProfileMobileLayout extends StatelessWidget {
                       ],
                     ),
                   ),
-                  _buildPopupMenu(profile, context), // Moved to end
+                  _buildPopupMenu(profile, context),
                 ],
               ),
               const SizedBox(height: 16),
@@ -586,7 +586,7 @@ class _DigitalProfileDesktopLayout extends StatelessWidget {
 
   Widget _buildPopupMenu(DigitalProfileData profile, BuildContext context) {
     return Align(
-      alignment: Alignment.topRight, // Changed from topLeft
+      alignment: Alignment.topRight,
       child:  PopupMenuButton<String>(
           icon: const Icon(Icons.more_vert),
           onSelected: (String result) {

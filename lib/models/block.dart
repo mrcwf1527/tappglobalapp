@@ -32,7 +32,7 @@ class Block {
   final int sequence;
   final bool? isVisible;
   final BlockLayout layout;
-  final String? aspectRatio;  // Only used when layout is carousel
+  final String? aspectRatio;
   final TextAlignment? textAlignment;
   final bool? isCollapsed;
 

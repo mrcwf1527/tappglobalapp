@@ -22,7 +22,7 @@ class _AuthScreenState extends State<AuthScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _authService = AuthService();
-  
+
   bool _isLoading = false;
   bool _isLogin = true;
   bool _obscurePassword = true;
@@ -46,8 +46,8 @@ class _AuthScreenState extends State<AuthScreen> {
                 children: [
                   Image.asset(
                     Theme.of(context).brightness == Brightness.dark
-                      ? 'assets/logo/logo_white.png'
-                      : 'assets/logo/logo_black.png',
+                        ? 'assets/logo/logo_white.png'
+                        : 'assets/logo/logo_black.png',
                     width: 120,
                     height: 120,
                   ),
@@ -55,11 +55,11 @@ class _AuthScreenState extends State<AuthScreen> {
                   Text(
                     _isLogin ? 'Welcome to TAPP!' : 'Create Account',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.white
-                        : Colors.black,
-                    ),
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white
+                              : Colors.black,
+                        ),
                   ),
                   const SizedBox(height: 24),
                   Form(
@@ -81,11 +81,14 @@ class _AuthScreenState extends State<AuthScreen> {
                           obscureText: _obscurePassword,
                           errorText: _passwordError,
                           suffixIcon: IconButton(
-                            icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
-                            onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                            icon: Icon(_obscurePassword
+                                ? Icons.visibility_off
+                                : Icons.visibility),
+                            onPressed: () =>
+                                setState(() => _obscurePassword = !_obscurePassword),
                           ),
                         ),
-                        if (!_isLogin) 
+                        if (!_isLogin)
                           Padding(
                             padding: const EdgeInsets.only(top: 16),
                             child: _buildTextField(
@@ -95,8 +98,12 @@ class _AuthScreenState extends State<AuthScreen> {
                               obscureText: _obscureConfirmPassword,
                               errorText: _confirmPasswordError,
                               suffixIcon: IconButton(
-                                icon: Icon(_obscureConfirmPassword ? Icons.visibility_off : Icons.visibility),
-                                onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                                icon: Icon(_obscureConfirmPassword
+                                    ? Icons.visibility_off
+                                    : Icons.visibility),
+                                onPressed: () => setState(() =>
+                                    _obscureConfirmPassword =
+                                        !_obscureConfirmPassword),
                               ),
                             ),
                           ),
@@ -108,13 +115,14 @@ class _AuthScreenState extends State<AuthScreen> {
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
-                        onPressed: () => Navigator.pushNamed(context, '/forgot-password'),
+                        onPressed: () =>
+                            Navigator.pushNamed(context, '/forgot-password'),
                         child: Text(
                           'Forgot Password?',
                           style: TextStyle(
                             color: Theme.of(context).brightness == Brightness.dark
-                              ? Colors.white
-                              : Colors.black87,
+                                ? Colors.white
+                                : Colors.black87,
                           ),
                         ),
                       ),
@@ -123,33 +131,36 @@ class _AuthScreenState extends State<AuthScreen> {
                   ElevatedButton(
                     onPressed: _isLoading ? null : _handleSubmit,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).brightness == Brightness.dark
-                        ? const Color(0xFF252525)
-                        : Colors.black,
+                      backgroundColor:
+                          Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFF252525)
+                              : Colors.black,
                       minimumSize: const Size(double.infinity, 50),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                         side: Theme.of(context).brightness == Brightness.dark
-                          ? const BorderSide(color: Colors.white24)
-                          : BorderSide.none,
+                            ? const BorderSide(color: Colors.white24)
+                            : BorderSide.none,
                       ),
                     ),
                     child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : Text(
-                          _isLogin ? 'Sign In' : 'Sign Up',
-                          style: const TextStyle(color: Colors.white),
-                        ),
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : Text(
+                            _isLogin ? 'Sign In' : 'Sign Up',
+                            style: const TextStyle(color: Colors.white),
+                          ),
                   ),
                   const SizedBox(height: 16),
                   TextButton(
                     onPressed: () => setState(() => _isLogin = !_isLogin),
                     child: Text(
-                      _isLogin ? "Don't have an account? Sign Up" : 'Already have an account? Sign In',
+                      _isLogin
+                          ? "Don't have an account? Sign Up"
+                          : 'Already have an account? Sign In',
                       style: TextStyle(
                         color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.white
-                          : Colors.black87,
+                            ? Colors.white
+                            : Colors.black87,
                       ),
                     ),
                   ),
@@ -187,11 +198,13 @@ class _AuthScreenState extends State<AuthScreen> {
                           style: TextStyle(
                             fontSize: 14,
                             color: Theme.of(context).brightness == Brightness.dark
-                              ? Colors.white70
-                              : Colors.black87,
+                                ? Colors.white70
+                                : Colors.black87,
                           ),
                           children: [
-                            const TextSpan(text: 'By signing up, you are agreeing to our '),
+                            const TextSpan(
+                                text:
+                                    'By signing up, you are agreeing to our '),
                             TextSpan(
                               text: 'Terms of Service',
                               style: const TextStyle(
@@ -199,7 +212,8 @@ class _AuthScreenState extends State<AuthScreen> {
                                 fontWeight: FontWeight.w500,
                               ),
                               recognizer: TapGestureRecognizer()
-                                ..onTap = () => _launchURL('https://tappglobal.app/tnc'),
+                                ..onTap = () =>
+                                    _launchURL('https://tappglobal.app/tnc'),
                             ),
                             const TextSpan(text: ' and '),
                             TextSpan(
@@ -209,7 +223,8 @@ class _AuthScreenState extends State<AuthScreen> {
                                 fontWeight: FontWeight.w500,
                               ),
                               recognizer: TapGestureRecognizer()
-                                ..onTap = () => _launchURL('https://tappglobal.app/policyPrivacy'),
+                                ..onTap = () => _launchURL(
+                                    'https://tappglobal.app/policyPrivacy'),
                             ),
                           ],
                         ),
@@ -249,7 +264,8 @@ class _AuthScreenState extends State<AuthScreen> {
               setState(() {
                 _passwordError = _validatePassword(value);
                 if (!_isLogin && _confirmPasswordController.text.isNotEmpty) {
-                  _confirmPasswordError = _validateConfirmPassword(_confirmPasswordController.text);
+                  _confirmPasswordError =
+                      _validateConfirmPassword(_confirmPasswordController.text);
                 }
               });
             } else if (hintText == 'Confirm Password') {
@@ -263,68 +279,65 @@ class _AuthScreenState extends State<AuthScreen> {
             }
           },
           style: TextStyle(
-            color: isError 
-              ? Colors.red 
-              : (isDark ? Colors.white : Colors.black)
+            color: isError
+                ? Colors.red
+                : (isDark ? Colors.white : Colors.black),
           ),
           decoration: InputDecoration(
             hintText: hintText,
             hintStyle: TextStyle(
-              color: isError 
-                ? Colors.red.withAlpha(179)
-                : (isDark ? Colors.white.withAlpha(179) : Colors.black54)
-            ),
+                color: isError
+                    ? Colors.red.withAlpha(179)
+                    : (isDark ? Colors.white.withAlpha(179) : Colors.black54)),
             prefixIcon: IconTheme(
               data: IconThemeData(
-                color: isError 
-                ? Colors.red 
-                : (isDark ? Colors.white : Colors.black54)
-              ),
+                  color: isError
+                      ? Colors.red
+                      : (isDark ? Colors.white : Colors.black54)),
               child: prefixIcon,
             ),
-            suffixIcon: suffixIcon != null 
-              ? IconTheme(
-                  data: IconThemeData(
-                    color: isError 
-                      ? Colors.red 
-                      : (isDark ? Colors.white : Colors.black54)
-                  ),
-                  child: suffixIcon,
-                )
-              : null,
+            suffixIcon: suffixIcon != null
+                ? IconTheme(
+                    data: IconThemeData(
+                        color: isError
+                            ? Colors.red
+                            : (isDark ? Colors.white : Colors.black54)),
+                    child: suffixIcon,
+                  )
+                : null,
             filled: true,
             fillColor: Theme.of(context).brightness == Brightness.dark
-              ? const Color(0xFF121212)
-              : Colors.grey[50],
+                ? const Color(0xFF121212)
+                : Colors.grey[50],
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(
                 color: isError
-                  ? Colors.red
-                  : (Theme.of(context).brightness == Brightness.dark
-                      ? const Color(0xFF232323)
-                      : Colors.grey[900]!),
+                    ? Colors.red
+                    : (Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF232323)
+                        : Colors.grey[900]!),
               ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(
                 color: isError
-                  ? Colors.red
-                  : (Theme.of(context).brightness == Brightness.dark
-                      ? const Color(0xFF232323)
-                      : Colors.grey[900]!),
+                    ? Colors.red
+                    : (Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF232323)
+                        : Colors.grey[900]!),
               ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(
                 color: isError
-                  ? Colors.red
-                  : (Theme.of(context).brightness == Brightness.dark
-                      ? const Color(0xFF232323)
-                      : Colors.black),
-                width: 2
+                    ? Colors.red
+                    : (Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF232323)
+                        : Colors.black),
+                width: 2,
               ),
             ),
           ),
@@ -334,10 +347,7 @@ class _AuthScreenState extends State<AuthScreen> {
             padding: const EdgeInsets.only(top: 6, left: 12),
             child: Text(
               errorText,
-              style: TextStyle(
-                color: Colors.red,
-                fontSize: 12
-              ),
+              style: const TextStyle(color: Colors.red, fontSize: 12),
             ),
           ),
       ],
@@ -382,7 +392,7 @@ class _AuthScreenState extends State<AuthScreen> {
               SnackBar(
                 content: Text(
                   e.message ?? 'Authentication failed',
-                  style: const TextStyle(color: Colors.white), 
+                  style: const TextStyle(color: Colors.white),
                 ),
                 backgroundColor: Colors.red,
               ),
@@ -406,34 +416,34 @@ class _AuthScreenState extends State<AuthScreen> {
       },
       style: OutlinedButton.styleFrom(
         backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? const Color(0xFF252525)
-          : Colors.white,
+            ? const Color(0xFF252525)
+            : Colors.white,
         foregroundColor: Theme.of(context).brightness == Brightness.dark
-          ? Colors.white
-          : Colors.black,
+            ? Colors.white
+            : Colors.black,
         minimumSize: const Size(double.infinity, 50),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
         ),
         side: BorderSide(
           color: Theme.of(context).brightness == Brightness.dark
-            ? Colors.white24
-            : Colors.grey,
+              ? Colors.white24
+              : Colors.grey,
         ),
       ),
       icon: FaIcon(icon, size: 18),
-      label: _isLoading ? 
-        SizedBox(
-          height: 20,
-          width: 20,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.white
-              : Colors.black,
-          ),
-        ) : 
-        Text(text),
+      label: _isLoading
+          ? SizedBox(
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white
+                    : Colors.black,
+              ),
+            )
+          : Text(text),
     );
   }
 
@@ -496,7 +506,8 @@ class _AuthScreenState extends State<AuthScreen> {
     if (passwordError != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(passwordError, style: const TextStyle(color: Colors.white)),
+          content:
+              Text(passwordError, style: const TextStyle(color: Colors.white)),
           backgroundColor: Colors.red,
         ),
       );
@@ -505,12 +516,14 @@ class _AuthScreenState extends State<AuthScreen> {
 
     // Confirm password validation
     if (!_isLogin) {
-      final confirmPasswordError = _validateConfirmPassword(_confirmPasswordController.text);
+      final confirmPasswordError =
+          _validateConfirmPassword(_confirmPasswordController.text);
       setState(() => _confirmPasswordError = confirmPasswordError);
       if (confirmPasswordError != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(confirmPasswordError, style: const TextStyle(color: Colors.white)),
+            content: Text(confirmPasswordError,
+                style: const TextStyle(color: Colors.white)),
             backgroundColor: Colors.red,
           ),
         );

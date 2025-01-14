@@ -274,7 +274,8 @@ class CountryCodes {
     CountryCode(name: 'Zimbabwe', code: 'ZW', dialCode: '+263'),
   ];
 
-  static CountryCode getDefault() => codes.firstWhere((code) => code.code == 'AE');
+  static CountryCode getDefault() =>
+      codes.firstWhere((code) => code.code == 'AE');
 
   static CountryCode? findByCode(String code) {
     try {

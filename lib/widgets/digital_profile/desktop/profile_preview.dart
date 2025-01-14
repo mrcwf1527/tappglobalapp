@@ -41,7 +41,8 @@ class _ProfilePreviewState extends State<ProfilePreview> {
               borderRadius: BorderRadius.circular(32),
               child: SizedBox(
                 height: 812, // Fixed height for phone ratio
-                child: SingleChildScrollView( // Enable scroll if content overflows
+                child: SingleChildScrollView(
+                  // Enable scroll if content overflows
                   child: Column(
                     children: [
                       _buildHeader(data),
@@ -118,7 +119,7 @@ class _ProfilePreviewState extends State<ProfilePreview> {
               width: double.infinity,
               height: double.infinity,
               fit: BoxFit.cover,
-              ),
+            ),
     );
   }
 
@@ -161,7 +162,6 @@ class _ProfilePreviewState extends State<ProfilePreview> {
     );
   }
 
-
   Widget _buildProfileImage(Map<String, dynamic> data, double radius) {
     return Container(
       decoration: BoxDecoration(
@@ -170,9 +170,11 @@ class _ProfilePreviewState extends State<ProfilePreview> {
       ),
       child: CircleAvatar(
         radius: radius,
-        backgroundImage: data['profileImageUrl'] != null && data['profileImageUrl'].isNotEmpty
+        backgroundImage: data['profileImageUrl'] != null &&
+                data['profileImageUrl'].isNotEmpty
             ? NetworkImage(data['profileImageUrl'])
-            : AssetImage('assets/images/empty_profile_image.png') as ImageProvider,
+            : AssetImage('assets/images/empty_profile_image.png')
+                as ImageProvider,
         backgroundColor: Colors.white,
       ),
     );
@@ -186,9 +188,11 @@ class _ProfilePreviewState extends State<ProfilePreview> {
       ),
       child: CircleAvatar(
         radius: radius,
-        backgroundImage: data['companyImageUrl'] != null && data['companyImageUrl'].isNotEmpty
+        backgroundImage: data['companyImageUrl'] != null &&
+                data['companyImageUrl'].isNotEmpty
             ? NetworkImage(data['companyImageUrl'])
-            : AssetImage('assets/images/empty_company_image.png') as ImageProvider,
+            : AssetImage('assets/images/empty_company_image.png')
+                as ImageProvider,
         backgroundColor: Colors.white,
       ),
     );
@@ -220,7 +224,8 @@ class _ProfilePreviewState extends State<ProfilePreview> {
                   style: const TextStyle(color: Colors.white70, fontSize: 16),
                   textAlign: TextAlign.center,
                 ),
-                if (data['companyName'] != null && data['companyName'].isNotEmpty) ...[
+                if (data['companyName'] != null &&
+                    data['companyName'].isNotEmpty) ...[
                   Text(
                     ' at ',
                     style: const TextStyle(color: Colors.white70, fontSize: 16),
@@ -300,10 +305,11 @@ class _ProfilePreviewState extends State<ProfilePreview> {
     );
   }
 
-  Future<void> _launchSocialLink(Map<String, dynamic> platform, BuildContext context) async {
+  Future<void> _launchSocialLink(
+      Map<String, dynamic> platform, BuildContext context) async {
     String url = '';
     final value = platform['value'];
-    
+
     if (value == null || value.isEmpty) return;
 
     switch (platform['id']) {
@@ -322,7 +328,7 @@ class _ProfilePreviewState extends State<ProfilePreview> {
       case 'address':
         url = value.startsWith('http') ? value : 'https://$value';
         break;
-       case 'red':
+      case 'red':
         url = value.startsWith('http') ? value : 'https://$value';
         break;
       case 'lemon8':
@@ -347,7 +353,8 @@ class _ProfilePreviewState extends State<ProfilePreview> {
         if (!mounted) return;
         scaffoldMessenger.showSnackBar(
           SnackBar(
-            content: Text('${platform['id'].toString().toUpperCase()} ID copied to clipboard'),
+            content:
+                Text('${platform['id'].toString().toUpperCase()} ID copied to clipboard'),
             duration: const Duration(seconds: 2),
             behavior: SnackBarBehavior.floating,
           ),
@@ -384,7 +391,7 @@ class _ProfilePreviewState extends State<ProfilePreview> {
       case 'linkedin':
         url = 'https://$value';
         break;
-       case 'tiktok':
+      case 'tiktok':
         url = 'https://tiktok.com/@$value';
         break;
       case 'threads':
@@ -399,16 +406,16 @@ class _ProfilePreviewState extends State<ProfilePreview> {
       case 'tumblr':
         url = 'https://tumblr.com/$value';
         break;
-       case 'linkedin_company':
+      case 'linkedin_company':
         url = 'https://$value';
         break;
       case 'mastodon':
         url = 'https://mastodon.social/@$value';
         break;
-       case 'bluesky':
+      case 'bluesky':
         url = 'https://$value';
         break;
-       case 'pinterest':
+      case 'pinterest':
         url = 'https://pinterest.com/$value';
         break;
       case 'appStore':
@@ -432,13 +439,13 @@ class _ProfilePreviewState extends State<ProfilePreview> {
       case 'steam':
         url = 'https://steamcommunity.com/id/$value';
         break;
-       case 'reddit':
+      case 'reddit':
         url = 'https://reddit.com/user/$value';
         break;
       case 'googleReviews':
         url = 'https://$value';
         break;
-      case 'shopee':
+       case 'shopee':
         url = 'https://$value';
         break;
        case 'lazada':
@@ -456,13 +463,13 @@ class _ProfilePreviewState extends State<ProfilePreview> {
       case 'dribbble':
         url = 'https://dribbble.com/$value';
         break;
-      case 'googlePlay':
+       case 'googlePlay':
         url = 'https://$value';
         break;
-      case 'weibo':
+       case 'weibo':
         url = 'https://$value';
         break;
-      case 'naver':
+       case 'naver':
         url = 'https://$value';
         break;
     }
@@ -476,7 +483,7 @@ class _ProfilePreviewState extends State<ProfilePreview> {
   Future<void> _copyToClipboard(String text) async {
     await Clipboard.setData(ClipboardData(text: text));
   }
-  
+
   Widget _buildActionButtons(Map<String, dynamic> data) {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -507,7 +514,8 @@ class _ProfilePreviewState extends State<ProfilePreview> {
               const SizedBox(height: 16),
               if (data['phone'] != null)
                 OutlinedButton.icon(
-                  onPressed: () => _launchSocialLink({'id': 'phone', 'value': data['phone']}, context),
+                  onPressed: () =>
+                      _launchSocialLink({'id': 'phone', 'value': data['phone']}, context),
                   icon: const Icon(Icons.phone),
                   label: const Text('Call me'),
                   style: OutlinedButton.styleFrom(
@@ -522,7 +530,8 @@ class _ProfilePreviewState extends State<ProfilePreview> {
               const SizedBox(height: 16),
               if (data['email'] != null)
                 OutlinedButton.icon(
-                  onPressed: () => _launchSocialLink({'id': 'email', 'value': data['email']}, context),
+                  onPressed: () =>
+                      _launchSocialLink({'id': 'email', 'value': data['email']}, context),
                   icon: const Icon(Icons.email),
                   label: const Text('Email me'),
                   style: OutlinedButton.styleFrom(

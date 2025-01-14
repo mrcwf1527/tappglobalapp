@@ -9,6 +9,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../models/social_platform.dart';
+import '../../../models/block.dart';
 
 enum ProfileLayout {
   classic,
@@ -65,7 +66,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
       final profileId = usernameDoc.get('profileId');
       debugPrint('Profile ID: $profileId');
 
-       final historyRef = FirebaseFirestore.instance
+      final historyRef = FirebaseFirestore.instance
           .collection('profileViewHistory')
           .doc();
 
@@ -83,23 +84,23 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
       });
 
 
-    final viewsRef = FirebaseFirestore.instance
+      final viewsRef = FirebaseFirestore.instance
           .collection('profileViews')
           .doc(profileId);
 
-    final docSnapshot = await viewsRef.get();
-          if (!docSnapshot.exists) {
+      final docSnapshot = await viewsRef.get();
+      if (!docSnapshot.exists) {
         await viewsRef.set({
-            'views': 1,
-            'lastViewed': FieldValue.serverTimestamp(),
-          });
-           debugPrint('Profile view tracked successfully for profileId: $profileId and document was created');
+          'views': 1,
+          'lastViewed': FieldValue.serverTimestamp(),
+        });
+        debugPrint('Profile view tracked successfully for profileId: $profileId and document was created');
       } else {
-           await viewsRef.update({
-            'views': FieldValue.increment(1),
-            'lastViewed': FieldValue.serverTimestamp(),
-          });
-         debugPrint('Profile view tracked successfully for profileId: $profileId and document was updated');
+        await viewsRef.update({
+          'views': FieldValue.increment(1),
+          'lastViewed': FieldValue.serverTimestamp(),
+        });
+        debugPrint('Profile view tracked successfully for profileId: $profileId and document was updated');
       }
     } catch (e) {
       debugPrint('Error tracking profile view: $e');
@@ -107,85 +108,145 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   }
 
   @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    backgroundColor: Colors.black,
-    body: FutureBuilder<DocumentSnapshot>(
-      future: _profileFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: FutureBuilder<DocumentSnapshot>(
+        future: _profileFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-        if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        }
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
 
-        final data = snapshot.data!.data() as Map<String, dynamic>;
+          final data = snapshot.data!.data() as Map<String, dynamic>;
 
-        return Align(
-          alignment: Alignment.topCenter,
-          child: SingleChildScrollView(
-            child: Container(
-              constraints: BoxConstraints(
-                maxWidth: 500,
-                minHeight: MediaQuery.of(context).size.height
-              ),
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: const Color(0xFF0E0E0E),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withAlpha(26),
-                    blurRadius: 10,
-                    spreadRadius: 0,
-                    offset: const Offset(0, 0),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  _buildHeader(data),
-                  const SizedBox(height: 24),
-                  _buildMainContent(data),
-                  _buildActionButtons(data),
-                  const SizedBox(height: 40),
-                ],
+          return Align(
+            alignment: Alignment.topCenter,
+            child: SingleChildScrollView(
+              child: Container(
+                constraints: BoxConstraints(
+                  maxWidth: 500,
+                  minHeight: MediaQuery.of(context).size.height
+                ),
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0E0E0E),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(26),
+                      blurRadius: 10,
+                      spreadRadius: 0,
+                      offset: const Offset(0, 0),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    _buildHeader(data),
+                    const SizedBox(height: 24),
+                    _buildMainContent(data),
+                    _buildActionButtons(data),
+                    const SizedBox(height: 40),
+                  ],
+                ),
               ),
             ),
-          ),
-        );
-      },
-    ),
-  );
-}
+          );
+        },
+      ),
+    );
+  }
 
   Widget _buildHeader(Map<String, dynamic> data) {
-  final layout = data['layout'] != null 
-      ? ProfileLayout.values.firstWhere(
-          (e) => e.name == data['layout'],
-          orElse: () => ProfileLayout.banner)
-      : ProfileLayout.banner;
+    final layout = data['layout'] != null 
+        ? ProfileLayout.values.firstWhere(
+            (e) => e.name == data['layout'],
+            orElse: () => ProfileLayout.banner)
+        : ProfileLayout.banner;
 
-  switch (layout) {
-    case ProfileLayout.classic:
-      return _buildClassicHeader(data);
-    case ProfileLayout.portrait:
-      return _buildPortraitHeader(data);
-    case ProfileLayout.banner:
-      return _buildBannerHeader(data);
+    switch (layout) {
+      case ProfileLayout.classic:
+        return _buildClassicHeader(data);
+      case ProfileLayout.portrait:
+        return _buildPortraitHeader(data);
+      case ProfileLayout.banner:
+        return _buildBannerHeader(data);
+    }
   }
-}
 
-Widget _buildClassicHeader(Map<String, dynamic> data) {
-  return Container(
-    padding: const EdgeInsets.only(top: 20),
-    child: Stack(
+  Widget _buildClassicHeader(Map<String, dynamic> data) {
+    return Container(
+      padding: const EdgeInsets.only(top: 20),
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.center,
+        children: [
+          const SizedBox(height: 120),
+          Positioned(
+            bottom: -60,
+            child: Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.center,
+              children: [
+                _buildProfileImage(data, 60),
+                if (data['companyImageUrl'] != null)
+                  Positioned(
+                    bottom: 0,
+                    right: -30,
+                    child: _buildCompanyImage(data, 28),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPortraitHeader(Map<String, dynamic> data) {
+    return SizedBox(
+      width: double.infinity,
+      height: 500,
+      child: data['profileImageUrl'] != null && data['profileImageUrl'].isNotEmpty
+          ? Image.network(
+              data['profileImageUrl'],
+              width: double.infinity,
+              height: double.infinity,
+              fit: BoxFit.cover,
+            )
+          : Image.asset(
+              'assets/images/empty_profile_image.png',
+              width: double.infinity,
+              height: double.infinity,
+              fit: BoxFit.cover,
+            ),
+    );
+  }
+
+  Widget _buildBannerHeader(Map<String, dynamic> data) {
+    return Stack(
       clipBehavior: Clip.none,
       alignment: Alignment.center,
       children: [
-        const SizedBox(height: 120),
+        AspectRatio(
+          aspectRatio: 2 / 1,
+          child: data['bannerImageUrl'] != null && data['bannerImageUrl'].isNotEmpty
+              ? Image.network(
+                  data['bannerImageUrl'],
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                )
+              : Image.asset(
+                  'assets/images/empty_banner_image.png',
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+        ),
         Positioned(
           bottom: -60,
           child: Stack(
@@ -203,108 +264,358 @@ Widget _buildClassicHeader(Map<String, dynamic> data) {
           ),
         ),
       ],
-    ),
-  );
-}
+    );
+  }
 
-Widget _buildPortraitHeader(Map<String, dynamic> data) {
-  return SizedBox(
-    width: double.infinity,
-    height: 500,
-    child: data['profileImageUrl'] != null && data['profileImageUrl'].isNotEmpty
-        ? Image.network(
-            data['profileImageUrl'],
-            width: double.infinity,
-            height: double.infinity,
-            fit: BoxFit.cover,
-          )
-        : Image.asset(
-            'assets/images/empty_profile_image.png',
-            width: double.infinity,
-            height: double.infinity,
-            fit: BoxFit.cover,
-          ),
-  );
-}
-
-Widget _buildBannerHeader(Map<String, dynamic> data) {
-  return Stack(
-    clipBehavior: Clip.none,
-    alignment: Alignment.center,
-    children: [
-      AspectRatio(
-        aspectRatio: 2 / 1,
-        child: data['bannerImageUrl'] != null && data['bannerImageUrl'].isNotEmpty
-            ? Image.network(
-                data['bannerImageUrl'],
-                width: double.infinity,
-                fit: BoxFit.cover,
-              )
-            : Image.asset(
-                'assets/images/empty_banner_image.png',
-                width: double.infinity,
-                fit: BoxFit.cover,
-              ),
+  // Add helper methods for profile and company images
+  Widget _buildProfileImage(Map<String, dynamic> data, double radius) {
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white, width: 2),
       ),
-      Positioned(
-        bottom: -60,
-        child: Stack(
-          clipBehavior: Clip.none,
-          alignment: Alignment.center,
-          children: [
-            _buildProfileImage(data, 60),
-            if (data['companyImageUrl'] != null)
-              Positioned(
-                bottom: 0,
-                right: -30,
-                child: _buildCompanyImage(data, 28),
+      child: CircleAvatar(
+        radius: radius,
+        backgroundImage: data['profileImageUrl'] != null && data['profileImageUrl'].isNotEmpty
+            ? NetworkImage(data['profileImageUrl'])
+            : AssetImage('assets/images/empty_profile_image.png') as ImageProvider,
+        backgroundColor: Colors.white,
+      ),
+    );
+  }
+
+  Widget _buildCompanyImage(Map<String, dynamic> data, double radius) {
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white, width: 2),
+      ),
+      child: CircleAvatar(
+        radius: radius,
+        backgroundImage: data['companyImageUrl'] != null && data['companyImageUrl'].isNotEmpty
+            ? NetworkImage(data['companyImageUrl'])
+            : AssetImage('assets/images/empty_company_image.png') as ImageProvider,
+        backgroundColor: Colors.white,
+      ),
+    );
+  }
+
+
+  Widget _buildWebsiteBlock(Block block) {
+    final alignment = block.textAlignment ?? TextAlignment.center;
+  
+    return Container(
+      margin: const EdgeInsets.only(top: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          if (block.title != null && block.title!.isNotEmpty) ...[
+            Text(
+              block.title!,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
               ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+          ],
+          if (block.description != null && block.description!.isNotEmpty) ...[
+            Text(
+              block.description!,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 16,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+          ],
+          ...block.contents
+              .where((content) => 
+                  content.isVisible && 
+                  content.url.isNotEmpty)
+              .map((content) => Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => _launchSocialLink({'id': 'website', 'value': content.url}, context),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2A2A2A),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: alignment == TextAlignment.center 
+                        ? Stack(
+                            alignment: Alignment.centerLeft,
+                            children: [
+                              if (content.imageUrl != null && content.imageUrl!.isNotEmpty)
+                                Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    image: DecorationImage(
+                                      image: NetworkImage(content.imageUrl!),
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+                              Center(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      content.title,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    if (content.subtitle != null && content.subtitle!.isNotEmpty)
+                                      Text(
+                                        content.subtitle!,
+                                        style: const TextStyle(
+                                          color: Colors.white70,
+                                          fontSize: 12,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          )
+                        : Row(
+                            mainAxisAlignment: alignment == TextAlignment.left 
+                              ? MainAxisAlignment.start 
+                              : MainAxisAlignment.end,
+                            children: [
+                              if (alignment == TextAlignment.left && content.imageUrl != null && content.imageUrl!.isNotEmpty) ...[
+                                Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    image: DecorationImage(
+                                      image: NetworkImage(content.imageUrl!),
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                              ],
+                              Column(
+                                crossAxisAlignment: alignment == TextAlignment.left 
+                                  ? CrossAxisAlignment.start 
+                                  : CrossAxisAlignment.end,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    content.title,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  if (content.subtitle != null && content.subtitle!.isNotEmpty)
+                                    Text(
+                                      content.subtitle!,
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              if (alignment == TextAlignment.right && content.imageUrl != null && content.imageUrl!.isNotEmpty) ...[
+                                const SizedBox(width: 12),
+                                Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    image: DecorationImage(
+                                      image: NetworkImage(content.imageUrl!),
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                    ),
+                  ),
+                ),
+              )),
+        ],
+      ),
+    );
+  }
+
+  
+  Widget _buildImageBlock(Block block) {
+    return Container(
+      margin: const EdgeInsets.only(top: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          if (block.title != null && block.title!.isNotEmpty) ...[
+            Text(
+              block.title!,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+          ],
+          if (block.description != null && block.description!.isNotEmpty) ...[
+            Text(
+              block.description!,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 16,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+          ],
+          block.layout == BlockLayout.carousel
+            ? _buildCarouselImageLayout(block)
+            : _buildClassicImageLayout(block),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildClassicImageLayout(Block block) {
+    return Column(
+      children: block.contents
+        .where((content) => content.isVisible && content.imageUrl != null && content.imageUrl!.isNotEmpty)
+        .map((content) => Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: AspectRatio(
+              aspectRatio: _parseAspectRatio(block.aspectRatio),
+              child: Image.network(
+                content.imageUrl!,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  color: Colors.grey[900],
+                  child: const Icon(Icons.error, color: Colors.white),
+                ),
+              ),
+            ),
+          ),
+        )).toList(),
+    );
+  }
+
+  Widget _buildCarouselImageLayout(Block block) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final containerWidth = screenWidth > 500 ? 500.0 : screenWidth;
+    final imageWidth = containerWidth - 48;
+    final aspectRatio = _parseAspectRatio(block.aspectRatio);
+    final imageHeight = imageWidth / aspectRatio;
+
+    return SizedBox(
+      height: imageHeight,
+      width: containerWidth,
+      child: PageView.builder(
+        itemCount: block.contents.where((content) => 
+          content.isVisible && content.imageUrl != null && content.imageUrl!.isNotEmpty
+        ).length,
+        itemBuilder: (context, index) {
+          final content = block.contents
+            .where((content) => 
+              content.isVisible && content.imageUrl != null && content.imageUrl!.isNotEmpty
+            ).toList()[index];
+          
+          return GestureDetector(
+            onTap: () => _showImageViewer(context, content.imageUrl!),
+            child: Container(
+              width: imageWidth,
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(
+                  content.imageUrl!,
+                  width: imageWidth,
+                  height: imageHeight,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    color: Colors.grey[900],
+                    child: const Icon(Icons.error, color: Colors.white),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showImageViewer(BuildContext context, String imageUrl) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Stack(
+          children: [
+            InteractiveViewer(
+              minScale: 0.5,
+              maxScale: 4.0,
+              child: Image.network(imageUrl),
+            ),
+            Positioned(
+              right: 0,
+              top: 0,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
           ],
         ),
       ),
-    ],
-  );
-}
+    );
+  }
 
-// Add helper methods for profile and company images
-Widget _buildProfileImage(Map<String, dynamic> data, double radius) {
-  return Container(
-    decoration: BoxDecoration(
-      shape: BoxShape.circle,
-      border: Border.all(color: Colors.white, width: 2),
-    ),
-    child: CircleAvatar(
-      radius: radius,
-      backgroundImage: data['profileImageUrl'] != null && data['profileImageUrl'].isNotEmpty
-          ? NetworkImage(data['profileImageUrl'])
-          : AssetImage('assets/images/empty_profile_image.png') as ImageProvider,
-      backgroundColor: Colors.white,
-    ),
-  );
-}
-
-Widget _buildCompanyImage(Map<String, dynamic> data, double radius) {
-  return Container(
-    decoration: BoxDecoration(
-      shape: BoxShape.circle,
-      border: Border.all(color: Colors.white, width: 2),
-    ),
-    child: CircleAvatar(
-      radius: radius,
-      backgroundImage: data['companyImageUrl'] != null && data['companyImageUrl'].isNotEmpty
-          ? NetworkImage(data['companyImageUrl'])
-          : AssetImage('assets/images/empty_company_image.png') as ImageProvider,
-      backgroundColor: Colors.white,
-    ),
-  );
-}
+  double _parseAspectRatio(String? aspectRatio) {
+    if (aspectRatio == null) return 16/9;
+  
+    try {
+      if (aspectRatio.contains(':')) {
+        final parts = aspectRatio.split(':');
+        return double.parse(parts[0]) / double.parse(parts[1]);
+      }
+      return double.parse(aspectRatio);
+    } catch (e) {
+      debugPrint('Error parsing aspect ratio: $e');
+      return 16/9;
+    }
+  }
 
   Widget _buildMainContent(Map<String, dynamic> data) {
     final layout = data['layout'] != null 
-      ? ProfileLayout.values.firstWhere(
-          (e) => e.name == data['layout'],
-          orElse: () => ProfileLayout.banner)
-      : ProfileLayout.banner;
+        ? ProfileLayout.values.firstWhere(
+            (e) => e.name == data['layout'],
+            orElse: () => ProfileLayout.banner)
+        : ProfileLayout.banner;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -367,6 +678,21 @@ Widget _buildCompanyImage(Map<String, dynamic> data, double radius) {
           const SizedBox(height: 24),
           _buildSocialIcons(data['socialPlatforms'] ?? []),
           const SizedBox(height: 24),
+          if (data['blocks'] != null) ...[
+            ...(data['blocks'] as List)
+                .map((b) => Block.fromMap(b))
+                .where((block) => 
+                    block.type == BlockType.website && 
+                    block.isVisible == true &&
+                    block.layout == BlockLayout.classic)
+                .map((block) => _buildWebsiteBlock(block))
+            ,
+             ...(data['blocks'] as List)
+                .map((b) => Block.fromMap(b))
+                .where((block) => block.type == BlockType.image && 
+                                  block.isVisible == true)
+                .map((block) => _buildImageBlock(block)),
+          ],
         ],
       ),
     );
@@ -601,26 +927,6 @@ Widget _buildCompanyImage(Map<String, dynamic> data, double radius) {
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
             children: [
-              Container(
-                constraints: BoxConstraints(
-                  maxWidth: constraints.maxWidth,
-                  minWidth: 200,
-                ),
-                child: ElevatedButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.person_add),
-                  label: const Text('Save my contact'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2A2A2A),
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(double.infinity, 50),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
               if (data['phone'] != null)
                 OutlinedButton.icon(
                   onPressed: () => _launchSocialLink({'id': 'phone', 'value': data['phone']}, context),

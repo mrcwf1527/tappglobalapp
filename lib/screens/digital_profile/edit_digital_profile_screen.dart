@@ -290,7 +290,7 @@ class _EditDigitalProfileScreenState extends State<EditDigitalProfileScreen>
               ),
               IconButton(
                 onPressed: () {
-                  _showShareModal(); // Calling the share modal function
+                  _showShareModal();
                 },
                 icon: FaIcon(
                   FontAwesomeIcons.share,
@@ -455,14 +455,14 @@ class BorderedQRView extends StatelessWidget {
           size: size,
           eyeStyle: QrEyeStyle(
             eyeShape: QrEyeShape.square,
-            color: Theme.of(context).brightness == Brightness.dark 
+            color: Theme.of(context).brightness == Brightness.dark
               ? Colors.white
               : Colors.black,
           ),
           dataModuleStyle: QrDataModuleStyle(
             dataModuleShape: QrDataModuleShape.square,
-            color: Theme.of(context).brightness == Brightness.dark 
-              ? Colors.white 
+            color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.white
               : Colors.black,
           ),
         ),
@@ -472,9 +472,9 @@ class BorderedQRView extends StatelessWidget {
             height: 36,
             padding: const EdgeInsets.all(2),
             decoration: BoxDecoration(
-              color: Theme.of(context).brightness == Brightness.dark 
-                ? Color(0xFF191919)
-                : Color(0xFFf5f5f5),
+              color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF191919)
+                : const Color(0xFFf5f5f5),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Container(

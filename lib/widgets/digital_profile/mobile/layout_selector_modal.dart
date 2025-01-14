@@ -214,7 +214,7 @@ class _LayoutPreview extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 16),
       width: screenWidth * 0.6,
       child: AspectRatio(
-        aspectRatio: 9/19,
+        aspectRatio: 9 / 19,
         child: Container(
           decoration: BoxDecoration(
             border: Border.all(
@@ -236,9 +236,9 @@ class _LayoutPreview extends StatelessWidget {
                 child: Text(
                   layout.name.toUpperCase(),
                   style: TextStyle(
-                    color: Theme.of(context).brightness == Brightness.light 
-                      ? Colors.black 
-                      : Colors.white,
+                    color: Theme.of(context).brightness == Brightness.light
+                        ? Colors.black
+                        : Colors.white,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -260,7 +260,7 @@ class _LayoutPreview extends StatelessWidget {
             return SizedBox(
               width: 180,
               child: AspectRatio(
-                aspectRatio: 9/19,
+                aspectRatio: 9 / 19,
                 child: Container(
                   color: const Color(0xFF0E0E0E),
                   padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -279,9 +279,13 @@ class _LayoutPreview extends StatelessWidget {
                             ),
                             child: CircleAvatar(
                               radius: 30,
-                              backgroundImage: data['profileImageUrl'] != null && data['profileImageUrl'].isNotEmpty
-                                  ? NetworkImage(data['profileImageUrl'])
-                                  : AssetImage('assets/images/empty_profile_image.png') as ImageProvider,
+                              backgroundImage:
+                                  data['profileImageUrl'] != null &&
+                                          data['profileImageUrl'].isNotEmpty
+                                      ? NetworkImage(data['profileImageUrl'])
+                                      : AssetImage(
+                                              'assets/images/empty_profile_image.png')
+                                          as ImageProvider,
                               backgroundColor: Colors.white,
                             ),
                           ),
@@ -295,9 +299,13 @@ class _LayoutPreview extends StatelessWidget {
                               ),
                               child: CircleAvatar(
                                 radius: 12,
-                                backgroundImage: data['companyImageUrl'] != null && data['companyImageUrl'].isNotEmpty
-                                    ? NetworkImage(data['companyImageUrl'])
-                                    : AssetImage('assets/images/empty_company_image.png') as ImageProvider,
+                                backgroundImage:
+                                    data['companyImageUrl'] != null &&
+                                            data['companyImageUrl'].isNotEmpty
+                                        ? NetworkImage(data['companyImageUrl'])
+                                        : AssetImage(
+                                                'assets/images/empty_company_image.png')
+                                            as ImageProvider,
                                 backgroundColor: Colors.white,
                               ),
                             ),
@@ -327,11 +335,13 @@ class _LayoutPreview extends StatelessWidget {
                             alignment: WrapAlignment.center,
                             crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
-                              const Icon(Icons.location_on, color: Colors.white70, size: 10),
+                              const Icon(Icons.location_on,
+                                  color: Colors.white70, size: 10),
                               const SizedBox(width: 2),
                               Text(
                                 data['location'],
-                                style: const TextStyle(color: Colors.white70, fontSize: 10),
+                                style: const TextStyle(
+                                    color: Colors.white70, fontSize: 10),
                               ),
                             ],
                           ),
@@ -345,7 +355,7 @@ class _LayoutPreview extends StatelessWidget {
                             style: const TextStyle(color: Colors.white70, fontSize: 10),
                           ),
                         ),
-                        const SizedBox(height: 6),
+                      const SizedBox(height: 6),
                       if (data['socialPlatforms'] != null)
                         Padding(
                           padding: const EdgeInsets.only(top: 8),
@@ -354,14 +364,14 @@ class _LayoutPreview extends StatelessWidget {
                     ],
                   ),
                 ),
-              )
+              ),
             );
 
           case ProfileLayout.portrait:
             return SizedBox(
               width: 180,
               child: AspectRatio(
-                aspectRatio: 9/19,
+                aspectRatio: 9 / 19,
                 child: Container(
                   color: const Color(0xFF0E0E0E),
                   child: Column(
@@ -371,7 +381,8 @@ class _LayoutPreview extends StatelessWidget {
                           maxWidth: 180,
                           maxHeight: 250,
                         ),
-                        child: data['profileImageUrl'] != null && data['profileImageUrl'].isNotEmpty
+                        child: data['profileImageUrl'] != null &&
+                                data['profileImageUrl'].isNotEmpty
                             ? Image.network(
                                 data['profileImageUrl'],
                                 fit: BoxFit.contain,
@@ -398,21 +409,25 @@ class _LayoutPreview extends StatelessWidget {
                             const SizedBox(height: 6),
                             Text(
                               '${data['jobTitle'] != null && data['jobTitle'].isNotEmpty ? data['jobTitle'] : ''}${(data['jobTitle'] != null && data['jobTitle'].isNotEmpty && data['companyName'] != null && data['companyName'].isNotEmpty) ? ' at ' : ''}${data['companyName'] != null && data['companyName'].isNotEmpty ? data['companyName'] : ''}',
-                              style: const TextStyle(color: Colors.white70, fontSize: 10),
+                              style: const TextStyle(
+                                  color: Colors.white70, fontSize: 10),
                               textAlign: TextAlign.center,
                             ),
-                            if (data['location'] != null && data['location'].isNotEmpty)
+                            if (data['location'] != null &&
+                                data['location'].isNotEmpty)
                               Padding(
                                 padding: const EdgeInsets.only(top: 4),
                                 child: Wrap(
                                   alignment: WrapAlignment.center,
                                   crossAxisAlignment: WrapCrossAlignment.center,
                                   children: [
-                                    const Icon(Icons.location_on, color: Colors.white70, size: 10),
+                                    const Icon(Icons.location_on,
+                                        color: Colors.white70, size: 10),
                                     const SizedBox(width: 2),
                                     Text(
                                       data['location'],
-                                      style: const TextStyle(color: Colors.white70, fontSize: 10),
+                                      style: const TextStyle(
+                                          color: Colors.white70, fontSize: 10),
                                     ),
                                   ],
                                 ),
@@ -423,29 +438,31 @@ class _LayoutPreview extends StatelessWidget {
                                 child: Text(
                                   data['bio'],
                                   textAlign: TextAlign.center,
-                                  style: const TextStyle(color: Colors.white70, fontSize: 10),
+                                  style: const TextStyle(
+                                      color: Colors.white70, fontSize: 10),
                                 ),
                               ),
-                              const SizedBox(height: 6),
+                            const SizedBox(height: 6),
                             if (data['socialPlatforms'] != null)
                               Padding(
                                 padding: const EdgeInsets.only(top: 8),
-                                child: _buildSocialIcons(data['socialPlatforms'] ?? []),
+                                child: _buildSocialIcons(
+                                    data['socialPlatforms'] ?? []),
                               ),
                           ],
                         ),
                       ),
                     ],
                   ),
-                )
-              )
+                ),
+              ),
             );
 
           case ProfileLayout.banner:
             return SizedBox(
               width: 180,
               child: AspectRatio(
-                aspectRatio: 9/19,
+                aspectRatio: 9 / 19,
                 child: Container(
                   color: const Color(0xFF0E0E0E),
                   child: Stack(
@@ -456,7 +473,8 @@ class _LayoutPreview extends StatelessWidget {
                         left: 0,
                         right: 0,
                         height: 120,
-                        child: data['bannerImageUrl'] != null && data['bannerImageUrl'].isNotEmpty
+                        child: data['bannerImageUrl'] != null &&
+                                data['bannerImageUrl'].isNotEmpty
                             ? Image.network(
                                 data['bannerImageUrl'],
                                 fit: BoxFit.cover,
@@ -481,13 +499,20 @@ class _LayoutPreview extends StatelessWidget {
                                   Container(
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
-                                      border: Border.all(color: Colors.white, width: 1),
+                                      border:
+                                          Border.all(color: Colors.white, width: 1),
                                     ),
                                     child: CircleAvatar(
                                       radius: 30,
-                                      backgroundImage: data['profileImageUrl'] != null && data['profileImageUrl'].isNotEmpty
-                                          ? NetworkImage(data['profileImageUrl'])
-                                          : AssetImage('assets/images/empty_profile_image.png') as ImageProvider,
+                                      backgroundImage:
+                                          data['profileImageUrl'] != null &&
+                                                  data['profileImageUrl']
+                                                      .isNotEmpty
+                                              ? NetworkImage(
+                                                  data['profileImageUrl'])
+                                              : AssetImage(
+                                                      'assets/images/empty_profile_image.png')
+                                                  as ImageProvider,
                                       backgroundColor: Colors.white,
                                     ),
                                   ),
@@ -497,13 +522,20 @@ class _LayoutPreview extends StatelessWidget {
                                     child: Container(
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
-                                        border: Border.all(color: Colors.white, width: 1),
+                                        border: Border.all(
+                                            color: Colors.white, width: 1),
                                       ),
                                       child: CircleAvatar(
                                         radius: 12,
-                                        backgroundImage: data['companyImageUrl'] != null && data['companyImageUrl'].isNotEmpty
-                                            ? NetworkImage(data['companyImageUrl'])
-                                            : AssetImage('assets/images/empty_company_image.png') as ImageProvider,
+                                        backgroundImage:
+                                            data['companyImageUrl'] != null &&
+                                                    data['companyImageUrl']
+                                                        .isNotEmpty
+                                                ? NetworkImage(
+                                                    data['companyImageUrl'])
+                                                : AssetImage(
+                                                        'assets/images/empty_company_image.png')
+                                                    as ImageProvider,
                                         backgroundColor: Colors.white,
                                       ),
                                     ),
@@ -523,21 +555,26 @@ class _LayoutPreview extends StatelessWidget {
                               const SizedBox(height: 4),
                               Text(
                                 '${data['jobTitle'] != null && data['jobTitle'].isNotEmpty ? data['jobTitle'] : ''}${(data['jobTitle'] != null && data['jobTitle'].isNotEmpty && data['companyName'] != null && data['companyName'].isNotEmpty) ? ' at ' : ''}${data['companyName'] != null && data['companyName'].isNotEmpty ? data['companyName'] : ''}',
-                                style: const TextStyle(color: Colors.white70, fontSize: 10),
+                                style: const TextStyle(
+                                    color: Colors.white70, fontSize: 10),
                                 textAlign: TextAlign.center,
                               ),
-                              if (data['location'] != null && data['location'].isNotEmpty)
+                              if (data['location'] != null &&
+                                  data['location'].isNotEmpty)
                                 Padding(
                                   padding: const EdgeInsets.only(top: 4),
                                   child: Wrap(
                                     alignment: WrapAlignment.center,
-                                    crossAxisAlignment: WrapCrossAlignment.center,
+                                    crossAxisAlignment:
+                                        WrapCrossAlignment.center,
                                     children: [
-                                      const Icon(Icons.location_on, color: Colors.white70, size: 10),
+                                      const Icon(Icons.location_on,
+                                          color: Colors.white70, size: 10),
                                       const SizedBox(width: 2),
                                       Text(
                                         data['location'],
-                                        style: const TextStyle(color: Colors.white70, fontSize: 10),
+                                        style: const TextStyle(
+                                            color: Colors.white70, fontSize: 10),
                                       ),
                                     ],
                                   ),
@@ -548,14 +585,16 @@ class _LayoutPreview extends StatelessWidget {
                                   child: Text(
                                     data['bio'],
                                     textAlign: TextAlign.center,
-                                    style: const TextStyle(color: Colors.white70, fontSize: 10),
+                                    style: const TextStyle(
+                                        color: Colors.white70, fontSize: 10),
                                   ),
                                 ),
                                 const SizedBox(height: 4),
                               if (data['socialPlatforms'] != null)
                                 Padding(
                                   padding: const EdgeInsets.only(top: 4),
-                                  child: _buildSocialIcons(data['socialPlatforms'] ?? []),
+                                  child: _buildSocialIcons(
+                                      data['socialPlatforms'] ?? []),
                                 ),
                             ],
                           ),
@@ -563,8 +602,8 @@ class _LayoutPreview extends StatelessWidget {
                       ),
                     ],
                   ),
-                )
-              )
+                ),
+              ),
             );
         }
       },

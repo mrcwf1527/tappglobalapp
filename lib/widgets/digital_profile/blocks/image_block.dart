@@ -16,7 +16,7 @@ class ImageBlock extends StatefulWidget {
   final Function(String) onBlockDeleted;
 
   const ImageBlock({
-    super.key, 
+    super.key,
     required this.block,
     required this.onBlockUpdated,
     required this.onBlockDeleted,
@@ -75,7 +75,7 @@ class _ImageBlockState extends State<ImageBlock> {
     final contentId = _contents[index].id;
     final provider = Provider.of<DigitalProfileProvider>(context, listen: false);
     await provider.deleteBlockImage(widget.block.id, contentId);
-  
+
     setState(() {
       _contents.removeAt(index);
     });
@@ -96,7 +96,7 @@ class _ImageBlockState extends State<ImageBlock> {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
+
     return ReorderableListView(
       key: const ValueKey('reorderable-list'),
       shrinkWrap: true,
@@ -168,164 +168,164 @@ class _ImageCard extends StatefulWidget {
 }
 
 class _ImageCardState extends State<_ImageCard> {
- bool _isLoading = false;
- double? _aspectRatio;
+  bool _isLoading = false;
+  double? _aspectRatio;
 
- @override
- void initState() {
-   super.initState();
-   if (widget.content.imageUrl != null) {
-     _loadImageDimensions();
-   }
- }
+  @override
+  void initState() {
+    super.initState();
+    if (widget.content.imageUrl != null) {
+      _loadImageDimensions();
+    }
+  }
 
- Future<void> _loadImageDimensions() async {
-   try {
-     final image = Image.network(widget.content.imageUrl!);
-     image.image.resolve(const ImageConfiguration()).addListener(
-       ImageStreamListener((info, _) {
-         if (mounted) {
-           setState(() {
-             _aspectRatio = info.image.width / info.image.height;
-           });
-         }
-       })
-     );
-   } catch (e) {
-     debugPrint('Error loading image dimensions: $e');
-   }
- }
+  Future<void> _loadImageDimensions() async {
+    try {
+      final image = Image.network(widget.content.imageUrl!);
+      image.image.resolve(const ImageConfiguration()).addListener(
+        ImageStreamListener((info, _) {
+          if (mounted) {
+            setState(() {
+              _aspectRatio = info.image.width / info.image.height;
+            });
+          }
+        }),
+      );
+    } catch (e) {
+      debugPrint('Error loading image dimensions: $e');
+    }
+  }
 
- Future<void> _pickAndUploadImage() async {
-   final ImagePicker picker = ImagePicker();
-   
-   try {
-     setState(() => _isLoading = true);
-     
-     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-     if (image == null) {
-       setState(() => _isLoading = false);
-       return;
-     }
+  Future<void> _pickAndUploadImage() async {
+    final ImagePicker picker = ImagePicker();
 
-     final userId = FirebaseAuth.instance.currentUser?.uid;
-     if (userId == null) throw Exception('User not logged in');
+    try {
+      setState(() => _isLoading = true);
 
-     final imageBytes = await image.readAsBytes();
-     final ref = FirebaseStorage.instance
-         .ref()
-         .child('users')
-         .child(userId)
-         .child('block_images/${widget.content.id}.jpg');
+      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+      if (image == null) {
+        setState(() => _isLoading = false);
+        return;
+      }
 
-     await ref.putData(imageBytes, SettableMetadata(contentType: 'image/jpeg'));
-     final downloadUrl = await ref.getDownloadURL();
-     
-     widget.onUpdate(widget.content.copyWith(
-       imageUrl: downloadUrl,
-       url: downloadUrl,
-     ));
-     
-     _loadImageDimensions();
-     
-   } catch (e) {
-     if (mounted) {
-       ScaffoldMessenger.of(context).showSnackBar(
-         SnackBar(content: Text('Error uploading image: $e')),
-       );
-     }
-   } finally {
-     if (mounted) {
-       setState(() => _isLoading = false);
-     }
-   }
- }
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId == null) throw Exception('User not logged in');
 
- @override
- Widget build(BuildContext context) {
-   final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-   
-   return Container(
-     margin: const EdgeInsets.symmetric(vertical: 8.0),
-     decoration: BoxDecoration(
-       color: isDarkMode ? const Color(0xFF121212) : Colors.white,
-       borderRadius: BorderRadius.circular(8),
-       border: Border.all(
-         color: isDarkMode ? Colors.white24 : Colors.black12,
-       ),
-     ),
-     child: Padding(
-       padding: const EdgeInsets.all(12),
-       child: Row(
-         children: [
-           const FaIcon(FontAwesomeIcons.gripVertical, size: 16),
-           const SizedBox(width: 12),
-           Expanded(
-             child: _isLoading 
-               ? const Center(child: CircularProgressIndicator())
-               : widget.content.imageUrl != null && widget.content.imageUrl!.isNotEmpty
-                 ? _buildImagePreview()
-                 : _buildUploadButton(),
-           ),
-           IconButton(
-             icon: const Icon(Icons.delete_outline),
-             onPressed: widget.onDelete,
-           ),
-         ],
-       ),
-     ),
-   );
- }
+      final imageBytes = await image.readAsBytes();
+      final ref = FirebaseStorage.instance
+          .ref()
+          .child('users')
+          .child(userId)
+          .child('block_images/${widget.content.id}.jpg');
 
- Widget _buildUploadButton() {
-   final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-   
-   return InkWell(
-     onTap: _pickAndUploadImage,
-     child: Container(
-       padding: const EdgeInsets.symmetric(vertical: 12),
-       child: Row(
-         mainAxisAlignment: MainAxisAlignment.center,
-         children: [
-           Icon(
-             Icons.image_outlined,
-             color: isDarkMode ? Colors.white54 : Colors.black54,
-           ),
-           const SizedBox(width: 8),
-           Text(
-             'Upload Image',
-             style: TextStyle(
-               color: isDarkMode ? Colors.white54 : Colors.black54,
-             ),
-           ),
-         ],
-       ),
-     ),
-   );
- }
+      await ref.putData(imageBytes, SettableMetadata(contentType: 'image/jpeg'));
+      final downloadUrl = await ref.getDownloadURL();
 
- Widget _buildImagePreview() {
-   return InkWell(
-     onTap: _pickAndUploadImage,
-     child: ClipRRect(
-       borderRadius: BorderRadius.circular(8),
-       child: _aspectRatio != null
-           ? AspectRatio(
-               aspectRatio: _aspectRatio!,
-               child: Image.network(
-                 widget.content.imageUrl!,
-                 width: double.infinity,
-                 fit: BoxFit.cover,
-                 errorBuilder: (_, __, ___) => _buildUploadButton(),
-               ),
-             )
-           : Image.network(
-               widget.content.imageUrl!,
-               width: double.infinity,
-               fit: BoxFit.cover,
-               errorBuilder: (_, __, ___) => _buildUploadButton(),
-             ),
-     ),
-   );
- }
+      widget.onUpdate(widget.content.copyWith(
+        imageUrl: downloadUrl,
+        url: downloadUrl,
+      ));
+
+      _loadImageDimensions();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error uploading image: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8.0),
+      decoration: BoxDecoration(
+        color: isDarkMode ? const Color(0xFF121212) : Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isDarkMode ? Colors.white24 : Colors.black12,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            const FaIcon(FontAwesomeIcons.gripVertical, size: 16),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : widget.content.imageUrl != null &&
+                          widget.content.imageUrl!.isNotEmpty
+                      ? _buildImagePreview()
+                      : _buildUploadButton(),
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline),
+              onPressed: widget.onDelete,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUploadButton() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    return InkWell(
+      onTap: _pickAndUploadImage,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.image_outlined,
+              color: isDarkMode ? Colors.white54 : Colors.black54,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Upload Image',
+              style: TextStyle(
+                color: isDarkMode ? Colors.white54 : Colors.black54,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImagePreview() {
+    return InkWell(
+      onTap: _pickAndUploadImage,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: _aspectRatio != null
+            ? AspectRatio(
+                aspectRatio: _aspectRatio!,
+                child: Image.network(
+                  widget.content.imageUrl!,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => _buildUploadButton(),
+                ),
+              )
+            : Image.network(
+                widget.content.imageUrl!,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _buildUploadButton(),
+              ),
+      ),
+    );
+  }
 }

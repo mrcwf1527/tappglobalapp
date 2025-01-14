@@ -48,21 +48,21 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             setState(() => _emailError = _validateEmail(value));
           },
           style: TextStyle(
-            color: isError 
-              ? Colors.red 
+            color: isError
+              ? Colors.red
               : (isDark ? Colors.white : Colors.black)
           ),
           decoration: InputDecoration(
             hintText: hintText,
             hintStyle: TextStyle(
-              color: isError 
+              color: isError
                 ? Colors.red.withAlpha(153)
                 : (isDark ? Colors.white.withAlpha(179) : Colors.black54)
             ),
             prefixIcon: IconTheme(
               data: IconThemeData(
-                color: isError 
-                  ? Colors.red 
+                color: isError
+                  ? Colors.red
                   : (isDark ? Colors.white : Colors.black54)
               ),
               child: prefixIcon,

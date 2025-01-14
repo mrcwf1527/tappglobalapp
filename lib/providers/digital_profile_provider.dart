@@ -1,12 +1,12 @@
 // lib/providers/digital_profile_provider.dart
 // Central state management for digital profiles, Handles CRUD operations for profiles, Manages profile layouts and social platforms, Implements real-time updates with Firestore
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import '../models/social_platform.dart';
 import '../models/block.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'dart:typed_data';
 
 enum ProfileLayout { classic, portrait, banner }
 
@@ -25,7 +25,7 @@ class SocialPlatformData {
         'id': id,
         'value': value,
         'sequence': sequence,
-  };
+      };
 }
 
 class DigitalProfileData {
@@ -43,8 +43,8 @@ class DigitalProfileData {
   List<SocialPlatform> socialPlatforms;
   DateTime? createdAt;
   DateTime? updatedAt;
-  ProfileLayout layout; // Added layout property
-  List<Block> blocks; // Added blocks property
+  ProfileLayout layout;
+  List<Block> blocks;
 
   DigitalProfileData({
     required this.id,
@@ -61,8 +61,8 @@ class DigitalProfileData {
     this.socialPlatforms = const [],
     this.createdAt,
     this.updatedAt,
-    this.layout = ProfileLayout.classic, // Default layout value
-    this.blocks = const [], // Initialize blocks
+    this.layout = ProfileLayout.classic,
+    this.blocks = const [],
   });
 
   Map<String, dynamic> toMap() {
@@ -78,11 +78,12 @@ class DigitalProfileData {
       'companyImageUrl': companyImageUrl,
       'bannerImageUrl': bannerImageUrl,
       'socialPlatforms': socialPlatforms.map((p) => p.toMap()).toList(),
-      'createdAt':
-          createdAt != null ? Timestamp.fromDate(createdAt!) : FieldValue.serverTimestamp(),
+      'createdAt': createdAt != null
+          ? Timestamp.fromDate(createdAt!)
+          : FieldValue.serverTimestamp(),
       'updatedAt': Timestamp.fromDate(DateTime.now()),
-      'layout': layout.name, // Include layout in toMap
-      'blocks': blocks.map((b) => b.toMap()).toList(), // Include blocks in toMap
+      'layout': layout.name,
+      'blocks': blocks.map((b) => b.toMap()).toList(),
     };
   }
 
@@ -105,14 +106,15 @@ class DigitalProfileData {
           [],
       createdAt: (map['createdAt'] as Timestamp?)?.toDate(),
       updatedAt: (map['updatedAt'] as Timestamp?)?.toDate(),
-      layout: map['layout'] != null // Add layout to fromMap
+      layout: map['layout'] != null
           ? ProfileLayout.values.firstWhere(
               (e) => e.name == map['layout'],
               orElse: () => ProfileLayout.banner)
           : ProfileLayout.banner,
-          blocks: (map['blocks'] as List?)
-          ?.map((b) => Block.fromMap(b))
-          .toList() ?? [], // Add blocks to fromMap
+      blocks: (map['blocks'] as List?)
+              ?.map((b) => Block.fromMap(b))
+              .toList() ??
+          [],
     );
   }
 }
@@ -124,23 +126,23 @@ class DigitalProfileProvider extends ChangeNotifier {
     username: '',
   );
   bool _isDirty = false;
-  ProfileLayout _selectedLayout = ProfileLayout.banner; // Added property
-  
+  ProfileLayout _selectedLayout = ProfileLayout.banner;
+
   DigitalProfileData get profileData => _profileData;
   bool get isDirty => _isDirty;
-  ProfileLayout get selectedLayout => _selectedLayout; // Added getter
+  ProfileLayout get selectedLayout => _selectedLayout;
 
   // Added method
   void setLayout(ProfileLayout layout) {
     _selectedLayout = layout;
-    _isDirty = true; // Set dirty when layout changes
+    _isDirty = true;
     notifyListeners();
 
-      // Save layout to Firestore
-      FirebaseFirestore.instance
-          .collection('digitalProfiles')
-          .doc(_profileData.id)
-          .update({'layout': layout.name});
+    // Save layout to Firestore
+    FirebaseFirestore.instance
+        .collection('digitalProfiles')
+        .doc(_profileData.id)
+        .update({'layout': layout.name});
   }
 
   void updateProfile({
@@ -169,8 +171,8 @@ class DigitalProfileProvider extends ChangeNotifier {
       socialPlatforms: _profileData.socialPlatforms,
       createdAt: _profileData.createdAt,
       updatedAt: _profileData.updatedAt,
-      layout: _profileData.layout, // Keep existing layout
-      blocks: _profileData.blocks, // Keep existing blocks
+      layout: _profileData.layout,
+      blocks: _profileData.blocks,
     );
     _isDirty = true;
     notifyListeners();
@@ -201,7 +203,8 @@ class DigitalProfileProvider extends ChangeNotifier {
 
     final batch = FirebaseFirestore.instance.batch();
 
-    final profileRef = FirebaseFirestore.instance.collection('digitalProfiles').doc();
+    final profileRef =
+        FirebaseFirestore.instance.collection('digitalProfiles').doc();
 
     final profile = DigitalProfileData(
       id: profileRef.id,
@@ -216,10 +219,11 @@ class DigitalProfileProvider extends ChangeNotifier {
       companyImageUrl: "",
       bannerImageUrl: "",
       socialPlatforms: [],
-      blocks: [], // Initialize blocks
+      blocks: [],
     );
 
-    final usernameRef = FirebaseFirestore.instance.collection('usernames').doc(username);
+    final usernameRef =
+        FirebaseFirestore.instance.collection('usernames').doc(username);
     batch.set(usernameRef, {
       'userId': userId,
       'profileId': profileRef.id,
@@ -289,7 +293,7 @@ class DigitalProfileProvider extends ChangeNotifier {
         username: '',
       );
       notifyListeners();
-      
+
       final doc = await FirebaseFirestore.instance
           .collection('digitalProfiles')
           .doc(profileId)
@@ -311,27 +315,31 @@ class DigitalProfileProvider extends ChangeNotifier {
           .collection('digitalProfiles')
           .doc(profileId)
           .get();
-    
+
       if (!profile.exists) return;
 
       // Clean up images for all blocks
-      final blocks = (profile.data()?['blocks'] as List?)?.map((b) => Block.fromMap(b)).toList() ?? [];
+      final blocks = (profile.data()?['blocks'] as List?)
+              ?.map((b) => Block.fromMap(b))
+              .toList() ??
+          [];
       for (var block in blocks) {
         if (block.type == BlockType.contact) {
           await deleteBlockStorage(block.id);
-        } else if (block.type == BlockType.image || block.type == BlockType.website) {
+        } else if (block.type == BlockType.image ||
+            block.type == BlockType.website) {
           // Delete all images in the image block
-            await deleteAllBlockImages(block.id, block.type, block.contents);
+          await deleteAllBlockImages(block.id, block.type, block.contents);
         }
       }
 
       final batch = FirebaseFirestore.instance.batch();
-    
+
       // Delete username reservation
       batch.delete(FirebaseFirestore.instance
           .collection('usernames')
           .doc(profile.data()!['username']));
-    
+
       // Delete profile
       batch.delete(FirebaseFirestore.instance
           .collection('digitalProfiles')
@@ -343,7 +351,8 @@ class DigitalProfileProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> deleteAllBlockImages(String blockId, BlockType type, List<BlockContent> contents) async {
+  Future<void> deleteAllBlockImages(
+      String blockId, BlockType type, List<BlockContent> contents) async {
     try {
       final userId = FirebaseAuth.instance.currentUser?.uid;
       if (userId == null) return;
@@ -355,11 +364,11 @@ class DigitalProfileProvider extends ChangeNotifier {
           if (type == BlockType.image) {
             // For image blocks, imageUrl is just the contentId
             final ref = FirebaseStorage.instance
-              .ref()
-              .child('users')
-              .child(userId)
-              .child('block_images')
-              .child('${content.id}.jpg');
+                .ref()
+                .child('users')
+                .child(userId)
+                .child('block_images')
+                .child('${content.id}.jpg');
             await ref.delete();
           } else if (type == BlockType.website) {
             // For website blocks, extract from full URL
@@ -367,13 +376,13 @@ class DigitalProfileProvider extends ChangeNotifier {
             final decodedPath = Uri.decodeComponent(uri.path);
             final pathSegments = decodedPath.split('/');
             final fileName = pathSegments.last;
-          
+
             final ref = FirebaseStorage.instance
-              .ref()
-              .child('users')
-              .child(userId)
-              .child('link_images')
-              .child(fileName);
+                .ref()
+                .child('users')
+                .child(userId)
+                .child('link_images')
+                .child(fileName);
             await ref.delete();
           }
         }
@@ -386,7 +395,7 @@ class DigitalProfileProvider extends ChangeNotifier {
   Future<void> deleteBlockImage(String blockId, String imageUrl) async {
     try {
       debugPrint('Attempting to delete image: $imageUrl');
-    
+
       final userId = FirebaseAuth.instance.currentUser?.uid;
       if (userId == null) return;
 
@@ -407,11 +416,11 @@ class DigitalProfileProvider extends ChangeNotifier {
       }
 
       final ref = FirebaseStorage.instance
-        .ref()
-        .child('users')
-        .child(userId)
-        .child(folderName)
-        .child(fileName);
+          .ref()
+          .child('users')
+          .child(userId)
+          .child(folderName)
+          .child(fileName);
 
       await ref.delete();
       debugPrint('Successfully deleted image: $fileName from $folderName');
@@ -426,10 +435,10 @@ class DigitalProfileProvider extends ChangeNotifier {
       if (userId == null) return;
 
       final ref = FirebaseStorage.instance
-        .ref()
-        .child('users')
-        .child(userId)
-        .child('contact_images/$blockId.jpg');
+          .ref()
+          .child('users')
+          .child(userId)
+          .child('contact_images/$blockId.jpg');
 
       await ref.delete();
     } catch (e) {
@@ -450,7 +459,8 @@ class DigitalProfileProvider extends ChangeNotifier {
             .map((doc) => DigitalProfileData.fromMap(doc.id, doc.data()))
             .toList());
   }
-    void updateBlocks(List<Block> blocks) {
+
+  void updateBlocks(List<Block> blocks) {
     _profileData.blocks = blocks;
     _isDirty = true;
 
@@ -470,7 +480,7 @@ class DigitalProfileProvider extends ChangeNotifier {
 
     final contentId = DateTime.now().millisecondsSinceEpoch.toString();
     debugPrint('Uploading image with contentId: $contentId');
-  
+
     final ref = FirebaseStorage.instance
         .ref()
         .child('users')
@@ -501,8 +511,8 @@ extension DigitalProfileDataExtension on DigitalProfileData {
     List<SocialPlatform>? socialPlatforms,
     DateTime? createdAt,
     DateTime? updatedAt,
-    ProfileLayout? layout, // Add layout to copyWith
-    List<Block>? blocks, // Add blocks to copyWith
+    ProfileLayout? layout,
+    List<Block>? blocks,
   }) {
     return DigitalProfileData(
       id: id ?? this.id,
@@ -519,11 +529,11 @@ extension DigitalProfileDataExtension on DigitalProfileData {
       socialPlatforms: socialPlatforms ?? this.socialPlatforms,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
-      layout: layout ?? this.layout, // Include layout in copyWith
-      blocks: blocks ?? this.blocks, // Include blocks in copyWith
+      layout: layout ?? this.layout,
+      blocks: blocks ?? this.blocks,
     );
   }
-  
+
   String getPublicProfileUrl(String username) {
     // Use custom domain when ready, fallback to Firebase hosting
     return 'https://tappglobal-app-profile.web.app/$username';

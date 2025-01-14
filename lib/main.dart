@@ -20,9 +20,9 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
   final prefs = await SharedPreferences.getInstance();
-  
+
   await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform
+    options: DefaultFirebaseOptions.currentPlatform,
   );
 
   runApp(
@@ -52,71 +52,72 @@ class MyAppState extends State<MyApp> {
     super.initState();
     _checkInitialRoute();
   }
-  
-  Future<void> _checkInitialRoute() async {
-        final path = html.window.location.pathname;
-        final uri = Uri.tryParse(path!);
 
-      if (uri != null && uri.pathSegments.length == 1 &&
-          !AppRoutes.isKnownRoute('/${uri.pathSegments[0]}')) {
-          setState(() {
-              _initialRoute = path;
-          });
-      }
-       setState(() {
-          _isInitialRouteChecked = true;
+  Future<void> _checkInitialRoute() async {
+    final path = html.window.location.pathname;
+    final uri = Uri.tryParse(path!);
+
+    if (uri != null &&
+        uri.pathSegments.length == 1 &&
+        !AppRoutes.isKnownRoute('/${uri.pathSegments[0]}')) {
+      setState(() {
+        _initialRoute = path;
       });
+    }
+    setState(() {
+      _isInitialRouteChecked = true;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-       if (!_isInitialRouteChecked) {
-            return _buildLoadingScreen();
-        }
+    if (!_isInitialRouteChecked) {
+      return _buildLoadingScreen();
+    }
 
-      return Consumer<ThemeProvider>(
-        builder: (context, themeProvider, _) => MaterialApp(
-          title: 'TAPP',
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          themeMode: themeProvider.themeMode,
-          navigatorKey: AppRoutes.navigatorKey,
-          onGenerateRoute: AppRoutes.onGenerateRoute,
-          home: _getHomeWidget(),
-            debugShowCheckedModeBanner: false,
-        ),
-      );
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, _) => MaterialApp(
+        title: 'TAPP',
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: themeProvider.themeMode,
+        navigatorKey: AppRoutes.navigatorKey,
+        onGenerateRoute: AppRoutes.onGenerateRoute,
+        home: _getHomeWidget(),
+        debugShowCheckedModeBanner: false,
+      ),
+    );
   }
-  
-   Widget _getHomeWidget() {
-        if (_initialRoute != null) {
-            final uri = Uri.parse(_initialRoute!);
-          return PublicProfileScreen(username: uri.pathSegments[0]);
+
+  Widget _getHomeWidget() {
+    if (_initialRoute != null) {
+      final uri = Uri.parse(_initialRoute!);
+      return PublicProfileScreen(username: uri.pathSegments[0]);
+    }
+
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return _buildLoadingScreen(); //Change to the loading screen
         }
-        
-        return StreamBuilder<User?>(
-          stream: FirebaseAuth.instance.authStateChanges(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return _buildLoadingScreen(); //Change to the loading screen
-            }
-            return snapshot.data == null ? const AuthScreen() : const HomeScreen();
-          },
-        );
-    }
-    
-    Widget _buildLoadingScreen() {
-      return Container(
-        color: Colors.white,
-        child: const Center(
-          child: SizedBox(
-            width: 120,
-            height: 120,
-            child:  Image(image: AssetImage('assets/tapp_logo.png')),
-          ),
+        return snapshot.data == null ? const AuthScreen() : const HomeScreen();
+      },
+    );
+  }
+
+  Widget _buildLoadingScreen() {
+    return Container(
+      color: Colors.white,
+      child: const Center(
+        child: SizedBox(
+          width: 120,
+          height: 120,
+          child: Image(image: AssetImage('assets/tapp_logo.png')),
         ),
-      );
-    }
+      ),
+    );
+  }
 }
 // TODO: Implement theme toggle in settings_screen.dart
 // - Add radio buttons for system/light/dark theme selection

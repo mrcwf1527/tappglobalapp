@@ -33,7 +33,7 @@ class ThemeProvider with ChangeNotifier {
       default:
         themeStr = 'system';
     }
-    
+
     await _prefs.setString(_themePreferenceKey, themeStr);
     notifyListeners();
   }

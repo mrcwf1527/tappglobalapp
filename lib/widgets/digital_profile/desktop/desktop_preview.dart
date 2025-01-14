@@ -2,12 +2,12 @@
 // Shows real-time preview of digital profile on desktop, Implements sharing functionality, Displays QR code for profile sharing
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../../screens/digital_profile/edit_digital_profile_screen.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'profile_preview.dart';
 import '../../../providers/digital_profile_provider.dart';
+import '../../../screens/digital_profile/edit_digital_profile_screen.dart';
 
 class DesktopPreview extends StatelessWidget {
   const DesktopPreview({super.key});

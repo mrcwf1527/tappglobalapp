@@ -2,82 +2,82 @@
 // Desktop interface for switching between profile layouts, Shows side-by-side layout previews, Handles layout selection and persistence
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../providers/digital_profile_provider.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../../../models/social_platform.dart';
-import '../../responsive_layout.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../mobile/layout_selector_modal.dart';
+import '../../responsive_layout.dart';
+import '../../../providers/digital_profile_provider.dart';
+import '../../../models/social_platform.dart';
 
 class LayoutSwitcher extends StatelessWidget {
   const LayoutSwitcher({super.key});
 
   @override
-Widget build(BuildContext context) {
-  return Consumer<DigitalProfileProvider>(
-    builder: (context, provider, _) {
-      if (ResponsiveLayout.isDesktop(context)) {
-        // Keep existing desktop layout code
-        return Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Layout:',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  _buildLayoutPreview(
-                    context,
-                    'Classic',
-                    ProfileLayout.classic,
-                    provider,
-                  ),
-                  const SizedBox(width: 16),
-                  _buildLayoutPreview(
-                    context,
-                    'Portrait',
-                    ProfileLayout.portrait,
-                    provider,
-                  ),
-                  const SizedBox(width: 16),
-                  _buildLayoutPreview(
-                    context,
-                    'Banner',
-                    ProfileLayout.banner,
-                    provider,
-                  ),
-                ],
-              ),
-            ],
+  Widget build(BuildContext context) {
+    return Consumer<DigitalProfileProvider>(
+      builder: (context, provider, _) {
+        if (ResponsiveLayout.isDesktop(context)) {
+          // Keep existing desktop layout code
+          return Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Layout:',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    _buildLayoutPreview(
+                      context,
+                      'Classic',
+                      ProfileLayout.classic,
+                      provider,
+                    ),
+                    const SizedBox(width: 16),
+                    _buildLayoutPreview(
+                      context,
+                      'Portrait',
+                      ProfileLayout.portrait,
+                      provider,
+                    ),
+                    const SizedBox(width: 16),
+                    _buildLayoutPreview(
+                      context,
+                      'Banner',
+                      ProfileLayout.banner,
+                      provider,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        }
+
+        // Mobile layout
+        return ListTile(
+          title: const Text('Layout'),
+          subtitle: Text(
+            provider.selectedLayout.name.toUpperCase(),
+            style: TextStyle(
+              color: Theme.of(context).brightness == Brightness.light
+                  ? Colors.black
+                  : Colors.white,
+            ),
+          ),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => LayoutSelectorModal.show(
+            context,
+            provider.selectedLayout,
+            provider.setLayout,
           ),
         );
-      }
-
-      // Mobile layout
-      return ListTile(
-        title: const Text('Layout'),
-        subtitle: Text(
-          provider.selectedLayout.name.toUpperCase(),
-          style: TextStyle(
-            color: Theme.of(context).brightness == Brightness.light 
-    ? Colors.black
-    : Colors.white,
-          ),
-        ),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: () => LayoutSelectorModal.show(
-          context,
-          provider.selectedLayout,
-          provider.setLayout,
-        ),
-      );
-    },
-  );
-}
+      },
+    );
+  }
 
   Widget _buildLayoutPreview(
     BuildContext context,
@@ -101,9 +101,10 @@ Widget build(BuildContext context) {
                 ),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: ClipRRect( // Added ClipRRect
+              child: ClipRRect(
+                // Added ClipRRect
                 borderRadius: BorderRadius.circular(8), // Match container's borderRadius
-                  child: _buildPreviewContent(layout, provider),
+                child: _buildPreviewContent(layout, provider),
               ),
             ),
           ),
@@ -147,9 +148,11 @@ Widget build(BuildContext context) {
                     ),
                     child: CircleAvatar(
                       radius: 30,
-                      backgroundImage: data['profileImageUrl'] != null && data['profileImageUrl'].isNotEmpty
+                      backgroundImage: data['profileImageUrl'] != null &&
+                              data['profileImageUrl'].isNotEmpty
                           ? NetworkImage(data['profileImageUrl'])
-                          : AssetImage('assets/images/empty_profile_image.png') as ImageProvider,
+                          : AssetImage('assets/images/empty_profile_image.png')
+                              as ImageProvider,
                       backgroundColor: Colors.white,
                     ),
                   ),
@@ -163,10 +166,12 @@ Widget build(BuildContext context) {
                       ),
                       child: CircleAvatar(
                         radius: 12,
-                          backgroundImage: data['companyImageUrl'] != null && data['companyImageUrl'].isNotEmpty
-                              ? NetworkImage(data['companyImageUrl'])
-                              : AssetImage('assets/images/empty_company_image.png') as ImageProvider,
-                          backgroundColor: Colors.white,
+                        backgroundImage: data['companyImageUrl'] != null &&
+                                data['companyImageUrl'].isNotEmpty
+                            ? NetworkImage(data['companyImageUrl'])
+                            : AssetImage('assets/images/empty_company_image.png')
+                                as ImageProvider,
+                        backgroundColor: Colors.white,
                       ),
                     ),
                   ),
@@ -190,35 +195,37 @@ Widget build(BuildContext context) {
               ),
               if (data['location'] != null && data['location'].isNotEmpty)
                 Padding(
-                  padding: const EdgeInsets.only(top:4),
+                  padding: const EdgeInsets.only(top: 4),
                   child: Wrap(
                     alignment: WrapAlignment.center,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      const Icon(Icons.location_on, color: Colors.white70, size: 10),
+                      const Icon(Icons.location_on,
+                          color: Colors.white70, size: 10),
                       const SizedBox(width: 2),
                       Text(
                         data['location'],
-                        style: const TextStyle(color: Colors.white70,fontSize: 10),
+                        style:
+                            const TextStyle(color: Colors.white70, fontSize: 10),
                       ),
                     ],
                   ),
                 ),
-                 if (data['bio'] != null)
+              if (data['bio'] != null)
                 Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Text(
-                      data['bio'],
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.white70, fontSize: 10),
-                    ),
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    data['bio'],
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.white70, fontSize: 10),
                   ),
-                  const SizedBox(height: 6),
+                ),
+              const SizedBox(height: 6),
               if (data['socialPlatforms'] != null)
-                 Padding(
-                   padding: const EdgeInsets.only(top: 8),
-                   child: _buildSocialIcons(data['socialPlatforms'] ?? []),
-                 ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: _buildSocialIcons(data['socialPlatforms'] ?? []),
+                ),
             ],
           ),
         );
@@ -238,7 +245,8 @@ Widget build(BuildContext context) {
                 child: Center(
                   child: SizedBox(
                     height: 250,
-                    child: data['profileImageUrl'] != null && data['profileImageUrl'].isNotEmpty
+                    child: data['profileImageUrl'] != null &&
+                            data['profileImageUrl'].isNotEmpty
                         ? Image.network(
                             data['profileImageUrl'],
                             fit: BoxFit.fitHeight,
@@ -246,18 +254,18 @@ Widget build(BuildContext context) {
                         : Image.asset(
                             'assets/images/empty_profile_image.png',
                             fit: BoxFit.fitHeight,
-                        ),
+                          ),
                   ),
                 ),
               ),
               Positioned(
-                  top: 250,
+                top: 250,
                 left: 0,
                 right: 0,
                 child: Column(
                   children: [
                     const SizedBox(height: 10),
-                     Text(
+                    Text(
                       data['displayName'] ?? '',
                       style: const TextStyle(
                         color: Colors.white,
@@ -273,36 +281,39 @@ Widget build(BuildContext context) {
                       textAlign: TextAlign.center,
                     ),
                     if (data['location'] != null && data['location'].isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top:4),
-                      child: Wrap(
-                        alignment: WrapAlignment.center,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          const Icon(Icons.location_on, color: Colors.white70, size: 10),
-                          const SizedBox(width: 2),
-                          Text(
-                            data['location'],
-                            style: const TextStyle(color: Colors.white70,fontSize: 10),
-                          ),
-                        ],
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Wrap(
+                          alignment: WrapAlignment.center,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            const Icon(Icons.location_on,
+                                color: Colors.white70, size: 10),
+                            const SizedBox(width: 2),
+                            Text(
+                              data['location'],
+                              style: const TextStyle(
+                                  color: Colors.white70, fontSize: 10),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                     if (data['bio'] != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Text(
-                        data['bio'],
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.white70, fontSize: 10),
+                    if (data['bio'] != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          data['bio'],
+                          textAlign: TextAlign.center,
+                          style:
+                              const TextStyle(color: Colors.white70, fontSize: 10),
+                        ),
                       ),
-                    ),
-                      const SizedBox(height: 6),
+                    const SizedBox(height: 6),
                     if (data['socialPlatforms'] != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: _buildSocialIcons(data['socialPlatforms'] ?? []),
-                    ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: _buildSocialIcons(data['socialPlatforms'] ?? []),
+                      ),
                   ],
                 ),
               ),
@@ -310,7 +321,7 @@ Widget build(BuildContext context) {
           ),
         );
 
-        case ProfileLayout.banner:
+      case ProfileLayout.banner:
         return Container(
           color: const Color(0xFF0E0E0E),
           child: Stack(
@@ -321,7 +332,8 @@ Widget build(BuildContext context) {
                   left: 0,
                   right: 0,
                   height: 120, // Set a fixed height for the banner image
-                  child: data['bannerImageUrl'] != null && data['bannerImageUrl'].isNotEmpty
+                  child: data['bannerImageUrl'] != null &&
+                          data['bannerImageUrl'].isNotEmpty
                       ? Image.network(
                           data['bannerImageUrl'],
                           fit: BoxFit.cover,
@@ -329,7 +341,7 @@ Widget build(BuildContext context) {
                       : Image.asset(
                           'assets/images/empty_banner_image.png',
                           fit: BoxFit.cover,
-                      ),
+                        ),
                 ),
               Positioned(
                 top: 88, // Adjusted top position of the content.
@@ -348,9 +360,11 @@ Widget build(BuildContext context) {
                           ),
                           child: CircleAvatar(
                             radius: 30, // Adjusted avatar radius
-                            backgroundImage: data['profileImageUrl'] != null && data['profileImageUrl'].isNotEmpty
+                            backgroundImage: data['profileImageUrl'] != null &&
+                                    data['profileImageUrl'].isNotEmpty
                                 ? NetworkImage(data['profileImageUrl'])
-                                : AssetImage('assets/images/empty_profile_image.png') as ImageProvider,
+                                : AssetImage('assets/images/empty_profile_image.png')
+                                    as ImageProvider,
                             backgroundColor: Colors.white,
                           ),
                         ),
@@ -364,9 +378,12 @@ Widget build(BuildContext context) {
                             ),
                             child: CircleAvatar(
                               radius: 12, // Adjusted company logo radius
-                              backgroundImage: data['companyImageUrl'] != null && data['companyImageUrl'].isNotEmpty
+                              backgroundImage: data['companyImageUrl'] != null &&
+                                      data['companyImageUrl'].isNotEmpty
                                   ? NetworkImage(data['companyImageUrl'])
-                                  : AssetImage('assets/images/empty_company_image.png') as ImageProvider,
+                                  : AssetImage(
+                                          'assets/images/empty_company_image.png')
+                                      as ImageProvider,
                               backgroundColor: Colors.white,
                             ),
                           ),
@@ -374,7 +391,7 @@ Widget build(BuildContext context) {
                       ],
                     ),
                     const SizedBox(height: 20),
-                     Text(
+                    Text(
                       data['displayName'] ?? '',
                       style: const TextStyle(
                         color: Colors.white,
@@ -390,36 +407,39 @@ Widget build(BuildContext context) {
                       textAlign: TextAlign.center,
                     ),
                     if (data['location'] != null && data['location'].isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top:4),
-                      child: Wrap(
-                        alignment: WrapAlignment.center,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          const Icon(Icons.location_on, color: Colors.white70, size: 10),
-                          const SizedBox(width: 2),
-                          Text(
-                            data['location'],
-                            style: const TextStyle(color: Colors.white70,fontSize: 10),
-                          ),
-                        ],
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Wrap(
+                          alignment: WrapAlignment.center,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            const Icon(Icons.location_on,
+                                color: Colors.white70, size: 10),
+                            const SizedBox(width: 2),
+                            Text(
+                              data['location'],
+                              style: const TextStyle(
+                                  color: Colors.white70, fontSize: 10),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                     if (data['bio'] != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(
-                        data['bio'],
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.white70, fontSize: 10),
+                    if (data['bio'] != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          data['bio'],
+                          textAlign: TextAlign.center,
+                          style:
+                              const TextStyle(color: Colors.white70, fontSize: 10),
+                        ),
                       ),
-                    ),
                     const SizedBox(height: 4),
-                      if (data['socialPlatforms'] != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: _buildSocialIcons(data['socialPlatforms'] ?? []),
-                    ),
+                    if (data['socialPlatforms'] != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: _buildSocialIcons(data['socialPlatforms'] ?? []),
+                      ),
                   ],
                 ),
               ),
@@ -428,7 +448,8 @@ Widget build(BuildContext context) {
         );
     }
   }
-    Widget _buildSocialIcons(List<dynamic> platforms) {
+
+  Widget _buildSocialIcons(List<dynamic> platforms) {
     return Wrap(
       spacing: 8,
       runSpacing: 8,

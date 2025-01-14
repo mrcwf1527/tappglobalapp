@@ -205,7 +205,7 @@ class _CompanyImageUploadState extends State<CompanyImageUpload> {
     );
   }
 
-    @override
+  @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -215,7 +215,7 @@ class _CompanyImageUploadState extends State<CompanyImageUpload> {
         const SizedBox(height: 8),
         ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 150, maxHeight: 150),
-            child: AspectRatio(
+          child: AspectRatio(
             aspectRatio: 1,
             child: InkWell(
               onTap: () => _showImageSourceDialog(),
@@ -235,7 +235,7 @@ class _CompanyImageUploadState extends State<CompanyImageUpload> {
     );
   }
 
-    Widget _buildContent() {
+  Widget _buildContent() {
     if (_isLoading) {
       return Center(
         child: CircularProgressIndicator(
@@ -245,14 +245,14 @@ class _CompanyImageUploadState extends State<CompanyImageUpload> {
 
     if (widget.currentImageUrl != null) {
       return ClipOval(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 150, maxHeight: 150),
-            child: Image.network(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 150, maxHeight: 150),
+          child: Image.network(
             widget.currentImageUrl!,
             fit: BoxFit.cover,
             errorBuilder: (_, __, ___) => _buildPlaceholder(),
           ),
-        )
+        ),
       );
     }
 

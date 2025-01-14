@@ -101,8 +101,8 @@ class BlocksTab extends StatelessWidget {
                     Transform.scale(
                       scale: 0.6,
                       child: SizedBox(
-                        width: 60, // Fixed width
-                        height: 30, // Fixed height
+                        width: 60,
+                        height: 30,
                         child: Switch(
                           value: block.isVisible ?? true,
                           activeColor: isDarkMode ? Colors.white : Colors.black,
@@ -225,7 +225,7 @@ class BlocksTab extends StatelessWidget {
         return Icons.image;
       case BlockType.youtube:
         return Icons.play_circle;
-      case BlockType.contact: // Added Contact Block Icon
+      case BlockType.contact:
         return Icons.contact_mail;
     }
   }
@@ -238,7 +238,7 @@ class BlocksTab extends StatelessWidget {
         return 'Image Gallery';
       case BlockType.youtube:
         return 'YouTube Videos';
-      case BlockType.contact: // Added Contact Block Title
+      case BlockType.contact:
         return 'Contact Details';
     }
   }

@@ -1,14 +1,14 @@
 // lib/screens/digital_profile/tabs/blocks/edit_block_screen.dart
 // Detailed block editing interface with three tabs (Links, Layouts, Settings). Manages block properties, content arrangement, layout options, and visibility settings. Includes specialized editors for different block types.
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../../models/block.dart';
 import '../../../../utils/debouncer.dart';
+import '../../../../providers/digital_profile_provider.dart';
 import '../../../../widgets/digital_profile/blocks/contact_block.dart';
 import '../../../../widgets/digital_profile/blocks/website_block.dart';
 import '../../../../widgets/digital_profile/blocks/image_block.dart';
 import '../../../../widgets/digital_profile/blocks/youtube_block.dart';
-import 'package:provider/provider.dart';
-import '../../../../providers/digital_profile_provider.dart';
 
 class EditBlockScreen extends StatefulWidget {
   final Block block;
@@ -19,19 +19,18 @@ class EditBlockScreen extends StatefulWidget {
   State<EditBlockScreen> createState() => _EditBlockScreenState();
 }
 
-class _EditBlockScreenState extends State<EditBlockScreen> with SingleTickerProviderStateMixin {
+class _EditBlockScreenState extends State<EditBlockScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _blockNameController = TextEditingController();
   final _debouncer = Debouncer();
   bool _isDeleted = false;
-  late List<BlockContent> _contents;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _blockNameController.text = widget.block.blockName;
-    _contents = List.from(widget.block.contents);
   }
 
   @override
@@ -47,9 +46,7 @@ class _EditBlockScreenState extends State<EditBlockScreen> with SingleTickerProv
   void didUpdateWidget(EditBlockScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.block.contents != widget.block.contents) {
-      setState(() {
-        _contents = List.from(widget.block.contents);
-      });
+      setState(() {});
     }
   }
 
@@ -92,21 +89,20 @@ class _EditBlockScreenState extends State<EditBlockScreen> with SingleTickerProv
           ),
           TextButton(
             onPressed: () async {
-              final provider = Provider.of<DigitalProfileProvider>(context, listen: false);
-            
+              final navigator = Navigator.of(context); // Capture Navigator before async gap
+              final provider =
+                  Provider.of<DigitalProfileProvider>(context, listen: false);
+
               // Get the latest block state from provider
               final currentBlock = provider.profileData.blocks
                   .firstWhere((b) => b.id == widget.block.id);
-            
+
               // Delete images based on current block state
               switch (currentBlock.type) {
                 case BlockType.website:
                 case BlockType.image:
                   await provider.deleteAllBlockImages(
-                    currentBlock.id, 
-                    currentBlock.type,
-                    currentBlock.contents
-                  );
+                      currentBlock.id, currentBlock.type, currentBlock.contents);
                   break;
                 case BlockType.contact:
                   await provider.deleteBlockStorage(currentBlock.id);
@@ -114,12 +110,16 @@ class _EditBlockScreenState extends State<EditBlockScreen> with SingleTickerProv
                 default:
                   break;
               }
-            
-              setState(() => _isDeleted = true);
-              onConfirm();
-              Navigator.pop(context);
+
+              if (mounted) {
+                // Check if the widget is still in the tree
+                setState(() => _isDeleted = true);
+                onConfirm();
+                navigator.pop();
+              }
             },
-            child: Text('Delete',
+            child: Text(
+              'Delete',
               style: TextStyle(color: Colors.red[700]),
             ),
           ),
@@ -132,81 +132,82 @@ class _EditBlockScreenState extends State<EditBlockScreen> with SingleTickerProv
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
-    onTap: () => FocusScope.of(context).unfocus(),
-    child: Scaffold(
-      appBar: AppBar(
-        title: Text('Edit ${_getBlockTitle(widget.block.type)}'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('Edit ${_getBlockTitle(widget.block.type)}'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.pop(context),
+          ),
         ),
-      ),
-      body: Consumer<DigitalProfileProvider>(
-        builder: (context, provider, _) {
-          final blockIndex = provider.profileData.blocks
-              .indexWhere((b) => b.id == widget.block.id);
+        body: Consumer<DigitalProfileProvider>(
+          builder: (context, provider, _) {
+            final blockIndex = provider.profileData.blocks
+                .indexWhere((b) => b.id == widget.block.id);
 
-          if (blockIndex == -1 || _isDeleted) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted && Navigator.canPop(context)) {
-                Navigator.pop(context);
-              }
-            });
-            return const SizedBox();
-          }
+            if (blockIndex == -1 || _isDeleted) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted && Navigator.canPop(context)) {
+                  Navigator.pop(context);
+                }
+              });
+              return const SizedBox();
+            }
 
-          return Column(
-            children: [
-              // Block Name & Controls
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    // Block Icon
-                    Padding(
-                      padding: const EdgeInsets.only(right: 12),
-                       child: Icon(
+            return Column(
+              children: [
+                // Block Name & Controls
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      // Block Icon
+                      Padding(
+                        padding: const EdgeInsets.only(right: 12),
+                        child: Icon(
                           _getBlockIcon(widget.block.type),
                           color: Theme.of(context).colorScheme.primary,
                           size: 24,
                         ),
-                    ),
-                    // Title TextField
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.only(right: 16.0),
-                        child: TextField(
-                          controller: _blockNameController,
-                          decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            hintText: 'Block Name',
+                      ),
+                      // Title TextField
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(right: 16.0),
+                          child: TextField(
+                            controller: _blockNameController,
+                            decoration: const InputDecoration(
+                              border: InputBorder.none,
+                              hintText: 'Block Name',
+                            ),
+                            onChanged: (value) {
+                              _debouncer.run(() {
+                                provider.updateBlocks([
+                                  for (var b in provider.profileData.blocks)
+                                    if (b.id == widget.block.id)
+                                      b.copyWith(
+                                        blockName: value,
+                                        sequence: b.sequence,
+                                      )
+                                    else
+                                      b
+                                ]);
+                              });
+                            },
                           ),
-                          onChanged: (value) {
-                            _debouncer.run(() {
-                              provider.updateBlocks([
-                                for (var b in provider.profileData.blocks)
-                                  if (b.id == widget.block.id)
-                                    b.copyWith(
-                                      blockName: value,
-                                      sequence: b.sequence,
-                                    )
-                                  else
-                                    b
-                              ]);
-                            });
-                          },
                         ),
                       ),
-                    ),
-                    // Visibility Toggle
-                    Transform.scale(
-                      scale: 0.7,
-                      child: Switch(
-                        value: provider.profileData.blocks
-                            .firstWhere((b) => b.id == widget.block.id)
-                            .isVisible ?? true,
-                        onChanged: (value) {
-                          provider.updateBlocks([
+                      // Visibility Toggle
+                      Transform.scale(
+                        scale: 0.7,
+                        child: Switch(
+                          value: provider.profileData.blocks
+                                  .firstWhere((b) => b.id == widget.block.id)
+                                  .isVisible ??
+                              true,
+                          onChanged: (value) {
+                            provider.updateBlocks([
                               for (var b in provider.profileData.blocks)
                                 if (b.id == widget.block.id)
                                   b.copyWith(
@@ -216,108 +217,111 @@ class _EditBlockScreenState extends State<EditBlockScreen> with SingleTickerProv
                                 else
                                   b
                             ]);
-                        },
-                        activeColor: isDarkMode ? Colors.white : Colors.black,
-                        activeTrackColor: isDarkMode ? const Color(0xFF121212) : Colors.white,
-                        inactiveThumbColor: isDarkMode ? Colors.white : Colors.black,
-                        inactiveTrackColor: isDarkMode ? const Color(0xFF121212) : Colors.white,
-                        trackOutlineColor: WidgetStateProperty.all(
-                          isDarkMode ? Colors.white : Colors.black,
-                        ),
-                        trackOutlineWidth: WidgetStateProperty.all(1.5),
-                      ),
-                    ),
-                    // Delete Icon
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline),
-                      onPressed: () => _showDeleteConfirmation(context, () {
-                        final blocks = [...provider.profileData.blocks];
-                        blocks.removeAt(blockIndex);
-                        provider.updateBlocks(blocks);
-                      }),
-                      
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1),
-              // Tabs
-              TabBar(
-                controller: _tabController,
-                tabs: const [
-                  Tab(text: 'Links'),
-                  Tab(text: 'Layouts'),
-                  Tab(text: 'Settings'),
-                ],
-              ),
-              Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    // Links Tab
-                    Consumer<DigitalProfileProvider>(
-                      builder: (context, provider, _) {
-                        final currentBlock = provider.profileData.blocks
-                            .firstWhere((b) => b.id == widget.block.id);
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                          child: SingleChildScrollView(
-                            child: _buildEditor(
-                              provider.profileData.blocks.indexOf(currentBlock),
-                              provider,
-                            ),
+                          },
+                          activeColor: isDarkMode ? Colors.white : Colors.black,
+                          activeTrackColor:
+                              isDarkMode ? const Color(0xFF121212) : Colors.white,
+                          inactiveThumbColor:
+                              isDarkMode ? Colors.white : Colors.black,
+                          inactiveTrackColor:
+                              isDarkMode ? const Color(0xFF121212) : Colors.white,
+                          trackOutlineColor: WidgetStateProperty.all(
+                            isDarkMode ? Colors.white : Colors.black,
                           ),
-                        );
-                      },
-                    ),
-                    // Layouts Tab
-                    Consumer<DigitalProfileProvider>(
-                      builder: (context, provider, _) => _LayoutsTab(
-                        onLayoutChanged: (layout, aspectRatio) {
-                          provider.updateBlocks([
-                            for (var b in provider.profileData.blocks)
-                              if (b.id == widget.block.id)
-                                b.copyWith(
-                                  layout: layout,
-                                  aspectRatio: aspectRatio,
-                                  sequence: b.sequence,
-                                )
-                else
-                                b
-                          ]);
-                        },
-                        block: provider.profileData.blocks
-                            .firstWhere((b) => b.id == widget.block.id),
+                          trackOutlineWidth: WidgetStateProperty.all(1.5),
+                        ),
                       ),
-                    ),
-                    // Settings Tab
-                    Consumer<DigitalProfileProvider>(
-                      builder: (context, provider, _) => _SettingsTab(
-                        block: provider.profileData.blocks
-                            .firstWhere((b) => b.id == widget.block.id),
-                        onUpdate: (updated) {
-                          provider.updateBlocks([
-                            for (var b in provider.profileData.blocks)
-                              if (b.id == widget.block.id)
-                                updated
-                              else
-                                b
-                          ]);
-                        },
+                      // Delete Icon
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline),
+                        onPressed: () => _showDeleteConfirmation(context, () {
+                          final blocks = [...provider.profileData.blocks];
+                          blocks.removeAt(blockIndex);
+                          provider.updateBlocks(blocks);
+                        }),
                       ),
-                    ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                // Tabs
+                TabBar(
+                  controller: _tabController,
+                  tabs: const [
+                    Tab(text: 'Links'),
+                    Tab(text: 'Layouts'),
+                    Tab(text: 'Settings'),
                   ],
                 ),
-              ),
-              const SizedBox(height: 56),
-            ],
-          );
-        },
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      // Links Tab
+                      Consumer<DigitalProfileProvider>(
+                        builder: (context, provider, _) {
+                          final currentBlock = provider.profileData.blocks
+                              .firstWhere((b) => b.id == widget.block.id);
+                          return Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 20.0),
+                            child: SingleChildScrollView(
+                              child: _buildEditor(
+                                provider.profileData.blocks.indexOf(currentBlock),
+                                provider,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      // Layouts Tab
+                      Consumer<DigitalProfileProvider>(
+                        builder: (context, provider, _) => _LayoutsTab(
+                          onLayoutChanged: (layout, aspectRatio) {
+                            provider.updateBlocks([
+                              for (var b in provider.profileData.blocks)
+                                if (b.id == widget.block.id)
+                                  b.copyWith(
+                                    layout: layout,
+                                    aspectRatio: aspectRatio,
+                                    sequence: b.sequence,
+                                  )
+                                else
+                                  b
+                            ]);
+                          },
+                          block: provider.profileData.blocks
+                              .firstWhere((b) => b.id == widget.block.id),
+                        ),
+                      ),
+                      // Settings Tab
+                      Consumer<DigitalProfileProvider>(
+                        builder: (context, provider, _) => _SettingsTab(
+                          block: provider.profileData.blocks
+                              .firstWhere((b) => b.id == widget.block.id),
+                          onUpdate: (updated) {
+                            provider.updateBlocks([
+                              for (var b in provider.profileData.blocks)
+                                if (b.id == widget.block.id)
+                                  updated
+                                else
+                                  b
+                            ]);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 56),
+              ],
+            );
+          },
+        ),
       ),
-    ),
     );
   }
-  
+
   Widget _buildEditor(int blockIndex, DigitalProfileProvider provider) {
     final currentBlock = provider.profileData.blocks
         .firstWhere((b) => b.id == widget.block.id);
@@ -418,14 +422,33 @@ class _LayoutsTabState extends State<_LayoutsTab> {
   BlockLayout selectedLayout = BlockLayout.classic;
   String selectedAspectRatio = '16:9';
   TextAlign selectedAlignment = TextAlign.center;
-  
+
   @override
   void initState() {
     super.initState();
     selectedLayout = widget.block.layout;
     selectedAspectRatio = widget.block.aspectRatio ?? '16:9';
+    selectedAlignment = widget.block.textAlignment == TextAlignment.left
+        ? TextAlign.left
+        : widget.block.textAlignment == TextAlignment.right
+            ? TextAlign.right
+            : TextAlign.center;
   }
-  
+
+  @override
+  void didUpdateWidget(_LayoutsTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.block != widget.block) {
+      selectedLayout = widget.block.layout;
+      selectedAspectRatio = widget.block.aspectRatio ?? '16:9';
+      selectedAlignment = widget.block.textAlignment == TextAlignment.left
+          ? TextAlign.left
+          : widget.block.textAlignment == TextAlignment.right
+              ? TextAlign.right
+              : TextAlign.center;
+    }
+  }
+
   final List<AspectRatioOption> aspectRatios = const [
     AspectRatioOption(value: '1:1', label: '1:1 Square', ratio: 1),
     AspectRatioOption(value: '3:2', label: '3:2 Horizontal', ratio: 1.5),
@@ -440,7 +463,7 @@ class _LayoutsTabState extends State<_LayoutsTab> {
 
     return Container(
       width: containerSize,
-      height: containerSize,  // Fixed height
+      height: containerSize,
       decoration: BoxDecoration(
         border: Border.all(
           color: isDarkMode ? Colors.grey.shade600 : Colors.grey.shade300,
@@ -454,7 +477,7 @@ class _LayoutsTabState extends State<_LayoutsTab> {
           final maxWidth = constraints.maxWidth;
           final width = ratio >= 1 ? maxWidth : maxWidth * ratio;
           final height = ratio >= 1 ? maxWidth / ratio : maxWidth;
-        
+
           return Center(
             child: Container(
               width: width,
@@ -473,50 +496,56 @@ class _LayoutsTabState extends State<_LayoutsTab> {
   void _showAspectRatioModal(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Theme.of(context).colorScheme.background, // Dark in dark mode
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (context) => Container(
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.background,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
         ),
         child: SingleChildScrollView(
           child: Column(
-            children: aspectRatios.map((option) => InkWell(
-              onTap: () {
-                setState(() {
-                  selectedAspectRatio = option.value;
-                });
-                widget.onLayoutChanged(selectedLayout, option.value);
-                Navigator.pop(context);
-              },
-              child: Container(
-                color: selectedAspectRatio == option.value 
-                  ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
-                  : null,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Row(
-                  children: [
-                    _buildAspectRatioIcon(option.ratio),
-                    const SizedBox(width: 12),
-                    Text(
-                      option.label,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onBackground,
+            children: aspectRatios
+                .map((option) => InkWell(
+                      onTap: () {
+                        setState(() {
+                          selectedAspectRatio = option.value;
+                        });
+                        widget.onLayoutChanged(selectedLayout, option.value);
+                        Navigator.pop(context);
+                      },
+                      child: Container(
+                        color: selectedAspectRatio == option.value
+                            ? Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withAlpha((0.1 * 255).toInt())
+                            : null,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        child: Row(
+                          children: [
+                            _buildAspectRatioIcon(option.ratio),
+                            const SizedBox(width: 12),
+                            Text(
+                              option.label,
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                            const Spacer(),
+                            if (selectedAspectRatio == option.value)
+                              Icon(
+                                Icons.check,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                          ],
+                        ),
                       ),
-                    ),
-                    const Spacer(),
-                    if (selectedAspectRatio == option.value)
-                      Icon(
-                        Icons.check,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                  ],
-                ),
-              ),
-            )).toList(),
+                    ))
+                .toList(),
           ),
         ),
       ),
@@ -577,7 +606,8 @@ class _LayoutsTabState extends State<_LayoutsTab> {
                         isSelected: selectedLayout == BlockLayout.businessCard,
                         onTap: () => setState(() {
                           selectedLayout = BlockLayout.businessCard;
-                          widget.onLayoutChanged(BlockLayout.businessCard, null);
+                          widget.onLayoutChanged(
+                              BlockLayout.businessCard, null);
                         }),
                       ),
                     ),
@@ -636,17 +666,19 @@ class _LayoutsTabState extends State<_LayoutsTab> {
                     isSelected: selectedLayout == BlockLayout.carousel,
                     onTap: () => setState(() {
                       selectedLayout = BlockLayout.carousel;
-                      widget.onLayoutChanged(BlockLayout.carousel, selectedAspectRatio);
+                      widget.onLayoutChanged(
+                          BlockLayout.carousel, selectedAspectRatio);
                     }),
                   ),
                 ),
               ],
             ),
-          
+
             // Show aspect ratio only for image blocks in carousel layout
-            if (widget.block.type == BlockType.image && selectedLayout == BlockLayout.carousel) ...[
+            if (widget.block.type == BlockType.image &&
+                selectedLayout == BlockLayout.carousel) ...[
               const SizedBox(height: 24),
-                Column(
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
@@ -660,18 +692,22 @@ class _LayoutsTabState extends State<_LayoutsTab> {
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         border: Border.all(
-                          color: Colors.grey.shade600,  // Same as unselected layout
-                          width: 1,  // Same as unselected layout
+                          color: Colors.grey.shade600, // Same as unselected layout
+                          width: 1, // Same as unselected layout
                         ),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         children: [
-                          _buildAspectRatioIcon(
-                            aspectRatios.firstWhere((opt) => opt.value == selectedAspectRatio).ratio
-                          ),
+                          _buildAspectRatioIcon(aspectRatios
+                              .firstWhere(
+                                  (opt) => opt.value == selectedAspectRatio)
+                              .ratio),
                           const SizedBox(width: 12),
-                          Text(aspectRatios.firstWhere((opt) => opt.value == selectedAspectRatio).label),
+                          Text(aspectRatios
+                              .firstWhere(
+                                  (opt) => opt.value == selectedAspectRatio)
+                              .label),
                           const Spacer(),
                           const Icon(Icons.keyboard_arrow_down),
                         ],
@@ -681,7 +717,7 @@ class _LayoutsTabState extends State<_LayoutsTab> {
                 ],
               ),
             ],
-          
+
             // Show text alignment only for website blocks
             if (widget.block.type == BlockType.website) ...[
               const SizedBox(height: 24),
@@ -744,7 +780,6 @@ class _SettingsTab extends StatefulWidget {
 
   @override
   State<_SettingsTab> createState() => _SettingsTabState();
-  
 }
 
 class _SettingsTabState extends State<_SettingsTab> {
@@ -758,7 +793,8 @@ class _SettingsTabState extends State<_SettingsTab> {
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.block.title);
-    _descriptionController = TextEditingController(text: widget.block.description);
+    _descriptionController =
+        TextEditingController(text: widget.block.description);
     _isCollapsed = widget.block.isCollapsed ?? false;
   }
 
@@ -767,7 +803,7 @@ class _SettingsTabState extends State<_SettingsTab> {
     _titleController.dispose();
     _descriptionController.dispose();
     _titleDebouncer.dispose();
-    _descriptionDebouncer.dispose(); 
+    _descriptionDebouncer.dispose();
     super.dispose();
   }
 
@@ -775,7 +811,7 @@ class _SettingsTabState extends State<_SettingsTab> {
   Widget build(BuildContext context) {
     final provider = Provider.of<DigitalProfileProvider>(context, listen: false);
     final blockIndex = provider.profileData.blocks
-              .indexWhere((b) => b.id == widget.block.id);
+        .indexWhere((b) => b.id == widget.block.id);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -804,7 +840,9 @@ class _SettingsTabState extends State<_SettingsTab> {
             ),
             onChanged: (value) {
               _titleDebouncer.run(() {
-                final updatedBlock = {...provider.profileData.blocks[blockIndex].toMap()};
+                final updatedBlock = {
+                  ...provider.profileData.blocks[blockIndex].toMap()
+                };
                 updatedBlock['title'] = value;
                 widget.onUpdate(Block.fromMap(updatedBlock));
               });
@@ -817,9 +855,11 @@ class _SettingsTabState extends State<_SettingsTab> {
               hintText: 'Description',
               border: OutlineInputBorder(),
             ),
-             onChanged: (value) {
+            onChanged: (value) {
               _descriptionDebouncer.run(() {
-                final updatedBlock = {...provider.profileData.blocks[blockIndex].toMap()};
+                final updatedBlock = {
+                  ...provider.profileData.blocks[blockIndex].toMap()
+                };
                 updatedBlock['description'] = value;
                 widget.onUpdate(Block.fromMap(updatedBlock));
               });
@@ -856,20 +896,19 @@ class _SettingsTabState extends State<_SettingsTab> {
               const SizedBox(width: 8),
               Expanded(
                 child: _VisibilityOption(
-                  title: 'COLLAPSED',
-                  icon: Icons.view_headline,
-                  isSelected: _isCollapsed,
-                  onTap: () {
-                    setState(() {
-                      _isCollapsed = true;
-                    });
-                    final updatedBlock = widget.block.copyWith(
-                      isCollapsed: true,
-                      sequence: widget.block.sequence,
-                    );
-                    widget.onUpdate(updatedBlock);
-                  }
-                ),
+                    title: 'COLLAPSED',
+                    icon: Icons.view_headline,
+                    isSelected: _isCollapsed,
+                    onTap: () {
+                      setState(() {
+                        _isCollapsed = true;
+                      });
+                      final updatedBlock = widget.block.copyWith(
+                        isCollapsed: true,
+                        sequence: widget.block.sequence,
+                      );
+                      widget.onUpdate(updatedBlock);
+                    }),
               ),
             ],
           ),
@@ -894,16 +933,15 @@ class _LayoutOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           border: Border.all(
-            color: isSelected 
-              ? Theme.of(context).colorScheme.onBackground  // White in dark mode
-              : Colors.grey.shade600,  // Darker grey in dark mode
+            color: isSelected
+                ? Theme.of(context).colorScheme.onSurface
+                : Colors.grey.shade600,
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(8),
@@ -913,9 +951,9 @@ class _LayoutOption extends StatelessWidget {
             Icon(
               icon,
               size: 24,
-              color: isSelected 
-                ? Theme.of(context).colorScheme.onBackground  // White in dark mode
-                : Colors.grey.shade600,  // Darker grey in dark mode
+              color: isSelected
+                  ? Theme.of(context).colorScheme.onSurface
+                  : Colors.grey.shade600,
             ),
             const SizedBox(height: 8),
             Text(
@@ -923,9 +961,9 @@ class _LayoutOption extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                color: isSelected 
-                  ? Theme.of(context).colorScheme.onBackground  // White in dark mode
-                  : Colors.grey.shade600,  // Darker grey in dark mode
+                color: isSelected
+                    ? Theme.of(context).colorScheme.onSurface
+                    : Colors.grey.shade600,
               ),
             ),
           ],
@@ -958,21 +996,21 @@ class _AlignmentOption extends StatelessWidget {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           border: Border.all(
-            color: isDarkMode 
-              ? (isSelected ? Colors.white : Colors.grey.shade600)
-              : (isSelected ? Colors.black : Colors.grey.shade600),
+            color: isDarkMode
+                ? (isSelected ? Colors.white : Colors.grey.shade600)
+                : (isSelected ? Colors.black : Colors.grey.shade600),
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(8),
           color: isDarkMode
-            ? (isSelected ? Colors.white : Colors.transparent)
-            : (isSelected ? Colors.black : Colors.transparent),
+              ? (isSelected ? Colors.white : Colors.transparent)
+              : (isSelected ? Colors.black : Colors.transparent),
         ),
         child: Icon(
           icon,
           color: isDarkMode
-            ? (isSelected ? Color(0xFF121212) : Colors.grey.shade600)
-            : (isSelected ? Colors.white : Colors.black),
+              ? (isSelected ? Color(0xFF121212) : Colors.grey.shade600)
+              : (isSelected ? Colors.white : Colors.black),
         ),
       ),
     );
@@ -1003,8 +1041,8 @@ class _VisibilityOption extends StatelessWidget {
         decoration: BoxDecoration(
           border: Border.all(
             color: isDarkMode
-              ? (isSelected ? Colors.white : Colors.grey.shade600)
-              : (isSelected ? Colors.black : Colors.grey.shade300),
+                ? (isSelected ? Colors.white : Colors.grey.shade600)
+                : (isSelected ? Colors.black : Colors.grey.shade300),
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(8),
@@ -1015,9 +1053,8 @@ class _VisibilityOption extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 border: Border.all(
-                  color: isDarkMode
-                    ? Colors.grey.shade600
-                    : Colors.grey.shade300,
+                  color:
+                      isDarkMode ? Colors.grey.shade600 : Colors.grey.shade300,
                 ),
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -1025,8 +1062,8 @@ class _VisibilityOption extends StatelessWidget {
                 icon,
                 size: 24,
                 color: isDarkMode
-                  ? (isSelected ? Colors.white : Colors.grey.shade600)
-                  : (isSelected ? Colors.black : Colors.grey),
+                    ? (isSelected ? Colors.white : Colors.grey.shade600)
+                    : (isSelected ? Colors.black : Colors.grey),
               ),
             ),
             const SizedBox(height: 8),
@@ -1036,8 +1073,8 @@ class _VisibilityOption extends StatelessWidget {
                 fontSize: 12,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 color: isDarkMode
-                  ? (isSelected ? Colors.white : Colors.grey.shade600)
-                  : (isSelected ? Colors.black : Colors.grey),
+                    ? (isSelected ? Colors.white : Colors.grey.shade600)
+                    : (isSelected ? Colors.black : Colors.grey),
               ),
             ),
           ],

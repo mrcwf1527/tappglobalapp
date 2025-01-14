@@ -479,21 +479,21 @@ class SocialPlatforms {
       requiresCountryCode: true,
       numbersOnly: true,
     ),
-    SocialPlatform(
+     SocialPlatform(
       id: 'red',
       name: 'RED 小红书',
       imagePath: 'assets/social_icons/red.svg',
       placeholder: 'Enter RED URL',
       urlHandlingType: UrlHandlingType.urlOnly,
     ),
-    SocialPlatform(
+      SocialPlatform(
       id: 'lemon8',
       name: 'Lemon8',
       imagePath: 'assets/social_icons/lemon8.svg',
-      placeholder: 'Enter Lemon8 URL',
-      urlHandlingType: UrlHandlingType.urlOnly,
+       placeholder: 'Enter Lemon8 URL',
+       urlHandlingType: UrlHandlingType.urlOnly,
     ),
-    SocialPlatform(
+      SocialPlatform(
       id: 'douyin',
       name: '抖音',
       icon: FontAwesomeIcons.tiktok,

@@ -25,10 +25,12 @@ class _ProfileFormState extends State<ProfileForm> {
   void initState() {
     super.initState();
     final provider = context.read<DigitalProfileProvider>();
-    _displayNameController = TextEditingController(text: provider.profileData.displayName);
+    _displayNameController =
+        TextEditingController(text: provider.profileData.displayName);
     _locationController = TextEditingController(text: provider.profileData.location);
     _jobTitleController = TextEditingController(text: provider.profileData.jobTitle);
-    _companyNameController = TextEditingController(text: provider.profileData.companyName);
+    _companyNameController =
+        TextEditingController(text: provider.profileData.companyName);
     _bioController = TextEditingController(text: provider.profileData.bio);
 
     _setupListeners(provider);
@@ -104,7 +106,8 @@ class _ProfileFormState extends State<ProfileForm> {
     );
   }
 
-  Widget _buildFormField(String label, TextEditingController controller, int maxLength) {
+  Widget _buildFormField(
+      String label, TextEditingController controller, int maxLength) {
     return TextFormField(
       controller: controller,
       decoration: InputDecoration(
@@ -127,7 +130,8 @@ class _ProfileFormState extends State<ProfileForm> {
       maxLines: null,
       minLines: 1,
       maxLength: 50,
-      buildCounter: (context, {required currentLength, required isFocused, maxLength}) {
+      buildCounter: (context,
+          {required currentLength, required isFocused, maxLength}) {
         return Padding(
           padding: const EdgeInsets.only(right: 8),
           child: Text('$currentLength/50 words', textAlign: TextAlign.end),

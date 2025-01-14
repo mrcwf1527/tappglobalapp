@@ -1,5 +1,6 @@
 // lib/widgets/digital_profile/social_icons.dart
 // Profile Components: Social media links management
+// Profile Components: Social media links management
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -31,7 +32,7 @@ class _SocialIconsState extends State<SocialIcons> {
   void initState() {
     super.initState();
     final provider = context.read<DigitalProfileProvider>();
-    
+
     for (var entry in provider.profileData.socialPlatforms.asMap().entries) {
       final platform = entry.value;
       final index = entry.key;
@@ -40,9 +41,9 @@ class _SocialIconsState extends State<SocialIcons> {
         // Initialize phone controllers
         _phoneControllers[platform.id] = TextEditingController();
         _countryNotifiers[platform.id] = ValueNotifier(
-          _getCountryFromValue(platform.value)
+          _getCountryFromValue(platform.value),
         );
-        
+
         if (platform.value != null) {
           // Extract phone number without country code
           final dialCode = _countryNotifiers[platform.id]!.value.dialCode;
@@ -50,39 +51,40 @@ class _SocialIconsState extends State<SocialIcons> {
           _phoneControllers[platform.id]!.text = number;
         }
       } else {
-        _socialControllers[platform.id] = TextEditingController(text: platform.value);
-        _focusNodes[platform.id] = FocusNode()..addListener(() {
-          final focusNode = _focusNodes[platform.id];
-          if (focusNode != null && !focusNode.hasFocus) {
-            _handleFocusLost(platform, index);
-          }
-        });
+        _socialControllers[platform.id] =
+            TextEditingController(text: platform.value);
+        _focusNodes[platform.id] = FocusNode()
+          ..addListener(() {
+            final focusNode = _focusNodes[platform.id];
+            if (focusNode != null && !focusNode.hasFocus) {
+              _handleFocusLost(platform, index);
+            }
+          });
       }
     }
   }
 
   void _handleFocusLost(SocialPlatform platform, int index) {
     // Add website, address, bluesky, etc to the check
-    if (!(platform.id == 'facebook' || 
-          platform.id == 'linkedin' || 
-          platform.id == 'linkedin_company' ||
-          platform.id == 'website' ||
-          platform.id == 'address' ||
-          platform.id == 'bluesky' ||
-          platform.id == 'discord' ||
-          platform.id == 'googleReviews' ||
-          platform.id == 'shopee' ||
-          platform.id == 'lazada' ||
-          platform.id == 'amazon' ||
-          platform.id == 'googlePlay' ||
-          platform.id == 'appStore' ||
-          platform.id == 'line' ||
-          platform.id == 'weibo' ||
-          platform.id == 'naver'
-        )) {
+    if (!(platform.id == 'facebook' ||
+        platform.id == 'linkedin' ||
+        platform.id == 'linkedin_company' ||
+        platform.id == 'website' ||
+        platform.id == 'address' ||
+        platform.id == 'bluesky' ||
+        platform.id == 'discord' ||
+        platform.id == 'googleReviews' ||
+        platform.id == 'shopee' ||
+        platform.id == 'lazada' ||
+        platform.id == 'amazon' ||
+        platform.id == 'googlePlay' ||
+        platform.id == 'appStore' ||
+        platform.id == 'line' ||
+        platform.id == 'weibo' ||
+        platform.id == 'naver')) {
       return;
     }
-    
+
     final controller = _socialControllers[platform.id];
     if (controller == null || controller.text.isEmpty) return;
 
@@ -141,7 +143,9 @@ class _SocialIconsState extends State<SocialIcons> {
       final newValue = prefix + controller.text;
       controller.text = newValue;
       // Update platforms with the new value
-      final platforms = [...context.read<DigitalProfileProvider>().profileData.socialPlatforms];
+      final platforms = [
+        ...context.read<DigitalProfileProvider>().profileData.socialPlatforms
+      ];
       platforms[index] = platform.copyWith(value: newValue);
       context.read<DigitalProfileProvider>().updateSocialPlatforms(platforms);
     }
@@ -150,16 +154,16 @@ class _SocialIconsState extends State<SocialIcons> {
   // Add this helper method
   CountryCode _getCountryFromValue(String? value) {
     if (value == null || value.isEmpty) {
-      return CountryCodes.getDefault();  
+      return CountryCodes.getDefault();
     }
-    
+
     // Find matching country code
     for (var country in CountryCodes.codes) {
       if (value.startsWith(country.dialCode)) {
         return country;
       }
     }
-    
+
     return CountryCodes.getDefault();
   }
 
@@ -192,20 +196,21 @@ class _SocialIconsState extends State<SocialIcons> {
     final result = await showDialog<SocialPlatform>(
       context: context,
       builder: (context) => SocialMediaSelector(
-        selectedPlatformIds: provider.profileData.socialPlatforms
-            .map((p) => p.id)
-            .toList(),
+        selectedPlatformIds:
+            provider.profileData.socialPlatforms.map((p) => p.id).toList(),
       ),
     );
 
     if (result != null) {
       _socialControllers[result.id] = TextEditingController();
-      final index = provider.profileData.socialPlatforms.length; // Get the new index
-      _focusNodes[result.id] = FocusNode()..addListener(() {
-        if (!_focusNodes[result.id]!.hasFocus) {
-          _handleFocusLost(result, index);
-        }
-      });
+      final index =
+          provider.profileData.socialPlatforms.length; // Get the new index
+      _focusNodes[result.id] = FocusNode()
+        ..addListener(() {
+          if (!_focusNodes[result.id]!.hasFocus) {
+            _handleFocusLost(result, index);
+          }
+        });
       provider.updateSocialPlatforms([
         ...provider.profileData.socialPlatforms,
         result,
@@ -248,9 +253,9 @@ class _SocialIconsState extends State<SocialIcons> {
           ElevatedButton(
             onPressed: _addSocialPlatform,
             style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).brightness == Brightness.dark 
-                ? const Color(0xFFD9D9D9) 
-                : Colors.black,
+              backgroundColor: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFFD9D9D9)
+                  : Colors.black,
               minimumSize: const Size(double.infinity, 50),
             ),
             child: Row(
@@ -258,17 +263,17 @@ class _SocialIconsState extends State<SocialIcons> {
               children: [
                 Icon(
                   FontAwesomeIcons.plus,
-                  color: Theme.of(context).brightness == Brightness.dark 
-                    ? Colors.black 
-                    : Colors.white,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.black
+                      : Colors.white,
                 ),
                 const SizedBox(width: 8),
                 Text(
                   'Add Social Icons',
                   style: TextStyle(
-                    color: Theme.of(context).brightness == Brightness.dark 
-                      ? Colors.black 
-                      : Colors.white,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.black
+                        : Colors.white,
                   ),
                 ),
               ],
@@ -284,8 +289,8 @@ class _SocialIconsState extends State<SocialIcons> {
 
     if (platform.requiresCountryCode && platform.numbersOnly) {
       _initializePhoneController(
-        platform.id, 
-        CountryCodes.codes.firstWhere((code) => code.code == 'US')
+        platform.id,
+        CountryCodes.codes.firstWhere((code) => code.code == 'US'),
       );
       final phoneController = _phoneControllers[platform.id]!;
       final selectedCountry = _countryNotifiers[platform.id]!;
@@ -314,21 +319,23 @@ class _SocialIconsState extends State<SocialIcons> {
                   filled: true,
                   fillColor: Theme.of(context).colorScheme.surface,
                   border: Theme.of(context).inputDecorationTheme.border,
-                  enabledBorder: Theme.of(context).inputDecorationTheme.enabledBorder,
-                  focusedBorder: Theme.of(context).inputDecorationTheme.focusedBorder,
+                  enabledBorder:
+                      Theme.of(context).inputDecorationTheme.enabledBorder,
+                  focusedBorder:
+                      Theme.of(context).inputDecorationTheme.focusedBorder,
                   prefixIcon: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       SizedBox(
                         width: 40,
                         child: Center(
-                          child: platform.icon != null 
-                            ? FaIcon(platform.icon, size: 20)
-                            : SvgPicture.asset(
-                                platform.imagePath!,
-                                width: 20,
-                                height: 20,
-                              ),
+                          child: platform.icon != null
+                              ? FaIcon(platform.icon, size: 20)
+                              : SvgPicture.asset(
+                                  platform.imagePath!,
+                                  width: 20,
+                                  height: 20,
+                                ),
                         ),
                       ),
                       InkWell(
@@ -342,13 +349,15 @@ class _SocialIconsState extends State<SocialIcons> {
                             // Clear the phone number field
                             phoneController.clear();
                             // Update platforms with empty value for this entry
-                            final platforms = [...provider.profileData.socialPlatforms];
+                            final platforms = [
+                              ...provider.profileData.socialPlatforms
+                            ];
                             platforms[index] = platform.copyWith(value: '');
                             provider.updateSocialPlatforms(platforms);
                           }
                         },
                         child: selectedCountry.value.getFlagWidget(
-                          width: 24, 
+                          width: 24,
                           height: 16,
                         ),
                       ),
@@ -359,56 +368,64 @@ class _SocialIconsState extends State<SocialIcons> {
                 ),
                 onChanged: (value) {
                   String formattedNumber = value;
-                  if (value.startsWith(selectedCountry.value.dialCode.replaceAll('+', ''))) {
-                    formattedNumber = value.substring(selectedCountry.value.dialCode.replaceAll('+', '').length);
+                  if (value.startsWith(
+                      selectedCountry.value.dialCode.replaceAll('+', ''))) {
+                    formattedNumber = value.substring(
+                        selectedCountry.value.dialCode.replaceAll('+', '').length);
                   }
                   if (formattedNumber.startsWith('0')) {
                     formattedNumber = formattedNumber.substring(1);
                   }
-                  
+
                   try {
                     final phoneNumber = PhoneNumber.parse(
                       formattedNumber,
-                      destinationCountry: IsoCode.values.firstWhere(
-                        (code) => code.name == selectedCountry.value.code.toUpperCase()
-                      ),
+                      destinationCountry: IsoCode.values.firstWhere((code) =>
+                          code.name ==
+                          selectedCountry.value.code.toUpperCase()),
                     );
-                    
-                    final platforms = [...provider.profileData.socialPlatforms];
+
+                    final platforms = [
+                      ...provider.profileData.socialPlatforms
+                    ];
                     phoneController.text = phoneNumber.nsn;
                     platforms[index] = platform.copyWith(
-                      value: '${selectedCountry.value.dialCode}${phoneNumber.nsn}'
-                    );
-                    
+                        value: '${selectedCountry.value.dialCode}${phoneNumber.nsn}');
+
                     if (_debounceTimers[platform.id]?.isActive ?? false) {
                       _debounceTimers[platform.id]?.cancel();
                     }
-                    _debounceTimers[platform.id] = Timer(const Duration(milliseconds: 500), () {
+                    _debounceTimers[platform.id] =
+                        Timer(const Duration(milliseconds: 500), () {
                       provider.updateSocialPlatforms(platforms);
                     });
                   } catch (e) {
-                    final platforms = [...provider.profileData.socialPlatforms];
+                    final platforms = [
+                      ...provider.profileData.socialPlatforms
+                    ];
                     phoneController.text = formattedNumber;
                     platforms[index] = platform.copyWith(
-                      value: '${selectedCountry.value.dialCode}$formattedNumber'
-                    );
+                        value: '${selectedCountry.value.dialCode}$formattedNumber');
                     if (_debounceTimers[platform.id]?.isActive ?? false) {
                       _debounceTimers[platform.id]?.cancel();
                     }
-                    _debounceTimers[platform.id] = Timer(const Duration(milliseconds: 500), () {
+                    _debounceTimers[platform.id] =
+                        Timer(const Duration(milliseconds: 500), () {
                       provider.updateSocialPlatforms(platforms);
                     });
                   }
                 },
                 validator: (value) {
-                  if (value == null || value.isEmpty) return 'Please enter a phone number';
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a phone number';
+                  }
 
                   try {
                     final phoneNumber = PhoneNumber.parse(
                       value,
-                      destinationCountry: IsoCode.values.firstWhere(
-                        (code) => code.name == selectedCountry.value.code.toUpperCase()
-                      ),
+                      destinationCountry: IsoCode.values.firstWhere((code) =>
+                          code.name ==
+                          selectedCountry.value.code.toUpperCase()),
                     );
 
                     if (!phoneNumber.isValid()) {
@@ -418,7 +435,7 @@ class _SocialIconsState extends State<SocialIcons> {
                     return 'Invalid phone number format';
                   }
                   return null;
-                }
+                },
               ),
             ),
             const SizedBox(width: 8),
@@ -456,35 +473,41 @@ class _SocialIconsState extends State<SocialIcons> {
                   prefixIcon: SizedBox(
                     width: 40,
                     child: Center(
-                      child: platform.icon != null 
-                        ? FaIcon(platform.icon, size: 20)
-                        : SvgPicture.asset(
-                            platform.imagePath!,
-                            width: 20,
-                            height: 20,
-                          ),
+                      child: platform.icon != null
+                          ? FaIcon(platform.icon, size: 20)
+                          : SvgPicture.asset(
+                              platform.imagePath!,
+                              width: 20,
+                              height: 20,
+                            ),
                     ),
                   ),
                   hintText: platform.placeholder,
                   filled: true,
                   fillColor: Theme.of(context).colorScheme.surface,
                   border: Theme.of(context).inputDecorationTheme.border,
-                  enabledBorder: Theme.of(context).inputDecorationTheme.enabledBorder,
-                  focusedBorder: Theme.of(context).inputDecorationTheme.focusedBorder,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  errorText: platform.value != null && 
-                            !platform.validationPattern!.hasMatch(platform.value!) 
-                            ? 'Please enter a valid email address' 
-                            : null,
+                  enabledBorder:
+                      Theme.of(context).inputDecorationTheme.enabledBorder,
+                  focusedBorder:
+                      Theme.of(context).inputDecorationTheme.focusedBorder,
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  errorText: platform.value != null &&
+                          !platform.validationPattern!.hasMatch(platform.value!)
+                      ? 'Please enter a valid email address'
+                      : null,
                 ),
                 onChanged: (value) {
                   final parsedValue = platform.parseUrl(value);
-                  final platforms = [...provider.profileData.socialPlatforms];
+                  final platforms = [
+                    ...provider.profileData.socialPlatforms
+                  ];
                   platforms[index] = platform.copyWith(value: parsedValue);
                   if (_debounceTimers[platform.id]?.isActive ?? false) {
                     _debounceTimers[platform.id]?.cancel();
                   }
-                  _debounceTimers[platform.id] = Timer(const Duration(milliseconds: 500), () {
+                  _debounceTimers[platform.id] =
+                      Timer(const Duration(milliseconds: 500), () {
                     provider.updateSocialPlatforms(platforms);
                   });
                 },
@@ -533,24 +556,27 @@ class _SocialIconsState extends State<SocialIcons> {
                 prefixIcon: SizedBox(
                   width: 40,
                   child: Center(
-                    child: platform.icon != null 
-                      ? FaIcon(platform.icon, size: 20)
-                      : SvgPicture.asset(
-                          platform.imagePath!,
-                          width: 20,
-                          height: 20,
-                      ),
+                    child: platform.icon != null
+                        ? FaIcon(platform.icon, size: 20)
+                        : SvgPicture.asset(
+                            platform.imagePath!,
+                            width: 20,
+                            height: 20,
+                          ),
                   ),
                 ),
-                hintText: _socialControllers[platform.id]?.text.isEmpty ?? true 
-                  ? platform.placeholder
-                  : null,
+                hintText: _socialControllers[platform.id]?.text.isEmpty ?? true
+                    ? platform.placeholder
+                    : null,
                 filled: true,
                 fillColor: Theme.of(context).colorScheme.surface,
                 border: Theme.of(context).inputDecorationTheme.border,
-                enabledBorder: Theme.of(context).inputDecorationTheme.enabledBorder,
-                focusedBorder: Theme.of(context).inputDecorationTheme.focusedBorder,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                enabledBorder:
+                    Theme.of(context).inputDecorationTheme.enabledBorder,
+                focusedBorder:
+                    Theme.of(context).inputDecorationTheme.focusedBorder,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 prefixText: platform.prefix,
               ),
               onChanged: (value) {
@@ -558,22 +584,24 @@ class _SocialIconsState extends State<SocialIcons> {
                   setState(() {});
                   return;
                 }
-                
+
                 final parsedValue = platform.parseUrl(value);
                 if (parsedValue != value && parsedValue != null) {
                   _socialControllers[platform.id]?.text = parsedValue;
-                  _socialControllers[platform.id]?.selection = TextSelection.collapsed(
-                    offset: parsedValue.length
-                  );
+                  _socialControllers[platform.id]?.selection =
+                      TextSelection.collapsed(offset: parsedValue.length);
                 }
-                
-                final platforms = [...provider.profileData.socialPlatforms];
+
+                final platforms = [
+                  ...provider.profileData.socialPlatforms
+                ];
                 platforms[index] = platform.copyWith(value: parsedValue);
-                
+
                 if (_debounceTimers[platform.id]?.isActive ?? false) {
                   _debounceTimers[platform.id]?.cancel();
                 }
-                _debounceTimers[platform.id] = Timer(const Duration(milliseconds: 500), () {
+                _debounceTimers[platform.id] =
+                    Timer(const Duration(milliseconds: 500), () {
                   provider.updateSocialPlatforms(platforms);
                 });
               },

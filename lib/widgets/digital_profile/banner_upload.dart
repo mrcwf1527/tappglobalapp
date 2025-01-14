@@ -15,7 +15,7 @@ class BannerUpload extends StatefulWidget {
   final Function(String)? onImageUploaded;
 
   const BannerUpload({
-    super.key, 
+    super.key,
     this.currentImageUrl,
     this.onImageUploaded,
   });
@@ -43,7 +43,7 @@ class _BannerUploadState extends State<BannerUpload> {
         final file = File(image.path);
         _imageBytes = await file.readAsBytes();
       }
-      
+
       if (_imageBytes != null) {
         _showCropDialog();
       }
@@ -55,7 +55,7 @@ class _BannerUploadState extends State<BannerUpload> {
   void _showCropDialog() {
     final cropController = CropController();
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-  
+
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -70,9 +70,8 @@ class _BannerUploadState extends State<BannerUpload> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     IconButton(
-                      icon: Icon(Icons.close, 
-                        color: isDarkMode ? Colors.white : Colors.black
-                      ),
+                      icon: Icon(Icons.close,
+                          color: isDarkMode ? Colors.white : Colors.black),
                       onPressed: () {
                         _imageBytes = null;
                         Navigator.pop(context);
@@ -89,7 +88,8 @@ class _BannerUploadState extends State<BannerUpload> {
                   controller: cropController,
                   aspectRatio: 2.0,
                   baseColor: isDarkMode ? const Color(0xFF121212) : Colors.white,
-                  maskColor: (isDarkMode ? Colors.white : Colors.black).withAlpha(153),
+                  maskColor:
+                      (isDarkMode ? Colors.white : Colors.black).withAlpha(153),
                   onCropped: (result) {
                     switch (result) {
                       case CropSuccess(:final croppedImage):
@@ -111,7 +111,8 @@ class _BannerUploadState extends State<BannerUpload> {
                     if (mounted) setDialogState(() => _isCropping = false);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: isDarkMode ? const Color(0xFFD9D9D9) : Colors.black,
+                    backgroundColor:
+                        isDarkMode ? const Color(0xFFD9D9D9) : Colors.black,
                     foregroundColor: isDarkMode ? Colors.black : Colors.white,
                     minimumSize: const Size(double.infinity, 50),
                   ),
@@ -204,7 +205,7 @@ class _BannerUploadState extends State<BannerUpload> {
     );
   }
 
-    @override
+  @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -212,7 +213,7 @@ class _BannerUploadState extends State<BannerUpload> {
         const Text('Banner Image',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
         const SizedBox(height: 8),
-       ConstrainedBox(
+        ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 600, maxHeight: 230),
           child: AspectRatio(
             aspectRatio: 2.6,
@@ -234,27 +235,25 @@ class _BannerUploadState extends State<BannerUpload> {
     );
   }
 
-    Widget _buildContent() {
+  Widget _buildContent() {
     if (_isLoading) {
       return Center(
         child: CircularProgressIndicator(
-          value: _uploadProgress.isFinite ? _uploadProgress : null
-        ),
+            value: _uploadProgress.isFinite ? _uploadProgress : null),
       );
     }
 
     if (widget.currentImageUrl != null) {
       return ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 600, maxHeight: 230),
-          child: Image.network(
-            widget.currentImageUrl!,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => _buildPlaceholder(),
-          ),
-        )
-      );
+          borderRadius: BorderRadius.circular(8),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600, maxHeight: 230),
+            child: Image.network(
+              widget.currentImageUrl!,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _buildPlaceholder(),
+            ),
+          ));
     }
 
     return _buildPlaceholder();

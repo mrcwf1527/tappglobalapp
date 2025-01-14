@@ -7,7 +7,7 @@ import '../../services/auth_service.dart';
 class WebSideNav extends StatelessWidget {
   final int selectedIndex;
   final Function(int) onTabSelected;
-  
+
   const WebSideNav({
     super.key,
     required this.selectedIndex,
@@ -17,7 +17,7 @@ class WebSideNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Container(
       width: 230,
       color: isDarkMode ? const Color(0xFF191919) : const Color(0xFFF5F5F5),
@@ -26,9 +26,9 @@ class WebSideNav extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(24),
             child: Image.asset(
-              isDarkMode 
-                ? 'assets/logo/logo_long_white.png' 
-                : 'assets/logo/logo_long_black.png',
+              isDarkMode
+                  ? 'assets/logo/logo_long_white.png'
+                  : 'assets/logo/logo_long_black.png',
               height: 40,
               width: 160,
               fit: BoxFit.contain,
@@ -107,9 +107,9 @@ class WebSideNav extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: isSelected 
-              ? (isDarkMode ? const Color(0xFF252525) : Colors.black)
-              : Colors.transparent,
+            color: isSelected
+                ? (isDarkMode ? const Color(0xFF252525) : Colors.black)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
@@ -120,8 +120,8 @@ class WebSideNav extends StatelessWidget {
                   icon,
                   size: 20,
                   color: isSelected
-                    ? (isDarkMode ? Colors.white : Colors.white)
-                    : (isDarkMode ? Colors.white70 : Colors.black54),
+                      ? (isDarkMode ? Colors.white : Colors.white)
+                      : (isDarkMode ? Colors.white70 : Colors.black54),
                 ),
               ),
               const SizedBox(width: 12),
@@ -129,8 +129,8 @@ class WebSideNav extends StatelessWidget {
                 label,
                 style: TextStyle(
                   color: isSelected
-                    ? (isDarkMode ? Colors.white : Colors.white)
-                    : (isDarkMode ? Colors.white70 : Colors.black54),
+                      ? (isDarkMode ? Colors.white : Colors.white)
+                      : (isDarkMode ? Colors.white70 : Colors.black54),
                   fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
                 ),
               ),
@@ -141,7 +141,7 @@ class WebSideNav extends StatelessWidget {
     );
   }
 
-  Widget _buildLogoutButton(BuildContext context) {    
+  Widget _buildLogoutButton(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: InkWell(

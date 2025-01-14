@@ -1,4 +1,9 @@
 // lib/widgets/digital_profile/blocks/contact_block.dart
+// Widget for managing contact cards including profile photo upload, basic info (name, job, company), phone numbers, and emails with Firebase integration and real-time updates.
+import 'dart:ui' as ui;
+import 'dart:math' as math;
+import 'dart:typed_data';
+import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
@@ -7,10 +12,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:crop_your_image/crop_your_image.dart';
 import 'package:provider/provider.dart';
 import 'package:phone_numbers_parser/phone_numbers_parser.dart';
-import 'package:http/http.dart' as http;
-import 'dart:ui' as ui;
-import 'dart:math' as math;
-import 'dart:typed_data';
 import '../../../models/block.dart';
 import '../../../models/country_code.dart';
 import '../../../models/social_platform.dart';
@@ -990,7 +991,7 @@ Future<void> _handleCroppedImage(Uint8List croppedBytes) async {
     );
   }
 
-Widget _buildEmailField({
+  Widget _buildEmailField({
     required Key key,
     required String id,
     required TextEditingController controller,

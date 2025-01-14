@@ -3,9 +3,9 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
+import 'link_image_upload.dart';
 import '../../../models/block.dart';
 import '../../../providers/digital_profile_provider.dart';
-import 'link_image_upload.dart';
 
 class WebsiteBlock extends StatefulWidget {
   final Block block;
@@ -33,7 +33,6 @@ class _WebsiteBlockState extends State<WebsiteBlock> {
     _contents = List.from(widget.block.contents);
     _isVisible = widget.block.isVisible ?? true;
   }
-
 
   void _updateBlock() {
     final updatedBlock = widget.block.copyWith(
@@ -68,7 +67,8 @@ class _WebsiteBlockState extends State<WebsiteBlock> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Link'),
-        content: const Text('Are you sure you want to delete this link? All associated analytics will be deleted.'),
+        content: const Text(
+            'Are you sure you want to delete this link? All associated analytics will be deleted.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -77,12 +77,14 @@ class _WebsiteBlockState extends State<WebsiteBlock> {
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
-            
+
               // Delete image from storage if exists
               final content = _contents[index];
               if (content.imageUrl != null && content.imageUrl!.isNotEmpty) {
-                final provider = Provider.of<DigitalProfileProvider>(context, listen: false);
-                await provider.deleteBlockImage(widget.block.id, content.imageUrl!);
+                final provider =
+                    Provider.of<DigitalProfileProvider>(context, listen: false);
+                await provider.deleteBlockImage(
+                    widget.block.id, content.imageUrl!);
               }
 
               setState(() {
@@ -253,24 +255,32 @@ class _LinkCardState extends State<_LinkCard> {
                       ),
                       border: OutlineInputBorder(
                         borderSide: BorderSide(
-                          color: isDarkMode ? const Color(0xFF121212) : Colors.white,
+                          color: isDarkMode
+                              ? const Color(0xFF121212)
+                              : Colors.white,
                         ),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderSide: BorderSide(
-                          color: isDarkMode ? const Color(0xFF121212) : Colors.white,
+                          color: isDarkMode
+                              ? const Color(0xFF121212)
+                              : Colors.white,
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderSide: BorderSide(
-                          color: isDarkMode ? const Color(0xFF121212) : Colors.white,
+                          color: isDarkMode
+                              ? const Color(0xFF121212)
+                              : Colors.white,
                         ),
                       ),
-                      fillColor: isDarkMode ? const Color(0xFF121212) : Colors.white,
+                      fillColor:
+                          isDarkMode ? const Color(0xFF121212) : Colors.white,
                       filled: true,
                       contentPadding: const EdgeInsets.symmetric(vertical: 8.0),
                     ),
-                    onChanged: (value) => widget.onUpdate(widget.content.copyWith(title: value)),
+                    onChanged: (value) =>
+                        widget.onUpdate(widget.content.copyWith(title: value)),
                   ),
                   const SizedBox(height: 8),
                   TextFormField(
@@ -284,24 +294,32 @@ class _LinkCardState extends State<_LinkCard> {
                       ),
                       border: OutlineInputBorder(
                         borderSide: BorderSide(
-                          color: isDarkMode ? const Color(0xFF121212) : Colors.white,
+                          color: isDarkMode
+                              ? const Color(0xFF121212)
+                              : Colors.white,
                         ),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderSide: BorderSide(
-                          color: isDarkMode ? const Color(0xFF121212) : Colors.white,
+                          color: isDarkMode
+                              ? const Color(0xFF121212)
+                              : Colors.white,
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderSide: BorderSide(
-                          color: isDarkMode ? const Color(0xFF121212) : Colors.white,
+                          color: isDarkMode
+                              ? const Color(0xFF121212)
+                              : Colors.white,
                         ),
                       ),
-                      fillColor: isDarkMode ? const Color(0xFF121212) : Colors.white,
+                      fillColor:
+                          isDarkMode ? const Color(0xFF121212) : Colors.white,
                       filled: true,
                       contentPadding: const EdgeInsets.symmetric(vertical: 8.0),
                     ),
-                    onChanged: (value) => widget.onUpdate(widget.content.copyWith(subtitle: value)),
+                    onChanged: (value) => widget.onUpdate(
+                        widget.content.copyWith(subtitle: value)),
                   ),
                   const SizedBox(height: 8),
                   Row(
@@ -320,24 +338,34 @@ class _LinkCardState extends State<_LinkCard> {
                             ),
                             border: OutlineInputBorder(
                               borderSide: BorderSide(
-                                color: isDarkMode ? const Color(0xFF121212) : Colors.white,
+                                color: isDarkMode
+                                    ? const Color(0xFF121212)
+                                    : Colors.white,
                               ),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderSide: BorderSide(
-                                color: isDarkMode ? const Color(0xFF121212) : Colors.white,
+                                color: isDarkMode
+                                    ? const Color(0xFF121212)
+                                    : Colors.white,
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderSide: BorderSide(
-                                color: isDarkMode ? const Color(0xFF121212) : Colors.white,
+                                color: isDarkMode
+                                    ? const Color(0xFF121212)
+                                    : Colors.white,
                               ),
                             ),
-                            fillColor: isDarkMode ? const Color(0xFF121212) : Colors.white,
+                            fillColor: isDarkMode
+                                ? const Color(0xFF121212)
+                                : Colors.white,
                             filled: true,
-                            contentPadding: const EdgeInsets.symmetric(vertical: 8.0),
+                            contentPadding:
+                                const EdgeInsets.symmetric(vertical: 8.0),
                           ),
-                          onChanged: (value) => widget.onUpdate(widget.content.copyWith(url: value)),
+                          onChanged: (value) =>
+                              widget.onUpdate(widget.content.copyWith(url: value)),
                         ),
                       ),
                     ],
@@ -351,7 +379,8 @@ class _LinkCardState extends State<_LinkCard> {
                 LinkImageUpload(
                   currentImageUrl: widget.content.imageUrl,
                   linkId: widget.content.id,
-                  onImageUploaded: (url) => widget.onUpdate(widget.content.copyWith(imageUrl: url)),
+                  onImageUploaded: (url) =>
+                      widget.onUpdate(widget.content.copyWith(imageUrl: url)),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -361,11 +390,15 @@ class _LinkCardState extends State<_LinkCard> {
                       scale: 0.7,
                       child: Switch(
                         value: widget.content.isVisible,
-                        onChanged: (value) => widget.onUpdate(widget.content.copyWith(isVisible: value)),
+                        onChanged: (value) => widget.onUpdate(
+                            widget.content.copyWith(isVisible: value)),
                         activeColor: isDarkMode ? Colors.white : Colors.black,
-                        activeTrackColor: isDarkMode ? const Color(0xFF121212) : Colors.white,
-                        inactiveThumbColor: isDarkMode ? Colors.white : Colors.black,
-                        inactiveTrackColor: isDarkMode ? const Color(0xFF121212) : Colors.white,
+                        activeTrackColor:
+                            isDarkMode ? const Color(0xFF121212) : Colors.white,
+                        inactiveThumbColor:
+                            isDarkMode ? Colors.white : Colors.black,
+                        inactiveTrackColor:
+                            isDarkMode ? const Color(0xFF121212) : Colors.white,
                         trackOutlineColor: WidgetStateProperty.all(
                           isDarkMode ? Colors.white : Colors.black,
                         ),
@@ -391,7 +424,8 @@ class _LinkCardState extends State<_LinkCard> {
                                 context: context,
                                 builder: (context) => AlertDialog(
                                   title: const Text('Coming Soon!'),
-                                  content: const Text('Analytics feature will be available in future updates. Stay tuned!'),
+                                  content: const Text(
+                                      'Analytics feature will be available in future updates. Stay tuned!'),
                                   actions: [
                                     TextButton(
                                       child: const Text('OK'),
@@ -417,7 +451,8 @@ class _LinkCardState extends State<_LinkCard> {
                                 context: context,
                                 builder: (context) => AlertDialog(
                                   title: const Text('Coming Soon!'),
-                                  content: const Text('Animation settings will be available in future updates. Stay tuned!'),
+                                  content: const Text(
+                                      'Animation settings will be available in future updates. Stay tuned!'),
                                   actions: [
                                     TextButton(
                                       child: const Text('OK'),
