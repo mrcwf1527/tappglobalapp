@@ -1,6 +1,5 @@
 // lib/screens/digital_profile/tabs/blocks/edit_block_screen.dart
 // Detailed block editing interface with three tabs (Links, Layouts, Settings). Manages block properties, content arrangement, layout options, and visibility settings. Includes specialized editors for different block types.
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import '../../../../models/block.dart';
 import '../../../../utils/debouncer.dart';
@@ -69,62 +68,53 @@ class _EditBlockScreenState extends State<EditBlockScreen> with SingleTickerProv
   }
 
   void _showDeleteConfirmation(BuildContext context, VoidCallback onConfirm) {
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('Delete Block'),
-      content: const Text('Are you sure you want to delete this block?'),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        TextButton(
-          onPressed: () async {
-            final provider = Provider.of<DigitalProfileProvider>(context, listen: false);
-            
-            switch (widget.block.type) {
-              case BlockType.website:
-                FirebaseStorage.instance
-                  .ref()
-                  .child('users')
-                  .child(provider.profileData.userId)
-                  .child('link_images');
-                for (var content in widget.block.contents) {
-                  if (content.imageUrl != null && content.imageUrl!.isNotEmpty) {
-                    await provider.deleteBlockStorage(content.id);
-                  }
-                }
-                break;
-              
-              case BlockType.image:
-                for (var content in widget.block.contents) {
-                  if (content.imageUrl != null) {
-                    await provider.deleteBlockStorage(content.id);
-                  }
-                }
-                break;
-              
-              case BlockType.contact:
-                await provider.deleteBlockStorage(widget.block.id);
-                break;
-              
-              default:
-                break;
-            }
-            
-            setState(() => _isDeleted = true);
-            onConfirm();
-            Navigator.pop(context);
-          },
-          child: Text('Delete',
-            style: TextStyle(color: Colors.red[700]),
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Block'),
+        content: const Text('Are you sure you want to delete this block?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
           ),
-        ),
-      ],
-    ),
-  );
-}
+          TextButton(
+            onPressed: () async {
+              final provider = Provider.of<DigitalProfileProvider>(context, listen: false);
+            
+              // Get the latest block state from provider
+              final currentBlock = provider.profileData.blocks
+                  .firstWhere((b) => b.id == widget.block.id);
+            
+              // Delete images based on current block state
+              switch (currentBlock.type) {
+                case BlockType.website:
+                case BlockType.image:
+                  await provider.deleteAllBlockImages(
+                    currentBlock.id, 
+                    currentBlock.type,
+                    currentBlock.contents
+                  );
+                  break;
+                case BlockType.contact:
+                  await provider.deleteBlockStorage(currentBlock.id);
+                  break;
+                default:
+                  break;
+              }
+            
+              setState(() => _isDeleted = true);
+              onConfirm();
+              Navigator.pop(context);
+            },
+            child: Text('Delete',
+              style: TextStyle(color: Colors.red[700]),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
