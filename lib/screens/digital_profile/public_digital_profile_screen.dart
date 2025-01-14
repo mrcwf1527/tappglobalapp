@@ -8,6 +8,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import '../../models/social_platform.dart';
 import '../../../models/block.dart';
 
@@ -27,10 +28,18 @@ class PublicProfileScreen extends StatefulWidget {
 
 class _PublicProfileScreenState extends State<PublicProfileScreen> {
   late Future<DocumentSnapshot> _profileFuture;
+  PageController? _pageController;
+  double _dragStartX = 0;
+  final int _currentPage = 0;
+  int _currentVideoPage = 0;
+  PageController? _videoPageController;
+  YoutubeCarouselManager? _youtubeManager;
 
   @override
   void initState() {
     super.initState();
+    _pageController = PageController();
+    _videoPageController = PageController();
     _profileFuture = _loadProfile();
     _trackView();
   }
@@ -534,37 +543,67 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     return SizedBox(
       height: imageHeight,
       width: containerWidth,
-      child: PageView.builder(
-        itemCount: block.contents.where((content) => 
-          content.isVisible && content.imageUrl != null && content.imageUrl!.isNotEmpty
-        ).length,
-        itemBuilder: (context, index) {
-          final content = block.contents
-            .where((content) => 
-              content.isVisible && content.imageUrl != null && content.imageUrl!.isNotEmpty
-            ).toList()[index];
-          
-          return GestureDetector(
-            onTap: () => _showImageViewer(context, content.imageUrl!),
-            child: Container(
-              width: imageWidth,
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.network(
-                  content.imageUrl!,
-                  width: imageWidth,
-                  height: imageHeight,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    color: Colors.grey[900],
-                    child: const Icon(Icons.error, color: Colors.white),
+      child: Listener(
+        onPointerDown: (details) {
+          _dragStartX = details.position.dx;
+        },
+        onPointerMove: (details) {
+          if (kIsWeb) {
+            final currentX = details.position.dx;
+            final difference = _dragStartX - currentX;
+            
+            if (difference.abs() > 10) {
+              if (difference > 0 && _currentPage < block.contents.length - 1) {
+                _pageController?.animateToPage(
+                  _currentPage + 1,
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                );
+              } else if (difference < 0 && _currentPage > 0) {
+                _pageController?.animateToPage(
+                  _currentPage - 1,
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                );
+              }
+              _dragStartX = currentX;
+            }
+          }
+        },
+        child: PageView.builder(
+          controller: _videoPageController,
+          onPageChanged: (page) => setState(() => _currentVideoPage = page),
+          itemCount: block.contents.where((content) => 
+            content.isVisible && content.imageUrl != null && content.imageUrl!.isNotEmpty
+          ).length,
+          itemBuilder: (context, index) {
+            final content = block.contents
+              .where((content) => 
+                content.isVisible && content.imageUrl != null && content.imageUrl!.isNotEmpty
+              ).toList()[index];
+            
+            return GestureDetector(
+              onTap: () => _showImageViewer(context, content.imageUrl!),
+              child: Container(
+                width: imageWidth,
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    content.imageUrl!,
+                    width: imageWidth,
+                    height: imageHeight,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: Colors.grey[900],
+                      child: const Icon(Icons.error, color: Colors.white),
+                    ),
                   ),
                 ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
@@ -608,6 +647,195 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
       debugPrint('Error parsing aspect ratio: $e');
       return 16/9;
     }
+  }
+
+  Widget _buildYoutubeBlock(Block block) {
+    return Container(
+      margin: const EdgeInsets.only(top: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          if (block.title != null && block.title!.isNotEmpty) ...[
+            Text(
+              block.title!,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+          ],
+          if (block.description != null && block.description!.isNotEmpty) ...[
+            Text(
+              block.description!,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 16,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+          ],
+          block.layout == BlockLayout.carousel
+            ? _buildCarouselYoutubeLayout(block)
+            : _buildClassicYoutubeLayout(block),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildClassicYoutubeLayout(Block block) {
+    return Column(
+      children: block.contents
+        .where((content) => content.isVisible && content.url.isNotEmpty)
+        .map((content) {
+          final videoId = _getYouTubeVideoId(content.url);
+          if (videoId == null) return const SizedBox.shrink();
+
+          return Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: AspectRatio(
+                aspectRatio: 16/9,
+                child: YoutubePlayer(
+                  controller: YoutubePlayerController.fromVideoId(
+                    videoId: videoId,
+                    autoPlay: false,
+                    params: const YoutubePlayerParams(
+                      showFullscreenButton: true,
+                      showControls: true,
+                      mute: false,
+                      loop: false,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+    );
+  }
+
+  Widget _buildCarouselYoutubeLayout(Block block) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final containerWidth = screenWidth > 500 ? 500.0 : screenWidth;
+    final videoWidth = containerWidth - 48;
+    final videoHeight = videoWidth * 9/16;
+
+    final validVideos = block.contents
+      .where((content) => 
+        content.isVisible && 
+        content.url.isNotEmpty &&
+        _getYouTubeVideoId(content.url) != null
+      ).toList();
+
+    if (validVideos.isEmpty) return const SizedBox.shrink();
+
+    final videoIds = validVideos
+      .map((content) => _getYouTubeVideoId(content.url)!)
+      .toList();
+
+    // Initialize YouTube manager if not already initialized
+    if (_youtubeManager == null) {
+      _initYoutubeManager(videoIds);
+    }
+
+    return Column(
+      children: [
+        SizedBox(
+          height: videoHeight,
+          width: containerWidth,
+          child: PageView.builder(
+            controller: _pageController,
+            onPageChanged: (page) => setState(() => _currentVideoPage = page),
+            itemCount: validVideos.length,
+            itemBuilder: (context, index) {
+              final videoId = _getYouTubeVideoId(validVideos[index].url)!;
+              return _YoutubeVideoPlayer(
+                videoId: videoId,
+                width: videoWidth,
+              );
+            },
+          ),
+        ),
+        if (validVideos.length > 1)
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  onPressed: _currentVideoPage > 0 
+                    ? () => _pageController?.animateToPage(
+                        _currentVideoPage - 1,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                        )
+                    : null,
+                  icon: Icon(
+                    Icons.arrow_back_ios_new,
+                    color: _currentVideoPage > 0 ? Colors.white : Colors.white38,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                ...List.generate(
+                  validVideos.length,
+                  (index) => Container(
+                    width: 8,
+                    height: 8,
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _currentVideoPage == index ? Colors.white : Colors.white38,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                IconButton(
+                  onPressed: _currentVideoPage < validVideos.length - 1
+                    ? () => _pageController?.animateToPage(
+                        _currentVideoPage + 1,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                        )
+                    : null,
+                  icon: Icon(
+                    Icons.arrow_forward_ios,
+                    color: _currentVideoPage < validVideos.length - 1
+                      ? Colors.white : Colors.white38,
+                    size: 24,
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  String? _getYouTubeVideoId(String url) {
+    if (url.isEmpty) return null;
+  
+    RegExp regExp = RegExp(
+      r'^.*(youtu.be\/|v\/|\/u\/\w\/|embed\/|watch\?v=|\&v=|shorts\/)([^#\&\?]*).*',
+      caseSensitive: false,
+      multiLine: false,
+    );
+  
+    final match = regExp.firstMatch(url);
+    final videoId = match?.group(2);
+  
+    return (videoId != null && videoId.length == 11) ? videoId : null;
+  }
+
+  void _initYoutubeManager(List<String> videoIds) {
+    _youtubeManager?.dispose();
+    _youtubeManager = YoutubeCarouselManager(videoIds: videoIds);
   }
 
   Widget _buildMainContent(Map<String, dynamic> data) {
@@ -685,13 +913,18 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                     block.type == BlockType.website && 
                     block.isVisible == true &&
                     block.layout == BlockLayout.classic)
-                .map((block) => _buildWebsiteBlock(block))
-            ,
-             ...(data['blocks'] as List)
+                .map((block) => _buildWebsiteBlock(block)),
+            ...(data['blocks'] as List)
                 .map((b) => Block.fromMap(b))
                 .where((block) => block.type == BlockType.image && 
                                   block.isVisible == true)
                 .map((block) => _buildImageBlock(block)),
+            ...(data['blocks'] as List)
+                .map((b) => Block.fromMap(b))
+                .where((block) => 
+                    block.type == BlockType.youtube && 
+                    block.isVisible == true)
+                .map((block) => _buildYoutubeBlock(block)),
           ],
         ],
       ),
@@ -961,5 +1194,88 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
         );
       },
     );
+  }
+  
+  @override
+  void dispose() {
+    _pageController?.dispose();
+    _videoPageController?.dispose();
+    _youtubeManager?.dispose();
+    super.dispose();
+  }
+}
+
+class _YoutubeVideoPlayer extends StatefulWidget {
+  final String videoId;
+  final double width;
+  
+  const _YoutubeVideoPlayer({
+    required this.videoId,
+    required this.width,
+  });
+
+  @override
+  State<_YoutubeVideoPlayer> createState() => _YoutubeVideoPlayerState();
+}
+
+class _YoutubeVideoPlayerState extends State<_YoutubeVideoPlayer> {
+  late final YoutubePlayerController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = YoutubePlayerController.fromVideoId(
+      videoId: widget.videoId,
+      autoPlay: false,
+      params: const YoutubePlayerParams(
+        showFullscreenButton: true,
+        showControls: true,
+        mute: false,
+        loop: false,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.close();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: widget.width,
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: YoutubePlayer(
+          controller: _controller,
+          key: ValueKey(widget.videoId),
+        ),
+      ),
+    );
+  }
+}
+
+class YoutubeCarouselManager {
+  final List<YoutubePlayerController> controllers;
+  
+  YoutubeCarouselManager({required List<String> videoIds}) 
+    : controllers = videoIds.map((id) => YoutubePlayerController.fromVideoId(
+        videoId: id,
+        autoPlay: false,
+        params: const YoutubePlayerParams(
+          showFullscreenButton: true,
+          showControls: true,
+          mute: false,
+          loop: false,
+        ),
+      )).toList();
+
+  void dispose() {
+    for (var controller in controllers) {
+      controller.close();
+    }
   }
 }
