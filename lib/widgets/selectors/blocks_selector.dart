@@ -26,6 +26,12 @@ class BlocksSelector extends StatelessWidget {
       'icon': FontAwesomeIcons.youtube,
       'description': 'Add embedded YouTube videos'
     },
+    {
+      'type': BlockType.contact,
+      'name': 'Contact Details',
+      'icon': FontAwesomeIcons.addressCard,
+      'description': 'Add personal contact information'
+    },
   ];
 
   @override

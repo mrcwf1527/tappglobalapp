@@ -200,6 +200,8 @@ class BlocksTab extends StatelessWidget {
         return Icons.image;
       case BlockType.youtube:
         return Icons.play_circle;
+      case BlockType.contact: // Added Contact Block Icon
+        return Icons.contact_mail;
     }
   }
 
@@ -211,6 +213,8 @@ class BlocksTab extends StatelessWidget {
         return 'Image Gallery';
       case BlockType.youtube:
         return 'YouTube Videos';
+      case BlockType.contact: // Added Contact Block Title
+        return 'Contact Details';
     }
   }
 
@@ -222,7 +226,7 @@ class BlocksTab extends StatelessWidget {
     );
   }
 
-  Block createNewBlock(BlockType type, int sequence) {
+   Block createNewBlock(BlockType type, int sequence) {
     switch (type) {
       case BlockType.website:
         return Block(
@@ -258,6 +262,27 @@ class BlocksTab extends StatelessWidget {
           title: '',
           description: '',
           contents: [],
+          sequence: sequence,
+          isVisible: true,
+        );
+      case BlockType.contact:
+        return Block(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          type: type,
+          blockName: '',
+          title: '',
+          description: '',
+          contents: [
+            BlockContent(
+              id: DateTime.now().millisecondsSinceEpoch.toString(),
+              title: '',
+              url: '',
+              metadata: {
+                'phones': [],
+                'emails': [],
+              }
+            )
+          ],
           sequence: sequence,
           isVisible: true,
         );

@@ -32,15 +32,6 @@ class CountryCodeSelectorButton extends StatelessWidget {
         height: height,
         width: ResponsiveLayout.isDesktop(context) ? 300 : 50,
         padding: const EdgeInsets.symmetric(horizontal: 8),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          border: Border.all(
-            color: Theme.of(context).brightness == Brightness.dark 
-              ? Colors.grey[700]! 
-              : Colors.grey[300]!,
-          ),
-          borderRadius: BorderRadius.circular(8),
-        ),
         child: Center(
           child: selectedCountry.getFlagWidget(
             width: 24,

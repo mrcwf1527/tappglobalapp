@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import '../../../../models/block.dart';
 import '../../../../utils/debouncer.dart';
+import '../../../../widgets/digital_profile/blocks/contact_block.dart';
 import '../../../../widgets/digital_profile/blocks/website_block.dart';
 import '../../../../widgets/digital_profile/blocks/image_block.dart';
 import '../../../../widgets/digital_profile/blocks/youtube_block.dart';
@@ -48,6 +49,8 @@ class _EditBlockScreenState extends State<EditBlockScreen> with SingleTickerProv
         return 'Image Gallery';
       case BlockType.youtube:
         return 'YouTube Videos';
+      case BlockType.contact:
+        return 'Contact Details';
     }
   }
 
@@ -59,6 +62,8 @@ class _EditBlockScreenState extends State<EditBlockScreen> with SingleTickerProv
         return Icons.image;
       case BlockType.youtube:
         return Icons.play_circle_filled;
+      case BlockType.contact:
+        return Icons.contact_mail;
     }
   }
 
@@ -145,7 +150,10 @@ class _EditBlockScreenState extends State<EditBlockScreen> with SingleTickerProv
                               provider.updateBlocks([
                                 for (var b in provider.profileData.blocks)
                                   if (b.id == widget.block.id)
-                                    Block.fromMap({...b.toMap(), 'blockName': value})
+                                    b.copyWith(
+                                      blockName: value,
+                                      sequence: b.sequence,
+                                    )
                                   else
                                     b
                               ]);
@@ -292,6 +300,21 @@ class _EditBlockScreenState extends State<EditBlockScreen> with SingleTickerProv
         );
       case BlockType.youtube:
         blockEditor = YouTubeBlock(
+          block: widget.block,
+          onBlockUpdated: (updated) {
+            final blocks = [...provider.profileData.blocks];
+            blocks[blockIndex] = updated;
+            provider.updateBlocks(blocks);
+          },
+          onBlockDeleted: (id) {
+            final blocks = [...provider.profileData.blocks];
+            blocks.removeAt(blockIndex);
+            provider.updateBlocks(blocks);
+            Navigator.maybePop(context);
+          },
+        );
+      case BlockType.contact:
+        blockEditor = ContactBlock(
           block: widget.block,
           onBlockUpdated: (updated) {
             final blocks = [...provider.profileData.blocks];

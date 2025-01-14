@@ -4,7 +4,8 @@
 enum BlockType {
   website,
   image,
-  youtube
+  youtube,
+  contact
 }
 
 enum BlockLayout {
@@ -122,6 +123,14 @@ class BlockContent {
   final String? imageUrl;
   final bool isVisible;
   final Map<String, dynamic>? metadata;
+  // Add new fields
+  final bool? isPrimaryPhone;
+  final bool? isPrimaryEmail;
+  final String? firstName;
+  final String? lastName;
+  final String? jobTitle;
+  final String? companyName;
+
 
   BlockContent({
     required this.id,
@@ -131,6 +140,12 @@ class BlockContent {
     this.imageUrl,
     this.isVisible = true,
     this.metadata,
+    this.isPrimaryPhone,
+    this.isPrimaryEmail,
+    this.firstName,
+    this.lastName,
+    this.jobTitle,
+    this.companyName,
   });
 
   Map<String, dynamic> toMap() => {
@@ -141,6 +156,12 @@ class BlockContent {
     'imageUrl': imageUrl,
     'isVisible': isVisible,
     'metadata': metadata,
+    'isPrimaryPhone': isPrimaryPhone,
+    'isPrimaryEmail': isPrimaryEmail,
+    'firstName': firstName,
+    'lastName': lastName,
+    'jobTitle': jobTitle,
+    'companyName': companyName,
   };
 
   factory BlockContent.fromMap(Map<String, dynamic> map) {
@@ -152,6 +173,12 @@ class BlockContent {
       imageUrl: map['imageUrl'],
       isVisible: map['isVisible'] ?? true,
       metadata: map['metadata'],
+      isPrimaryPhone: map['isPrimaryPhone'],
+      isPrimaryEmail: map['isPrimaryEmail'],
+      firstName: map['firstName'],
+      lastName: map['lastName'],
+      jobTitle: map['jobTitle'],
+      companyName: map['companyName'],
     );
   }
 
@@ -163,6 +190,12 @@ class BlockContent {
     String? imageUrl,
     bool? isVisible,
     Map<String, dynamic>? metadata,
+    bool? isPrimaryPhone,
+    bool? isPrimaryEmail,
+    String? firstName,
+    String? lastName,
+    String? jobTitle,
+    String? companyName,
   }) => BlockContent(
     id: id ?? this.id,
     title: title ?? this.title,
@@ -171,5 +204,11 @@ class BlockContent {
     imageUrl: imageUrl ?? this.imageUrl,
     isVisible: isVisible ?? this.isVisible,
     metadata: metadata ?? this.metadata,
+    isPrimaryPhone: isPrimaryPhone ?? this.isPrimaryPhone,
+    isPrimaryEmail: isPrimaryEmail ?? this.isPrimaryEmail,
+    firstName: firstName ?? this.firstName,
+    lastName: lastName ?? this.lastName,
+    jobTitle: jobTitle ?? this.jobTitle,
+    companyName: companyName ?? this.companyName,
   );
 }
