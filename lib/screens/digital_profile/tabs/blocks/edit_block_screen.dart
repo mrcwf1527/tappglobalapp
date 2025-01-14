@@ -24,12 +24,14 @@ class _EditBlockScreenState extends State<EditBlockScreen> with SingleTickerProv
   final TextEditingController _blockNameController = TextEditingController();
   final _debouncer = Debouncer();
   bool _isDeleted = false;
+  late List<BlockContent> _contents;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _blockNameController.text = widget.block.blockName;
+    _contents = List.from(widget.block.contents);
   }
 
   @override
@@ -41,7 +43,17 @@ class _EditBlockScreenState extends State<EditBlockScreen> with SingleTickerProv
     super.dispose();
   }
 
-    String _getBlockTitle(BlockType type) {
+  @override
+  void didUpdateWidget(EditBlockScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.block.contents != widget.block.contents) {
+      setState(() {
+        _contents = List.from(widget.block.contents);
+      });
+    }
+  }
+
+  String _getBlockTitle(BlockType type) {
     switch (type) {
       case BlockType.website:
         return 'Website Links';
@@ -243,33 +255,47 @@ class _EditBlockScreenState extends State<EditBlockScreen> with SingleTickerProv
                   controller: _tabController,
                   children: [
                     // Links Tab
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                       child: SingleChildScrollView(
-                        child: _buildEditor(blockIndex, provider),
-                      ),
+                    Consumer<DigitalProfileProvider>(
+                      builder: (context, provider, _) {
+                        final currentBlock = provider.profileData.blocks
+                            .firstWhere((b) => b.id == widget.block.id);
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                          child: SingleChildScrollView(
+                            child: _buildEditor(
+                              provider.profileData.blocks.indexOf(currentBlock),
+                              provider,
+                            ),
+                          ),
+                        );
+                      },
                     ),
                     // Layouts Tab
-                   _LayoutsTab(
-                      onLayoutChanged: (layout, aspectRatio) {
-                         provider.updateBlocks([
+                    Consumer<DigitalProfileProvider>(
+                      builder: (context, provider, _) => _LayoutsTab(
+                        onLayoutChanged: (layout, aspectRatio) {
+                          provider.updateBlocks([
                             for (var b in provider.profileData.blocks)
-                            if (b.id == widget.block.id)
+                              if (b.id == widget.block.id)
                                 b.copyWith(
-                                layout: layout,
-                                aspectRatio: aspectRatio,
-                                sequence: b.sequence,
+                                  layout: layout,
+                                  aspectRatio: aspectRatio,
+                                  sequence: b.sequence,
                                 )
-                            else
+                else
                                 b
-                            ]);
-                      },
-                      block: widget.block,
+                          ]);
+                        },
+                        block: provider.profileData.blocks
+                            .firstWhere((b) => b.id == widget.block.id),
+                      ),
                     ),
                     // Settings Tab
-                    _SettingsTab(
-                      block: widget.block,
-                       onUpdate: (updated) {
+                    Consumer<DigitalProfileProvider>(
+                      builder: (context, provider, _) => _SettingsTab(
+                        block: provider.profileData.blocks
+                            .firstWhere((b) => b.id == widget.block.id),
+                        onUpdate: (updated) {
                           provider.updateBlocks([
                             for (var b in provider.profileData.blocks)
                               if (b.id == widget.block.id)
@@ -278,6 +304,7 @@ class _EditBlockScreenState extends State<EditBlockScreen> with SingleTickerProv
                                 b
                           ]);
                         },
+                      ),
                     ),
                   ],
                 ),
@@ -292,11 +319,14 @@ class _EditBlockScreenState extends State<EditBlockScreen> with SingleTickerProv
   }
   
   Widget _buildEditor(int blockIndex, DigitalProfileProvider provider) {
+    final currentBlock = provider.profileData.blocks
+        .firstWhere((b) => b.id == widget.block.id);
+
     Widget blockEditor;
-    switch (widget.block.type) {
+    switch (currentBlock.type) {
       case BlockType.website:
         blockEditor = WebsiteBlock(
-          block: widget.block,
+          block: currentBlock,
           onBlockUpdated: (updated) {
             final blocks = [...provider.profileData.blocks];
             blocks[blockIndex] = updated;
@@ -311,7 +341,7 @@ class _EditBlockScreenState extends State<EditBlockScreen> with SingleTickerProv
         );
       case BlockType.image:
         blockEditor = ImageBlock(
-          block: widget.block,
+          block: currentBlock,
           onBlockUpdated: (updated) {
             final blocks = [...provider.profileData.blocks];
             blocks[blockIndex] = updated;
@@ -326,7 +356,7 @@ class _EditBlockScreenState extends State<EditBlockScreen> with SingleTickerProv
         );
       case BlockType.youtube:
         blockEditor = YouTubeBlock(
-          block: widget.block,
+          block: currentBlock,
           onBlockUpdated: (updated) {
             final blocks = [...provider.profileData.blocks];
             blocks[blockIndex] = updated;
@@ -341,7 +371,7 @@ class _EditBlockScreenState extends State<EditBlockScreen> with SingleTickerProv
         );
       case BlockType.contact:
         blockEditor = ContactBlock(
-          block: widget.block,
+          block: currentBlock,
           onBlockUpdated: (updated) {
             final blocks = [...provider.profileData.blocks];
             blocks[blockIndex] = updated;
@@ -509,7 +539,6 @@ class _LayoutsTabState extends State<_LayoutsTab> {
 
   @override
   Widget build(BuildContext context) {
-
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -523,116 +552,180 @@ class _LayoutsTabState extends State<_LayoutsTab> {
             ),
           ),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _LayoutOption(
-                  title: 'CLASSIC',
-                  icon: Icons.view_agenda,
-                  isSelected: selectedLayout == BlockLayout.classic,
-                  onTap: () => setState(() {
-                    selectedLayout = BlockLayout.classic;
-                    widget.onLayoutChanged(BlockLayout.classic, null);
-                  }),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _LayoutOption(
-                  title: 'CAROUSEL',
-                  icon: Icons.view_carousel,
-                  isSelected: selectedLayout == BlockLayout.carousel,
-                  onTap: () => setState(() {
-                    selectedLayout = BlockLayout.carousel;
-                    widget.onLayoutChanged(BlockLayout.carousel, selectedAspectRatio);
-                  }),
-                ),
-              ),
-            ],
-          ),
-          
-          // Show aspect ratio only for image blocks in carousel layout
-          if (widget.block.type == BlockType.image && selectedLayout == BlockLayout.carousel) ...[
-            const SizedBox(height: 24),
-             Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Aspect Ratio',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
-                InkWell(
-                  onTap: () => _showAspectRatioModal(context),
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: Colors.grey.shade600,  // Same as unselected layout
-                        width: 1,  // Same as unselected layout
-                      ),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        _buildAspectRatioIcon(
-                          aspectRatios.firstWhere((opt) => opt.value == selectedAspectRatio).ratio
-                        ),
-                        const SizedBox(width: 12),
-                        Text(aspectRatios.firstWhere((opt) => opt.value == selectedAspectRatio).label),
-                        const Spacer(),
-                        const Icon(Icons.keyboard_arrow_down),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-          
-          // Show text alignment only for website blocks
-          if (widget.block.type == BlockType.website) ...[
-            const SizedBox(height: 24),
+          if (widget.block.type == BlockType.contact) ...[
+            // Contact block layouts
             Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Text alignment',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
                 Row(
                   children: [
-                    _AlignmentOption(
-                      icon: Icons.format_align_left,
-                      isSelected: selectedAlignment == TextAlign.left,
-                      onTap: () {
-                         setState(() => selectedAlignment = TextAlign.left);
-                        _updateTextAlignment(TextAlignment.left);
-                      },
+                    Expanded(
+                      child: _LayoutOption(
+                        title: 'CLASSIC',
+                        icon: Icons.view_agenda,
+                        isSelected: selectedLayout == BlockLayout.classic,
+                        onTap: () => setState(() {
+                          selectedLayout = BlockLayout.classic;
+                          widget.onLayoutChanged(BlockLayout.classic, null);
+                        }),
+                      ),
                     ),
                     const SizedBox(width: 8),
-                    _AlignmentOption(
-                      icon: Icons.format_align_center,
-                      isSelected: selectedAlignment == TextAlign.center,
-                      onTap: () {
-                        setState(() => selectedAlignment = TextAlign.center);
-                         _updateTextAlignment(TextAlignment.center);
-                      },
+                    Expanded(
+                      child: _LayoutOption(
+                        title: 'BUSINESS CARD',
+                        icon: Icons.credit_card,
+                        isSelected: selectedLayout == BlockLayout.businessCard,
+                        onTap: () => setState(() {
+                          selectedLayout = BlockLayout.businessCard;
+                          widget.onLayoutChanged(BlockLayout.businessCard, null);
+                        }),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _LayoutOption(
+                        title: 'ICON BUTTON',
+                        icon: Icons.smart_button,
+                        isSelected: selectedLayout == BlockLayout.iconButton,
+                        onTap: () => setState(() {
+                          selectedLayout = BlockLayout.iconButton;
+                          widget.onLayoutChanged(BlockLayout.iconButton, null);
+                        }),
+                      ),
                     ),
                     const SizedBox(width: 8),
-                    _AlignmentOption(
-                      icon: Icons.format_align_right,
-                      isSelected: selectedAlignment == TextAlign.right,
-                      onTap: () {
-                        setState(() => selectedAlignment = TextAlign.right);
-                        _updateTextAlignment(TextAlignment.right);
-                      },
+                    Expanded(
+                      child: _LayoutOption(
+                        title: 'QR CODE',
+                        icon: Icons.qr_code,
+                        isSelected: selectedLayout == BlockLayout.qrCode,
+                        onTap: () => setState(() {
+                          selectedLayout = BlockLayout.qrCode;
+                          widget.onLayoutChanged(BlockLayout.qrCode, null);
+                        }),
+                      ),
                     ),
                   ],
                 ),
               ],
             ),
+          ] else ...[
+            // Original layout options for other block types
+            Row(
+              children: [
+                Expanded(
+                  child: _LayoutOption(
+                    title: 'CLASSIC',
+                    icon: Icons.view_agenda,
+                    isSelected: selectedLayout == BlockLayout.classic,
+                    onTap: () => setState(() {
+                      selectedLayout = BlockLayout.classic;
+                      widget.onLayoutChanged(BlockLayout.classic, null);
+                    }),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _LayoutOption(
+                    title: 'CAROUSEL',
+                    icon: Icons.view_carousel,
+                    isSelected: selectedLayout == BlockLayout.carousel,
+                    onTap: () => setState(() {
+                      selectedLayout = BlockLayout.carousel;
+                      widget.onLayoutChanged(BlockLayout.carousel, selectedAspectRatio);
+                    }),
+                  ),
+                ),
+              ],
+            ),
+          
+            // Show aspect ratio only for image blocks in carousel layout
+            if (widget.block.type == BlockType.image && selectedLayout == BlockLayout.carousel) ...[
+              const SizedBox(height: 24),
+                Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Aspect Ratio',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  InkWell(
+                    onTap: () => _showAspectRatioModal(context),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: Colors.grey.shade600,  // Same as unselected layout
+                          width: 1,  // Same as unselected layout
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          _buildAspectRatioIcon(
+                            aspectRatios.firstWhere((opt) => opt.value == selectedAspectRatio).ratio
+                          ),
+                          const SizedBox(width: 12),
+                          Text(aspectRatios.firstWhere((opt) => opt.value == selectedAspectRatio).label),
+                          const Spacer(),
+                          const Icon(Icons.keyboard_arrow_down),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          
+            // Show text alignment only for website blocks
+            if (widget.block.type == BlockType.website) ...[
+              const SizedBox(height: 24),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Text alignment',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      _AlignmentOption(
+                        icon: Icons.format_align_left,
+                        isSelected: selectedAlignment == TextAlign.left,
+                        onTap: () {
+                          setState(() => selectedAlignment = TextAlign.left);
+                          _updateTextAlignment(TextAlignment.left);
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      _AlignmentOption(
+                        icon: Icons.format_align_center,
+                        isSelected: selectedAlignment == TextAlign.center,
+                        onTap: () {
+                          setState(() => selectedAlignment = TextAlign.center);
+                          _updateTextAlignment(TextAlignment.center);
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      _AlignmentOption(
+                        icon: Icons.format_align_right,
+                        isSelected: selectedAlignment == TextAlign.right,
+                        onTap: () {
+                          setState(() => selectedAlignment = TextAlign.right);
+                          _updateTextAlignment(TextAlignment.right);
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
           ],
         ],
       ),
@@ -658,6 +751,8 @@ class _SettingsTabState extends State<_SettingsTab> {
   late TextEditingController _titleController;
   late TextEditingController _descriptionController;
   late bool _isCollapsed;
+  final _titleDebouncer = Debouncer();
+  final _descriptionDebouncer = Debouncer();
 
   @override
   void initState() {
@@ -671,6 +766,8 @@ class _SettingsTabState extends State<_SettingsTab> {
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
+    _titleDebouncer.dispose();
+    _descriptionDebouncer.dispose(); 
     super.dispose();
   }
 
@@ -706,9 +803,11 @@ class _SettingsTabState extends State<_SettingsTab> {
               border: OutlineInputBorder(),
             ),
             onChanged: (value) {
+              _titleDebouncer.run(() {
                 final updatedBlock = {...provider.profileData.blocks[blockIndex].toMap()};
                 updatedBlock['title'] = value;
                 widget.onUpdate(Block.fromMap(updatedBlock));
+              });
             },
           ),
           const SizedBox(height: 16),
@@ -719,9 +818,11 @@ class _SettingsTabState extends State<_SettingsTab> {
               border: OutlineInputBorder(),
             ),
              onChanged: (value) {
+              _descriptionDebouncer.run(() {
                 final updatedBlock = {...provider.profileData.blocks[blockIndex].toMap()};
                 updatedBlock['description'] = value;
                 widget.onUpdate(Block.fromMap(updatedBlock));
+              });
             },
           ),
           const SizedBox(height: 24),

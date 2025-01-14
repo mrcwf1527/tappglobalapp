@@ -6,6 +6,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:crop_your_image/crop_your_image.dart';
 import 'package:provider/provider.dart';
+import 'package:phone_numbers_parser/phone_numbers_parser.dart';
 import 'package:http/http.dart' as http;
 import 'dart:ui' as ui;
 import 'dart:math' as math;
@@ -15,7 +16,6 @@ import '../../../models/country_code.dart';
 import '../../../models/social_platform.dart';
 import '../../../providers/digital_profile_provider.dart';
 import '../../selectors/country_code_selector.dart';
-import 'package:phone_numbers_parser/phone_numbers_parser.dart';
 import '../../../utils/debouncer.dart';
 
 class ContactBlock extends StatefulWidget {
@@ -65,31 +65,42 @@ class _ContactBlockState extends State<ContactBlock> {
   void _initializeContacts() {
     final content = widget.block.contents.firstOrNull;
     final provider = Provider.of<DigitalProfileProvider>(context, listen: false);
-    final profileData = provider.profileData;
 
-    // If content exists but fields are empty, it's a new block
-    final isNewBlock = content == null || 
+    // Only consider it a new block if there's no content at all
+    final isNewBlock = content == null || (
       (content.firstName?.isEmpty ?? true) && 
+      (content.lastName?.isEmpty ?? true) && 
       (content.jobTitle?.isEmpty ?? true) && 
-      (content.companyName?.isEmpty ?? true);
+      (content.companyName?.isEmpty ?? true) &&
+      (content.imageUrl?.isEmpty ?? true) &&
+      ((content.metadata?['phones'] as List?)?.isEmpty ?? true) &&
+      ((content.metadata?['emails'] as List?)?.isEmpty ?? true)
+    );
 
     if (isNewBlock) {
       // New block - pull data from digital profile
       try {
+        final profileData = provider.profileData;
         final phones = _extractPhoneNumbers(profileData.socialPlatforms);
         final emails = _extractEmails(profileData.socialPlatforms);
+
+        // Create metadata with phones and emails
+        final metadata = {
+          'phones': phones,
+          'emails': emails,
+        };
 
         final newContent = BlockContent(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
           title: '',
           url: '',
           firstName: profileData.displayName,
+          lastName: '',
           jobTitle: profileData.jobTitle,
           companyName: profileData.companyName,
-          metadata: {
-            'phones': [],
-            'emails': [],
-          }
+          metadata: metadata,
+          isPrimaryPhone: phones.isNotEmpty ? phones[0]['isPrimary'] : null,
+          isPrimaryEmail: emails.isNotEmpty ? emails[0]['isPrimary'] : null,
         );
 
         // Update UI first
@@ -257,8 +268,35 @@ class _ContactBlockState extends State<ContactBlock> {
   }
 
   void _updateBlock(BlockContent content) {
+    // Get current form values
+    final updatedContent = content.copyWith(
+      firstName: _firstNameController.text,
+      lastName: _lastNameController.text,
+      jobTitle: _jobTitleController.text,
+      companyName: _companyNameController.text,
+      metadata: {
+        'phones': _phoneControllers.entries.map((entry) {
+          final id = entry.key;
+          final controller = entry.value;
+          final countryCode = _countryNotifiers[id]!.value;
+          return {
+            'id': id,
+            'number': '${countryCode.dialCode}${controller.text}',
+            'countryCode': countryCode.code,
+            'dialCode': countryCode.dialCode,
+            'isPrimary': _phoneControllers.keys.first == id,
+          };
+        }).toList(),
+        'emails': _emailControllers.entries.map((entry) => {
+          'id': entry.key,
+          'address': entry.value.text,
+          'isPrimary': _emailControllers.keys.first == entry.key,
+        }).toList(),
+      }
+    );
+
     final updatedBlock = widget.block.copyWith(
-      contents: [content],
+      contents: [updatedContent],
       sequence: widget.block.sequence,
     );
     widget.onBlockUpdated(updatedBlock);
@@ -271,33 +309,32 @@ class _ContactBlockState extends State<ContactBlock> {
     String? companyName,
     Map<String, dynamic>? metadata,
   }) {
-    final existingContent = widget.block.contents.first;
-  
-    // Get current phones and emails metadata
-    final currentPhones = _phoneControllers.entries.map((entry) {
-      final id = entry.key;
-      final controller = entry.value;
-      final countryCode = _countryNotifiers[id]!.value;
-      return {
-        'id': id,
-        'number': controller.text,
-        'countryCode': countryCode.code,
-        'dialCode': countryCode.dialCode,
-        'isPrimary': _phoneControllers.keys.first == id,
-      };
-    }).toList();
+    final existingContent = widget.block.contents.firstOrNull ?? BlockContent(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      title: '',
+      url: '',
+    );
 
-    final currentEmails = _emailControllers.entries.map((entry) => {
-      'id': entry.key,
-      'address': entry.value.text,
-      'isPrimary': _emailControllers.keys.first == entry.key,
-    }).toList();
-
-    // Create updated metadata preserving existing data
-    final updatedMetadata = {
+    // Get current phones and emails if not provided in metadata
+    final updatedMetadata = metadata ?? {
       ...existingContent.metadata ?? {},
-      'phones': currentPhones,
-      'emails': currentEmails,
+      'phones': _phoneControllers.entries.map((entry) {
+        final id = entry.key;
+        final controller = entry.value;
+        final countryCode = _countryNotifiers[id]!.value;
+        return {
+          'id': id,
+          'number': '${countryCode.dialCode}${controller.text}',
+          'countryCode': countryCode.code,
+          'dialCode': countryCode.dialCode,
+          'isPrimary': _phoneControllers.keys.first == id,
+        };
+      }).toList(),
+      'emails': _emailControllers.entries.map((entry) => {
+        'id': entry.key,
+        'address': entry.value.text,
+        'isPrimary': _emailControllers.keys.first == entry.key,
+      }).toList(),
     };
 
     final updatedContent = existingContent.copyWith(
@@ -305,7 +342,7 @@ class _ContactBlockState extends State<ContactBlock> {
       lastName: lastName ?? _lastNameController.text,
       jobTitle: jobTitle ?? _jobTitleController.text,
       companyName: companyName ?? _companyNameController.text,
-      metadata: metadata ?? updatedMetadata,
+      metadata: updatedMetadata,
     );
 
     _updateBlock(updatedContent);
@@ -676,7 +713,16 @@ Future<void> _handleCroppedImage(Uint8List croppedBytes) async {
     final downloadUrl = await ref.getDownloadURL();
 
     final content = widget.block.contents.first;
-    final updatedContent = content.copyWith(imageUrl: downloadUrl);
+    final updatedContent = content.copyWith(
+      imageUrl: downloadUrl,
+      firstName: content.firstName,
+      lastName: content.lastName,
+      jobTitle: content.jobTitle,
+      companyName: content.companyName,
+      metadata: content.metadata,
+      isPrimaryEmail: content.isPrimaryEmail,
+      isPrimaryPhone: content.isPrimaryPhone
+    );
 
     setState(() {
       widget.block.contents[0] = updatedContent;

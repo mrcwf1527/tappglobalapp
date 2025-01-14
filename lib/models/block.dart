@@ -10,7 +10,10 @@ enum BlockType {
 
 enum BlockLayout {
   classic,
-  carousel
+  carousel,
+  businessCard,
+  iconButton,
+  qrCode 
 }
 
 enum TextAlignment {
