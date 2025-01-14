@@ -100,6 +100,7 @@ class _ImageBlockState extends State<ImageBlock> {
     return ReorderableListView(
       key: const ValueKey('reorderable-list'),
       shrinkWrap: true,
+      buildDefaultDragHandles: false,
       physics: const NeverScrollableScrollPhysics(),
       onReorder: _reorderImages,
       children: [

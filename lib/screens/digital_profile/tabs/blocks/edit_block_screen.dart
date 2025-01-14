@@ -223,6 +223,7 @@ class _EditBlockScreenState extends State<EditBlockScreen> with SingleTickerProv
                         blocks.removeAt(blockIndex);
                         provider.updateBlocks(blocks);
                       }),
+                      
                     ),
                   ],
                 ),
@@ -281,6 +282,7 @@ class _EditBlockScreenState extends State<EditBlockScreen> with SingleTickerProv
                   ],
                 ),
               ),
+              const SizedBox(height: 56),
             ],
           );
         },

@@ -5,11 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:crop_your_image/crop_your_image.dart';
+import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
 import 'dart:ui' as ui;
 import 'dart:math' as math;
 import 'dart:typed_data';
 import '../../../models/block.dart';
 import '../../../models/country_code.dart';
+import '../../../providers/digital_profile_provider.dart';
 import '../../selectors/country_code_selector.dart';
 import 'package:phone_numbers_parser/phone_numbers_parser.dart';
 import '../../../utils/debouncer.dart';
@@ -39,68 +42,146 @@ class _ContactBlockState extends State<ContactBlock> {
   final Map<String, TextEditingController> _phoneControllers = {};
   final Map<String, TextEditingController> _emailControllers = {};
   final Map<String, ValueNotifier<CountryCode>> _countryNotifiers = {};
-  bool _initialized = false;
   final ImagePicker _picker = ImagePicker();
   bool _isUploading = false;
 
   @override
   void initState() {
     super.initState();
-    _firstNameController = TextEditingController();
-    _lastNameController = TextEditingController();
-    _jobTitleController = TextEditingController();
-    _companyNameController = TextEditingController();
-  }
-  
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_initialized) {
-      _initialized = true;
-      _initializeContacts();
-        _firstNameController.text = widget.block.contents.firstOrNull?.firstName ?? '';
-        _lastNameController.text = widget.block.contents.firstOrNull?.lastName ?? '';
-        _jobTitleController.text = widget.block.contents.firstOrNull?.jobTitle ?? '';
-        _companyNameController.text = widget.block.contents.firstOrNull?.companyName ?? '';
-    }
+    _firstNameController = TextEditingController(text: widget.block.contents.firstOrNull?.firstName ?? '');
+    _lastNameController = TextEditingController(text: widget.block.contents.firstOrNull?.lastName ?? '');
+    _jobTitleController = TextEditingController(text: widget.block.contents.firstOrNull?.jobTitle ?? '');
+    _companyNameController = TextEditingController(text: widget.block.contents.firstOrNull?.companyName ?? '');
+
+    // Delay initialization to ensure provider is ready
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _initializeContacts();
+      }
+    });
   }
 
   void _initializeContacts() {
     final content = widget.block.contents.firstOrNull;
-    if (content == null) {
+
+    // If content exists but fields are empty, it's a new block
+    final isNewBlock = content == null || 
+      (content.firstName?.isEmpty ?? true) && 
+      (content.jobTitle?.isEmpty ?? true) && 
+      (content.companyName?.isEmpty ?? true);
+
+    if (isNewBlock) {
+      // New block - pull data from digital profile
+      final provider = Provider.of<DigitalProfileProvider>(context, listen: false);
+      final profileData = provider.profileData;
+
       final newContent = BlockContent(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         title: '',
         url: '',
+        firstName: profileData.displayName,
+        jobTitle: profileData.jobTitle,
+        companyName: profileData.companyName,
         metadata: {
           'phones': [],
           'emails': [],
         }
       );
+
+      // Update UI first
+      setState(() {
+        _firstNameController.text = profileData.displayName ?? '';
+        _jobTitleController.text = profileData.jobTitle ?? '';
+        _companyNameController.text = profileData.companyName ?? '';
+      });
+
+      // Then update block
       _updateBlock(newContent);
+
+      // If profile image exists, process it
+      if (profileData.profileImageUrl?.isNotEmpty == true) {
+        _processProfileImage(profileData.profileImageUrl!, newContent.id);
+      }
       return;
     }
 
-    // Initialize controllers with existing values
-    _firstNameController.text = content.firstName ?? '';
-    _lastNameController.text = content.lastName ?? '';
-    _jobTitleController.text = content.jobTitle ?? '';
-    _companyNameController.text = content.companyName ?? '';
+    // Load existing content
+    setState(() {
+      _firstNameController.text = content.firstName ?? '';
+      _lastNameController.text = content.lastName ?? '';
+      _jobTitleController.text = content.jobTitle ?? '';
+      _companyNameController.text = content.companyName ?? '';
 
-    final phones = content.metadata?['phones'] as List? ?? [];
-    final emails = content.metadata?['emails'] as List? ?? [];
+      // Initialize phone controllers
+      final phones = content.metadata?['phones'] as List? ?? [];
+      for (var phone in phones) {
+        final id = phone['id'] as String;
+        _phoneControllers[id] = TextEditingController(text: phone['number']);
+        _countryNotifiers[id] = ValueNotifier(
+          CountryCodes.findByCode(phone['countryCode']) ?? CountryCodes.getDefault()
+        );
+      }
 
-    for (var phone in phones) {
-      final id = phone['id'] as String;
-      _phoneControllers[id] = TextEditingController(text: phone['number']);
-      _countryNotifiers[id] = ValueNotifier(
-        CountryCodes.findByCode(phone['countryCode']) ?? CountryCodes.getDefault()
-      );
+      // Initialize email controllers  
+      final emails = content.metadata?['emails'] as List? ?? [];
+      for (var email in emails) {
+        final id = email['id'] as String;
+        _emailControllers[id] = TextEditingController(text: email['address']);
+      }
+    });
+  }
+
+  Future<void> _processProfileImage(String sourceUrl, String contentId) async {
+    if (mounted) {
+      setState(() => _isUploading = true);
     }
 
-    for (var email in emails) {
-      final id = email['id'] as String;
-      _emailControllers[id] = TextEditingController(text: email['address']);
+    try {
+      final response = await http.get(Uri.parse(sourceUrl));
+      if (response.statusCode != 200) throw Exception('Failed to fetch image');
+
+      final imageBytes = await decodeImageFromList(response.bodyBytes);
+      Uint8List processedBytes;
+
+      if (response.bodyBytes.length > 224 * 1024 || 
+          imageBytes.width > 400 || 
+          imageBytes.height > 400) {
+        final resizedImage = await _resizeImage(imageBytes, 400, 400);
+        processedBytes = await _compressImage(resizedImage);
+      } else {
+        processedBytes = response.bodyBytes;
+      }
+
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId == null) throw Exception('User not logged in');
+
+      final ref = FirebaseStorage.instance
+          .ref()
+          .child('users')
+          .child(userId)
+          .child('contact_images/${widget.block.id}.jpg');
+
+      await ref.putData(processedBytes, SettableMetadata(contentType: 'image/jpeg'));
+      final downloadUrl = await ref.getDownloadURL();
+
+      if (mounted) {
+        final content = widget.block.contents.first;
+        final updatedContent = content.copyWith(imageUrl: downloadUrl);
+
+        // Add these lines to update the local state
+        setState(() {
+          widget.block.contents[0] = updatedContent;
+        });
+
+        _updateBlock(updatedContent);
+      }
+
+    } catch (e) {
+      debugPrint('Error processing profile image: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isUploading = false);
+      }
     }
   }
 
@@ -561,6 +642,7 @@ Future<void> _handleCroppedImage(Uint8List croppedBytes) async {
           ),
         ReorderableListView(
           shrinkWrap: true,
+          buildDefaultDragHandles: false,
           physics: const NeverScrollableScrollPhysics(),
           onReorder: (oldIndex, newIndex) {
             if (oldIndex < newIndex) newIndex -= 1;
@@ -709,6 +791,7 @@ Future<void> _handleCroppedImage(Uint8List croppedBytes) async {
         const SizedBox(height: 16),
         ReorderableListView(
           shrinkWrap: true,
+          buildDefaultDragHandles: false,
           physics: const NeverScrollableScrollPhysics(),
           onReorder: (oldIndex, newIndex) {
             if (oldIndex < newIndex) newIndex -= 1;

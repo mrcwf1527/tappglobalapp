@@ -96,6 +96,7 @@ class _YouTubeBlockState extends State<YouTubeBlock> {
        ReorderableListView(
          shrinkWrap: true,
          physics: const NeverScrollableScrollPhysics(),
+         buildDefaultDragHandles: false,
          onReorder: _reorderVideos,
          children: _contents.asMap().entries.map((entry) {
            final index = entry.key;

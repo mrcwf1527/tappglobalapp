@@ -118,6 +118,7 @@ class _WebsiteBlockState extends State<WebsiteBlock> {
     return ReorderableListView(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
+      buildDefaultDragHandles: false,
       onReorder: _reorderLinks,
       children: [
         ..._contents.asMap().entries.map((entry) {

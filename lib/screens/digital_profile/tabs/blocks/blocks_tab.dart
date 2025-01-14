@@ -17,6 +17,7 @@ class BlocksTab extends StatelessWidget {
     return Consumer<DigitalProfileProvider>(
       builder: (context, provider, _) => ReorderableListView(
         padding: const EdgeInsets.all(16),
+        buildDefaultDragHandles: false,
         onReorder: (oldIndex, newIndex) {
           final blocks = [...provider.profileData.blocks];
           if (oldIndex < newIndex) newIndex -= 1;
@@ -82,7 +83,7 @@ class BlocksTab extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 12),
                 child: Row(
                   children: [
-                    ReorderableDelayedDragStartListener(
+                    ReorderableDragStartListener(
                       index: entry.key,
                       child: const Icon(Icons.drag_indicator),
                     ),
