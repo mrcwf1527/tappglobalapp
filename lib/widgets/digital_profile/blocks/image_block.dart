@@ -5,7 +5,9 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 import '../../../models/block.dart';
+import '../../../providers/digital_profile_provider.dart';
 import '../../../utils/debouncer.dart';
 
 class ImageBlock extends StatefulWidget {
@@ -69,7 +71,11 @@ class _ImageBlockState extends State<ImageBlock> {
     _updateBlock();
   }
 
-  void _removeImage(int index) {
+  void _removeImage(int index) async {
+    final contentId = _contents[index].id;
+    final provider = Provider.of<DigitalProfileProvider>(context, listen: false);
+    await provider.deleteBlockImage(widget.block.id, contentId);
+  
     setState(() {
       _contents.removeAt(index);
     });

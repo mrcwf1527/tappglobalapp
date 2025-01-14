@@ -1,5 +1,12 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:crop_your_image/crop_your_image.dart';
+import 'dart:ui' as ui;
+import 'dart:math' as math;
+import 'dart:typed_data';
 import '../../../models/block.dart';
 import '../../../models/country_code.dart';
 import '../../selectors/country_code_selector.dart';
@@ -23,7 +30,7 @@ class ContactBlock extends StatefulWidget {
 }
 
 class _ContactBlockState extends State<ContactBlock> {
-  final _debouncer = Debouncer(); // Add this line
+  final _debouncer = Debouncer();
   late TextEditingController _firstNameController;
   late TextEditingController _lastNameController;
   late TextEditingController _jobTitleController;
@@ -31,7 +38,9 @@ class _ContactBlockState extends State<ContactBlock> {
   final Map<String, TextEditingController> _phoneControllers = {};
   final Map<String, TextEditingController> _emailControllers = {};
   final Map<String, ValueNotifier<CountryCode>> _countryNotifiers = {};
-  bool _initialized = false; // Add this line
+  bool _initialized = false;
+  final ImagePicker _picker = ImagePicker();
+  bool _isUploading = false;
 
   @override
   void initState() {
@@ -199,7 +208,7 @@ class _ContactBlockState extends State<ContactBlock> {
 
   Widget _buildBasicInfoSection(bool isDarkMode) {
     return Padding(
-      padding: const EdgeInsets.only(top: 16), // Added top padding
+      padding: const EdgeInsets.only(top: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -210,6 +219,8 @@ class _ContactBlockState extends State<ContactBlock> {
             ),
           ),
           const SizedBox(height: 16),
+          _buildProfileImageUpload(isDarkMode),
+          const SizedBox(height: 24),
           Row(
             children: [
               Expanded(
@@ -256,6 +267,274 @@ class _ContactBlockState extends State<ContactBlock> {
         ],
       ),
     );
+  }
+
+  Widget _buildProfileImageUpload(bool isDarkMode) {
+    final content = widget.block.contents.firstOrNull;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Contact Photo',
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)
+        ),
+        const SizedBox(height: 8),
+        InkWell(
+          onTap: _isUploading ? null : _pickAndUploadImage,
+          child: Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isDarkMode ? Colors.grey[900] : Colors.grey[200],
+            ),
+            child: _isUploading
+              ? Center(child: CircularProgressIndicator())
+              : content?.imageUrl != null 
+                ? ClipOval(
+                    child: Image.network(
+                      content!.imageUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _buildImagePlaceholder(),
+                    ),
+                  )
+                : _buildImagePlaceholder(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildImagePlaceholder() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Icon(Icons.person_outline, size: 24),
+        const SizedBox(height: 4),
+        Text(
+          'Add Photo',
+          style: TextStyle(
+            fontSize: 12,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.grey[400]
+                : Colors.grey[600],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _pickAndUploadImage() async {
+  _showImageSourceDialog();
+}
+
+void _showImageSourceDialog() {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Select Image Source'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.camera),
+            title: const Text('Camera'),
+            onTap: () {
+              Navigator.pop(context);
+              _pickImage(ImageSource.camera);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.photo_library),
+            title: const Text('Gallery'),
+            onTap: () {
+              Navigator.pop(context);
+              _pickImage(ImageSource.gallery);
+            },
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+Future<void> _pickImage(ImageSource source) async {
+  try {
+    final XFile? image = await _picker.pickImage(source: source);
+    if (image == null) return;
+
+    final imageBytes = await image.readAsBytes();
+    _showCropDialog(imageBytes);
+  } catch (e) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
+  }
+}
+
+void _showCropDialog(Uint8List imageBytes) {
+  final cropController = CropController();
+  final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+  bool isCropping = false;
+
+  showDialog(
+    context: context,
+    builder: (context) => StatefulBuilder(
+      builder: (context, setDialogState) => Dialog(
+        backgroundColor: isDarkMode ? const Color(0xFF121212) : Colors.white,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.close,
+                        color: isDarkMode ? Colors.white : Colors.black),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(
+              height: 400,
+              width: 400,
+              child: Crop(
+                image: imageBytes,
+                controller: cropController,
+                aspectRatio: 1,
+                baseColor: isDarkMode ? const Color(0xFF121212) : Colors.white,
+                maskColor: (isDarkMode ? Colors.white : Colors.black).withAlpha(153),
+                onCropped: (result) {
+                  switch (result) {
+                    case CropSuccess(:final croppedImage):
+                      _handleCroppedImage(croppedImage);
+                      Navigator.pop(context);
+                    case CropFailure():
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Failed to crop image')),
+                      );
+                  }
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: ElevatedButton(
+                onPressed: isCropping ? null : () async {
+                  setDialogState(() => isCropping = true);
+                  cropController.crop();
+                  if (mounted) setDialogState(() => isCropping = false);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isDarkMode ? const Color(0xFFD9D9D9) : Colors.black,
+                  foregroundColor: isDarkMode ? Colors.black : Colors.white,
+                  minimumSize: const Size(double.infinity, 50),
+                ),
+                child: isCropping 
+                  ? SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          isDarkMode ? Colors.black : Colors.white,
+                        ),
+                      ),
+                    )
+                  : const Text('Crop'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+Future<void> _handleCroppedImage(Uint8List croppedBytes) async {
+  setState(() => _isUploading = true);
+
+  try {
+    if (croppedBytes.length > 224 * 1024) {
+      final decodedImage = await decodeImageFromList(croppedBytes);
+      final resizedImage = await _resizeImage(decodedImage, 400, 400);
+      final compressedBytes = await _compressImage(resizedImage);
+      await _uploadImage(compressedBytes);
+    } else {
+      await _uploadImage(croppedBytes);
+    }
+  } catch (e) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
+  } finally {
+    if (mounted) setState(() => _isUploading = false);
+  }
+}
+
+  Future<Uint8List> _compressImage(ui.Image image) async {
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+    canvas.drawImage(image, Offset.zero, Paint());
+    final picture = recorder.endRecording();
+    final rasterImage = await picture.toImage(image.width, image.height);
+    final byteData = await rasterImage.toByteData(format: ui.ImageByteFormat.png);
+    return byteData!.buffer.asUint8List();
+  }
+
+  Future<ui.Image> _resizeImage(ui.Image image, int targetWidth, int targetHeight) async {
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+  
+    final ratioX = targetWidth / image.width;
+    final ratioY = targetHeight / image.height;
+    final ratio = math.min(ratioX, ratioY);
+  
+    final newWidth = (image.width * ratio).round();
+    final newHeight = (image.height * ratio).round();
+  
+    canvas.drawImageRect(
+      image,
+      Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
+      Rect.fromLTWH(0, 0, newWidth.toDouble(), newHeight.toDouble()),
+      Paint(),
+    );
+  
+    return recorder.endRecording().toImage(newWidth, newHeight);
+  }
+
+  Future<void> _uploadImage(Uint8List imageBytes) async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) throw Exception('User not logged in');
+
+    final ref = FirebaseStorage.instance
+        .ref()
+        .child('users')
+        .child(userId)
+        .child('contact_images/${widget.block.id}.jpg');
+
+    await ref.putData(imageBytes, SettableMetadata(contentType: 'image/jpeg'));
+    final downloadUrl = await ref.getDownloadURL();
+
+    final content = widget.block.contents.first;
+    final updatedContent = content.copyWith(imageUrl: downloadUrl);
+
+    setState(() {
+      widget.block.contents[0] = updatedContent;
+    });
+  
+    final updatedBlock = widget.block.copyWith(
+      contents: [updatedContent],
+      sequence: widget.block.sequence,
+    );
+  
+    widget.onBlockUpdated(updatedBlock);
   }
 
   Widget _buildPhoneNumbersSection(bool isDarkMode) {

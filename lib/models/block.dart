@@ -123,14 +123,12 @@ class BlockContent {
   final String? imageUrl;
   final bool isVisible;
   final Map<String, dynamic>? metadata;
-  // Add new fields
   final bool? isPrimaryPhone;
   final bool? isPrimaryEmail;
   final String? firstName;
   final String? lastName;
   final String? jobTitle;
   final String? companyName;
-
 
   BlockContent({
     required this.id,

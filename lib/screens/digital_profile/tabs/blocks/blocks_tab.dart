@@ -137,11 +137,15 @@ class BlocksTab extends StatelessWidget {
                           ),
                         ),
                         PopupMenuItem(
-                          onTap: () => _showDeleteConfirmation(context, () {
-                            final blocks = [...provider.profileData.blocks];
-                            blocks.removeAt(entry.key);
-                            provider.updateBlocks(blocks);
-                          }),
+                          onTap: () => _showDeleteConfirmation(
+                            context,
+                            block,
+                            () {
+                              final blocks = [...provider.profileData.blocks];
+                              blocks.removeAt(entry.key);
+                              provider.updateBlocks(blocks);
+                            }
+                          ),
                           child: Row(
                             children: [
                               FaIcon(FontAwesomeIcons.trash, 
@@ -167,7 +171,7 @@ class BlocksTab extends StatelessWidget {
     );
   }
 
-  void _showDeleteConfirmation(BuildContext context, VoidCallback onConfirm) {
+  void _showDeleteConfirmation(BuildContext context, Block block, VoidCallback onConfirm) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -179,8 +183,22 @@ class BlocksTab extends StatelessWidget {
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
+              // Get the provider
+              final provider = Provider.of<DigitalProfileProvider>(context, listen: false);
+          
+              // Delete storage files if needed
+              if (block.type == BlockType.image) {
+                for (var content in block.contents) {
+                  if (content.imageUrl != null) {
+                    await provider.deleteBlockImage(block.id, content.id);
+                  }
+                }
+              } else if (block.type == BlockType.contact) {
+                await provider.deleteBlockStorage(block.id);
+              }
+          
               onConfirm();
             },
             child: Text('Delete',

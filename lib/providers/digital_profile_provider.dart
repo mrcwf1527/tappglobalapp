@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/social_platform.dart';
-import '../models/block.dart'; // Import Block model
+import '../models/block.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:typed_data';
 
@@ -314,6 +314,19 @@ class DigitalProfileProvider extends ChangeNotifier {
     
       if (!profile.exists) return;
 
+      // Clean up images for all blocks
+      final blocks = (profile.data()?['blocks'] as List?)?.map((b) => Block.fromMap(b)).toList() ?? [];
+      for (var block in blocks) {
+        if (block.type == BlockType.contact) {
+          await deleteBlockStorage(block.id);
+        } else if (block.type == BlockType.image) {
+          // Delete all images in the image block
+          for (var content in block.contents) {
+            await deleteBlockImage(block.id, content.id);
+          }
+        }
+      }
+
       final batch = FirebaseFirestore.instance.batch();
     
       // Delete username reservation
@@ -329,6 +342,43 @@ class DigitalProfileProvider extends ChangeNotifier {
       await batch.commit();
     } catch (e) {
       throw Exception('Failed to delete profile: $e');
+    }
+  }
+
+  Future<void> deleteBlockImage(String blockId, String imageUrl) async {
+    try {
+      debugPrint('Attempting to delete image: $imageUrl');
+    
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId == null) return;
+
+      String fileName;
+      String folderName;
+
+      if (imageUrl.startsWith('http')) {
+        // Handle full URLs (for link_images)
+        final uri = Uri.parse(imageUrl);
+        final decodedPath = Uri.decodeComponent(uri.path);
+        final pathSegments = decodedPath.split('/');
+        fileName = pathSegments.last;
+        folderName = 'link_images';
+      } else {
+        // Handle direct IDs (for block_images and contact_block)
+        fileName = '$imageUrl.jpg';
+        folderName = 'block_images';
+      }
+
+      final ref = FirebaseStorage.instance
+        .ref()
+        .child('users')
+        .child(userId)
+        .child(folderName)
+        .child(fileName);
+
+      await ref.delete();
+      debugPrint('Successfully deleted image: $fileName from $folderName');
+    } catch (e) {
+      debugPrint('Error deleting block image: $e');
     }
   }
 
@@ -362,19 +412,38 @@ class DigitalProfileProvider extends ChangeNotifier {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) throw Exception('User not logged in');
 
+    final contentId = DateTime.now().millisecondsSinceEpoch.toString();
+    debugPrint('Uploading image with contentId: $contentId');
+  
     final ref = FirebaseStorage.instance
         .ref()
         .child('users')
         .child(userId)
-        .child('blocks/$blockId/${DateTime.now().millisecondsSinceEpoch}.jpg');
+        .child('block_images')
+        .child('$contentId.jpg');
 
-    final metadata = SettableMetadata(
-      contentType: 'image/jpeg',
-      customMetadata: {'block-id': blockId},
-    );
+    await ref.putData(imageBytes, SettableMetadata(contentType: 'image/jpeg'));
+    final url = await ref.getDownloadURL();
+    debugPrint('Image uploaded, URL: $url');
+    return url;
+  }
 
-    await ref.putData(imageBytes, metadata);
-    return await ref.getDownloadURL();
+  Future<void> deleteBlockStorage(String blockId) async {
+    try {
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId == null) return;
+
+      final ref = FirebaseStorage.instance
+        .ref()
+        .child('users')
+        .child(userId)
+        .child('contact_images/$blockId.jpg');
+
+      await ref.delete();
+    } catch (e) {
+      // File might not exist, which is fine
+      debugPrint('Error deleting storage file: $e');
+    }
   }
 }
 

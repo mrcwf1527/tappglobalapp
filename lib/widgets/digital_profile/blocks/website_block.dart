@@ -2,7 +2,9 @@
 // Widget for managing website link collections. Features title, subtitle, and URL inputs, thumbnail image upload, visibility toggle, and analytics integration.
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:provider/provider.dart';
 import '../../../models/block.dart';
+import '../../../providers/digital_profile_provider.dart';
 import 'link_image_upload.dart';
 
 class WebsiteBlock extends StatefulWidget {
@@ -73,8 +75,16 @@ class _WebsiteBlockState extends State<WebsiteBlock> {
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
+            
+              // Delete image from storage if exists
+              final content = _contents[index];
+              if (content.imageUrl != null && content.imageUrl!.isNotEmpty) {
+                final provider = Provider.of<DigitalProfileProvider>(context, listen: false);
+                await provider.deleteBlockImage(widget.block.id, content.imageUrl!);
+              }
+
               setState(() {
                 _contents.removeAt(index);
               });
