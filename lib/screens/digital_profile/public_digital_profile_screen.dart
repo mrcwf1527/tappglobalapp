@@ -35,7 +35,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   late Future<DocumentSnapshot> _profileFuture;
   PageController? _pageController;
   double _dragStartX = 0;
-  final int _currentPage = 0;
+  int _currentPage = 0;
   int _currentVideoPage = 0;
   PageController? _videoPageController;
   YoutubeCarouselManager? _youtubeManager;
@@ -148,72 +148,79 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                   .toList()
               : [];
 
-          return Stack(
-            children: [
-              Align(
-                alignment: Alignment.topCenter,
-                child: SingleChildScrollView(
-                  child: Container(
-                    constraints: BoxConstraints(
-                      maxWidth: 500,
-                      minHeight: MediaQuery.of(context).size.height
-                    ),
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0E0E0E),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withAlpha(26),
-                          blurRadius: 10,
-                          spreadRadius: 0,
-                          offset: const Offset(0, 0),
-                        ),
-                      ],
-                    ),
-                    child: Stack(
-                      children: [
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            _buildHeader(data),
-                            const SizedBox(height: 24),
-                            _buildMainContent(data),
-                            _buildActionButtons(data),
-                            const SizedBox(height: 40),
-                          ],
-                        ),
-                        if (contactBlocks.isNotEmpty)
-                          Positioned(
-                            top: 16,
-                            right: 16,
-                            child: Material(
-                              color: Colors.transparent,
-                              shape: const CircleBorder(),
-                              child: InkWell(
-                                onTap: () => _downloadVCard(contactBlocks.first),
-                                customBorder: const CircleBorder(),
-                                child: Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Color(0xFF2A2A2A),
-                                  ),
-                                  child: const FaIcon(
-                                    FontAwesomeIcons.userPlus,
-                                    color: Colors.white,
-                                    size: 16,
-                                  ),
+          return LayoutBuilder(
+              builder: (context, constraints) {
+                return Stack(
+                  children: [
+                  Align(
+                    alignment: Alignment.topCenter,
+                    child: SizedBox(
+                      height: constraints.maxHeight, // Force SingleChildScrollView to occupy the whole viewport
+                      child: SingleChildScrollView(
+                          child: Container(
+                            constraints: BoxConstraints(
+                                maxWidth: 500,
+                                minHeight: constraints.maxHeight, // Ensure content takes at least screen height
+                            ),
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0E0E0E),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withAlpha(26),
+                                  blurRadius: 10,
+                                  spreadRadius: 0,
+                                  offset: const Offset(0, 0),
                                 ),
-                              ),
+                              ],
+                            ),
+                            child: Stack(
+                              children: [
+                                Column(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    _buildHeader(data),
+                                    const SizedBox(height: 24),
+                                    _buildMainContent(data),
+                                    _buildActionButtons(data),
+                                    const SizedBox(height: 40),
+                                  ],
+                                ),
+                                if (contactBlocks.isNotEmpty)
+                                  Positioned(
+                                    top: 16,
+                                    right: 16,
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      shape: const CircleBorder(),
+                                      child: InkWell(
+                                        onTap: () => _downloadVCard(contactBlocks.first),
+                                        customBorder: const CircleBorder(),
+                                        child: Container(
+                                          padding: const EdgeInsets.all(12),
+                                          decoration: const BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: Color(0xFF2A2A2A),
+                                          ),
+                                          child: const FaIcon(
+                                            FontAwesomeIcons.userPlus,
+                                            color: Colors.white,
+                                            size: 16,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
-                      ],
+                        ),
                     ),
                   ),
-                ),
-              ),
-            ],
-          );
+              ],
+            );
+          }
+        );
         },
       ),
     );
@@ -659,8 +666,8 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
           }
         },
         child: PageView.builder(
-          controller: _videoPageController,
-          onPageChanged: (page) => setState(() => _currentVideoPage = page),
+          controller: _pageController,
+          onPageChanged: (page) => setState(() => _currentPage = page),
           itemCount: block.contents.where((content) => 
             content.isVisible && content.imageUrl != null && content.imageUrl!.isNotEmpty
           ).length,
@@ -738,73 +745,86 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   }
 
   Widget _buildYoutubeBlock(Block block) {
-    return Container(
-      margin: const EdgeInsets.only(top: 24),
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          if (block.title != null && block.title!.isNotEmpty) ...[
-            Text(
-              block.title!,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
+  return Container(
+    margin: const EdgeInsets.only(top: 24),
+    padding: const EdgeInsets.symmetric(horizontal: 24),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        if (block.title != null && block.title!.isNotEmpty) ...[
+          Text(
+            block.title!,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
             ),
-            const SizedBox(height: 8),
-          ],
-          if (block.description != null && block.description!.isNotEmpty) ...[
-            Text(
-              block.description!,
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 16,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-          ],
-          block.layout == BlockLayout.carousel
-            ? _buildCarouselYoutubeLayout(block)
-            : _buildClassicYoutubeLayout(block),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
         ],
-      ),
-    );
-  }
+        if (block.description != null && block.description!.isNotEmpty) ...[
+          Text(
+            block.description!,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 16,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+        ],
+        block.layout == BlockLayout.carousel
+          ? _buildCarouselYoutubeLayout(block)
+          : _buildClassicYoutubeLayout(block),
+      ],
+    ),
+  );
+}
 
   Widget _buildClassicYoutubeLayout(Block block) {
-    return Column(
-      children: block.contents
-        .where((content) => content.isVisible && content.url.isNotEmpty)
-        .map((content) {
-          final videoId = _getYouTubeVideoId(content.url);
-          if (videoId == null) return const SizedBox.shrink();
+    final screenWidth = MediaQuery.of(context).size.width;
+    final containerWidth = screenWidth > 500 ? 500.0 : screenWidth;
+    final videoWidth = containerWidth - 48;
+    final videoHeight = videoWidth * 9 / 16;
 
-          return Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: AspectRatio(
-                aspectRatio: 16/9,
-                child: YoutubePlayer(
-                  controller: YoutubePlayerController.fromVideoId(
-                    videoId: videoId,
-                    autoPlay: false,
-                    params: const YoutubePlayerParams(
-                      showFullscreenButton: true,
-                      showControls: true,
-                      mute: false,
-                      loop: false,
-                    ),
-                  ),
+    final validVideos = block.contents
+      .where((content) => 
+        content.isVisible && 
+        content.url.isNotEmpty &&
+        _getYouTubeVideoId(content.url) != null
+      ).toList();
+
+    if (validVideos.isEmpty) return const SizedBox.shrink();
+
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: validVideos.length,
+      itemBuilder: (context, index) {
+        final videoId = _getYouTubeVideoId(validVideos[index].url)!;
+        return Container(
+          width: videoWidth,
+          height: videoHeight,
+          margin: const EdgeInsets.only(bottom: 16),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: YoutubePlayer(
+              controller: YoutubePlayerController.fromVideoId(
+                videoId: videoId,
+                autoPlay: false,
+                params: const YoutubePlayerParams(
+                  showFullscreenButton: true,
+                  showControls: true,
+                  mute: false,
+                  loop: false,
                 ),
               ),
+              aspectRatio: 16 / 9,
             ),
-          );
-        }).toList(),
+          ),
+        );
+      },
     );
   }
 
@@ -823,86 +843,96 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
 
     if (validVideos.isEmpty) return const SizedBox.shrink();
 
-    final videoIds = validVideos
-      .map((content) => _getYouTubeVideoId(content.url)!)
-      .toList();
-
-    // Initialize YouTube manager if not already initialized
-    if (_youtubeManager == null) {
-      _initYoutubeManager(videoIds);
-    }
-
-    return Column(
-      children: [
-        SizedBox(
-          height: videoHeight,
-          width: containerWidth,
-          child: PageView.builder(
-            controller: _pageController,
-            onPageChanged: (page) => setState(() => _currentVideoPage = page),
-            itemCount: validVideos.length,
-            itemBuilder: (context, index) {
-              final videoId = _getYouTubeVideoId(validVideos[index].url)!;
-              return _YoutubeVideoPlayer(
-                videoId: videoId,
-                width: videoWidth,
-              );
-            },
-          ),
-        ),
-        if (validVideos.length > 1)
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton(
-                  onPressed: _currentVideoPage > 0 
-                    ? () => _pageController?.animateToPage(
-                        _currentVideoPage - 1,
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeInOut,
-                        )
-                    : null,
-                  icon: Icon(
-                    Icons.arrow_back_ios_new,
-                    color: _currentVideoPage > 0 ? Colors.white : Colors.white38,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                ...List.generate(
-                  validVideos.length,
-                  (index) => Container(
-                    width: 8,
-                    height: 8,
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: _currentVideoPage == index ? Colors.white : Colors.white38,
+    return SizedBox(
+      width: containerWidth,
+      child: Column(
+        children: [
+          SizedBox(
+            height: videoHeight,
+            width: containerWidth,
+            child: PageView.builder(
+              controller: _videoPageController,
+              onPageChanged: (page) => setState(() => _currentVideoPage = page),
+              itemCount: validVideos.length,
+              physics: const AlwaysScrollableScrollPhysics(),
+              itemBuilder: (context, index) {
+                final videoId = _getYouTubeVideoId(validVideos[index].url)!;
+                return Container(
+                  width: videoWidth,
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: YoutubePlayer(
+                      controller: YoutubePlayerController.fromVideoId(
+                        videoId: videoId,
+                        autoPlay: false,
+                        params: const YoutubePlayerParams(
+                          showFullscreenButton: true,
+                          showControls: true,
+                          mute: false,
+                          loop: false,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                IconButton(
-                  onPressed: _currentVideoPage < validVideos.length - 1
-                    ? () => _pageController?.animateToPage(
-                        _currentVideoPage + 1,
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeInOut,
-                        )
-                    : null,
-                  icon: Icon(
-                    Icons.arrow_forward_ios,
-                    color: _currentVideoPage < validVideos.length - 1
-                      ? Colors.white : Colors.white38,
-                    size: 24,
-                  ),
-                ),
-              ],
+                );
+              },
             ),
           ),
-      ],
+          if (validVideos.length > 1)
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    onPressed: _currentVideoPage > 0 
+                      ? () => _videoPageController?.animateToPage(
+                          _currentVideoPage - 1,
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        )
+                      : null,
+                    icon: Icon(
+                      Icons.arrow_back_ios_new,
+                      color: _currentVideoPage > 0 ? Colors.white : Colors.white38,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  ...List.generate(
+                    validVideos.length,
+                    (index) => Container(
+                      width: 8,
+                      height: 8,
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _currentVideoPage == index ? Colors.white : Colors.white38,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  IconButton(
+                    onPressed: _currentVideoPage < validVideos.length - 1
+                      ? () => _videoPageController?.animateToPage(
+                          _currentVideoPage + 1,
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        )
+                      : null,
+                    icon: Icon(
+                      Icons.arrow_forward_ios,
+                      color: _currentVideoPage < validVideos.length - 1
+                        ? Colors.white : Colors.white38,
+                      size: 24,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -919,11 +949,6 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     final videoId = match?.group(2);
   
     return (videoId != null && videoId.length == 11) ? videoId : null;
-  }
-
-  void _initYoutubeManager(List<String> videoIds) {
-    _youtubeManager?.dispose();
-    _youtubeManager = YoutubeCarouselManager(videoIds: videoIds);
   }
 
   Widget _buildContactBlock(Block block, [ProfileLayout? layout]) {
@@ -1325,12 +1350,23 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     }
   }
 
-  Widget _buildMainContent(Map<String, dynamic> data) {
+    Widget _buildMainContent(Map<String, dynamic> data) {
     final layout = data['layout'] != null 
         ? ProfileLayout.values.firstWhere(
             (e) => e.name == data['layout'],
             orElse: () => ProfileLayout.banner)
         : ProfileLayout.banner;
+
+    final blocks = <Block>[];
+    if (data['blocks'] != null) {
+      final List<dynamic> blocksList = data['blocks'] as List;
+      blocks.addAll(
+        blocksList
+          .map((b) => Block.fromMap(b))
+          .where((block) => block.isVisible == true)
+      );
+      blocks.sort((a, b) => a.sequence.compareTo(b.sequence));
+    }
 
     return Stack(
       clipBehavior: Clip.none,
@@ -1338,6 +1374,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
+             mainAxisSize: MainAxisSize.min, // Changed to min
             children: [
               SizedBox(height: layout == ProfileLayout.portrait ? 24 : 80),
               Text(
@@ -1396,33 +1433,22 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
               const SizedBox(height: 24),
               _buildSocialIcons(data['socialPlatforms'] ?? []),
               const SizedBox(height: 24),
-              if (data['blocks'] != null) ...[
-                ...(data['blocks'] as List)
-                    .map((b) => Block.fromMap(b))
-                    .where((block) => 
-                        block.type == BlockType.website && 
-                        block.isVisible == true &&
-                        block.layout == BlockLayout.classic)
-                    .map((block) => _buildWebsiteBlock(block)),
-                ...(data['blocks'] as List)
-                    .map((b) => Block.fromMap(b))
-                    .where((block) => 
-                        block.type == BlockType.contact && 
-                        block.isVisible == true &&
-                        block.layout != BlockLayout.iconButton)
-                    .map((block) => _buildContactBlock(block, layout)),
-                ...(data['blocks'] as List)
-                    .map((b) => Block.fromMap(b))
-                    .where((block) => block.type == BlockType.image && 
-                                      block.isVisible == true)
-                    .map((block) => _buildImageBlock(block)),
-                ...(data['blocks'] as List)
-                    .map((b) => Block.fromMap(b))
-                    .where((block) => 
-                        block.type == BlockType.youtube && 
-                        block.isVisible == true)
-                    .map((block) => _buildYoutubeBlock(block)),
-              ],
+              ...blocks.map((block) {
+                switch (block.type) {
+                  case BlockType.website:
+                    return block.layout == BlockLayout.classic 
+                        ? _buildWebsiteBlock(block) 
+                        : const SizedBox.shrink();
+                  case BlockType.contact:
+                    return block.layout != BlockLayout.iconButton 
+                        ? _buildContactBlock(block, layout)
+                        : const SizedBox.shrink();
+                  case BlockType.image:
+                    return _buildImageBlock(block);
+                  case BlockType.youtube:
+                    return _buildYoutubeBlock(block);
+                }
+              }),
             ],
           ),
         ),
