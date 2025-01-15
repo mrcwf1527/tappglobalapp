@@ -1,9 +1,14 @@
 // lib/screens/digital_profile/public_digital_profile_screen.dart
 // Profile Management: Public digital profile view
+import 'dart:convert';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:pretty_qr_code/pretty_qr_code.dart';
+import 'package:universal_html/html.dart' as html;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:universal_html/html.dart' as html;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -133,38 +138,81 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
 
           final data = snapshot.data!.data() as Map<String, dynamic>;
 
-          return Align(
-            alignment: Alignment.topCenter,
-            child: SingleChildScrollView(
-              child: Container(
-                constraints: BoxConstraints(
-                  maxWidth: 500,
-                  minHeight: MediaQuery.of(context).size.height
-                ),
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0E0E0E),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withAlpha(26),
-                      blurRadius: 10,
-                      spreadRadius: 0,
-                      offset: const Offset(0, 0),
+          final contactBlocks = data['blocks'] != null 
+              ? (data['blocks'] as List)
+                  .map((b) => Block.fromMap(b))
+                  .where((block) => 
+                    block.type == BlockType.contact && 
+                    block.isVisible == true &&
+                    block.layout == BlockLayout.iconButton)
+                  .toList()
+              : [];
+
+          return Stack(
+            children: [
+              Align(
+                alignment: Alignment.topCenter,
+                child: SingleChildScrollView(
+                  child: Container(
+                    constraints: BoxConstraints(
+                      maxWidth: 500,
+                      minHeight: MediaQuery.of(context).size.height
                     ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    _buildHeader(data),
-                    const SizedBox(height: 24),
-                    _buildMainContent(data),
-                    _buildActionButtons(data),
-                    const SizedBox(height: 40),
-                  ],
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0E0E0E),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withAlpha(26),
+                          blurRadius: 10,
+                          spreadRadius: 0,
+                          offset: const Offset(0, 0),
+                        ),
+                      ],
+                    ),
+                    child: Stack(
+                      children: [
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            _buildHeader(data),
+                            const SizedBox(height: 24),
+                            _buildMainContent(data),
+                            _buildActionButtons(data),
+                            const SizedBox(height: 40),
+                          ],
+                        ),
+                        if (contactBlocks.isNotEmpty)
+                          Positioned(
+                            top: 16,
+                            right: 16,
+                            child: Material(
+                              color: Colors.transparent,
+                              shape: const CircleBorder(),
+                              child: InkWell(
+                                onTap: () => _downloadVCard(contactBlocks.first),
+                                customBorder: const CircleBorder(),
+                                child: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Color(0xFF2A2A2A),
+                                  ),
+                                  child: const FaIcon(
+                                    FontAwesomeIcons.userPlus,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-            ),
+            ],
           );
         },
       ),
@@ -309,6 +357,37 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     );
   }
 
+  String _generateVCard(Block block) {
+    final content = block.contents.firstOrNull;
+    if (content == null) return '';
+
+    final phones = (content.metadata?['phones'] as List? ?? []);
+    final emails = (content.metadata?['emails'] as List? ?? []);
+  
+    final vCard = [
+      'BEGIN:VCARD',
+      'VERSION:3.0',
+      'FN;CHARSET=UTF-8:${content.firstName ?? ''} ${content.lastName ?? ''}'.trim(),
+      'N;CHARSET=UTF-8:${content.lastName ?? ''};${content.firstName ?? ''};;;',
+      if (content.imageUrl?.isNotEmpty == true) 'PHOTO;MEDIATYPE=image/jpeg:${content.imageUrl}',
+      ...emails.map((email) => 'EMAIL;CHARSET=UTF-8;type=WORK,INTERNET:${email['address']}'),
+      ...phones.map((phone) => 'TEL;TYPE=CELL:${phone['number']}'),
+      if (content.jobTitle?.isNotEmpty == true) 'TITLE;CHARSET=UTF-8:${content.jobTitle}',
+      if (content.companyName?.isNotEmpty == true) 'ORG;CHARSET=UTF-8:${content.companyName}',
+      'URL;type=TAPP! Digital Profile;CHARSET=UTF-8:https://l.tappglobal.app/${widget.username}',
+      'URL;TYPE=TAPP! Calendar Link:',
+      'URL;TYPE=WhatsApp:',
+      'URL;TYPE=Facebook:',
+      'URL;TYPE=X (Twitter):',
+      'URL;TYPE=LinkedIn Personal:',
+      'URL;TYPE=Instagram:',
+      'URL;TYPE=Youtube Channel:',
+      'URL;TYPE=TikTok:',
+      'END:VCARD'
+    ];
+  
+    return vCard.join('\n');
+  }
 
   Widget _buildWebsiteBlock(Block block) {
     final alignment = block.textAlignment ?? TextAlignment.center;
@@ -354,7 +433,8 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                     onTap: () => _launchSocialLink({'id': 'website', 'value': content.url}, context),
                     borderRadius: BorderRadius.circular(12),
                     child: Container(
-                      padding: const EdgeInsets.all(12),
+                      height: 64,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       decoration: BoxDecoration(
                         color: const Color(0xFF2A2A2A),
                         borderRadius: BorderRadius.circular(12),
@@ -386,6 +466,8 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                         fontSize: 16,
                                         fontWeight: FontWeight.w500,
                                       ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                       textAlign: TextAlign.center,
                                     ),
                                     if (content.subtitle != null && content.subtitle!.isNotEmpty)
@@ -395,6 +477,8 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                           color: Colors.white70,
                                           fontSize: 12,
                                         ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                         textAlign: TextAlign.center,
                                       ),
                                   ],
@@ -434,6 +518,8 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                       fontSize: 16,
                                       fontWeight: FontWeight.w500,
                                     ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                   if (content.subtitle != null && content.subtitle!.isNotEmpty)
                                     Text(
@@ -442,6 +528,8 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                         color: Colors.white70,
                                         fontSize: 12,
                                       ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                 ],
                               ),
@@ -838,6 +926,405 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     _youtubeManager = YoutubeCarouselManager(videoIds: videoIds);
   }
 
+  Widget _buildContactBlock(Block block, [ProfileLayout? layout]) {
+    switch (block.layout) {
+      case BlockLayout.classic:
+        return _buildClassicContactBlock(block);
+      case BlockLayout.businessCard:
+        return _buildBusinessCardContactBlock(block);
+      case BlockLayout.qrCode:
+        return _buildQRCodeContactBlock(block);
+      default:
+        return _buildClassicContactBlock(block);
+    }
+  }
+
+  Widget _buildClassicContactBlock(Block block) {
+    return Container(
+      margin: const EdgeInsets.only(top: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          if (block.title != null && block.title!.isNotEmpty) ...[
+            Text(
+              block.title!,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+          ],
+          if (block.description != null && block.description!.isNotEmpty) ...[
+            Text(
+              block.description!,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 16,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+          ],
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => _downloadVCard(block),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                height: 64,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2A2A2A),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    const Positioned(
+                      left: 8,
+                      child: FaIcon(
+                        FontAwesomeIcons.userPlus,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                    Center(
+                      child: Text(
+                        'Save Contact to Phone',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBusinessCardContactBlock(Block block) {
+    final content = block.contents.firstOrNull;
+    if (content == null) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.only(top: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          if (block.title != null && block.title!.isNotEmpty) ...[
+            Text(
+              block.title!,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+          ],
+          if (block.description != null && block.description!.isNotEmpty) ...[
+            Text(
+              block.description!,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 16,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+          ],
+          AspectRatio(
+            aspectRatio: 16/9,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => _downloadVCard(block),
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2A2A2A),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Row(
+                                    children: [
+                                      if (content.imageUrl != null)
+                                        Container(
+                                          width: 60,
+                                          height: 60,
+                                          margin: const EdgeInsets.only(right: 16),
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            image: DecorationImage(
+                                              image: NetworkImage(content.imageUrl!),
+                                              fit: BoxFit.cover,
+                                            ),
+                                          ),
+                                        ),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              '${content.firstName ?? ''} ${content.lastName ?? ''}'.trim(),
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            if (content.jobTitle?.isNotEmpty == true)
+                                              Text(
+                                                content.jobTitle!,
+                                                style: const TextStyle(
+                                                  color: Colors.white70,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const Spacer(),
+                                  if (content.companyName?.isNotEmpty == true)
+                                    Text(
+                                      content.companyName!,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  const SizedBox(height: 8),
+                                  _buildContactInfo(content),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (content.companyName?.isNotEmpty == true)
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: FutureBuilder<String?>(
+                            future: _getCompanyImageUrl(content.companyName!),
+                            builder: (context, snapshot) {
+                              if (snapshot.hasData && snapshot.data != null) {
+                                return Container(
+                                  width: 80,
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    image: DecorationImage(
+                                      image: NetworkImage(snapshot.data!),
+                                      fit: BoxFit.contain,
+                                    ),
+                                  ),
+                                );
+                              }
+                              return const SizedBox(width: 0);
+                            },
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQRCodeContactBlock(Block block) {
+    final vCardData = _generateVCard(block);
+
+    return Container(
+      margin: const EdgeInsets.only(top: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        children: [
+          if (block.title != null && block.title!.isNotEmpty) ...[
+            Text(
+              block.title!,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+          ],
+          if (block.description != null && block.description!.isNotEmpty) ...[
+            Text(
+              block.description!,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 16,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+          ],
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => _downloadVCard(block),
+              borderRadius: BorderRadius.circular(12),
+              child: AspectRatio(
+                aspectRatio: 16/9,
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2A2A2A),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              'Scan to add contact',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Use your phone camera to scan the QR code',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: PrettyQr(
+                          data: vCardData,
+                          size: 120,
+                          roundEdges: true,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContactInfo(BlockContent content) {
+    final phones = (content.metadata?['phones'] as List? ?? []);
+    final emails = (content.metadata?['emails'] as List? ?? []);
+  
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (phones.isNotEmpty)
+          Text(
+            phones.firstWhere((p) => p['isPrimary'] == true, 
+              orElse: () => phones.first)['number'],
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 14,
+            ),
+          ),
+        if (emails.isNotEmpty)
+          Text(
+            emails.firstWhere((e) => e['isPrimary'] == true, 
+              orElse: () => emails.first)['address'],
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 14,
+            ),
+          ),
+      ],
+    );
+  }
+
+  Future<String?> _getCompanyImageUrl(String companyName) async {
+    try {
+      final companyDoc = await FirebaseFirestore.instance
+          .collection('digitalProfiles')
+          .where('companyName', isEqualTo: companyName)
+          .get();
+    
+      if (companyDoc.docs.isNotEmpty) {
+        return companyDoc.docs.first.data()['companyImageUrl'];
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error fetching company image: $e');
+      return null;
+    }
+  }
+
+  Future<void> _downloadVCard(Block block) async {
+    final vCardData = _generateVCard(block);
+    if (kIsWeb) {
+      final bytes = utf8.encode(vCardData);
+      final blob = html.Blob([bytes]);
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      final anchor = html.AnchorElement()
+        ..href = url
+        ..download = '${block.contents.firstOrNull?.firstName ?? 'contact'}.vcf'
+        ..style.display = 'none';
+      html.document.body?.children.add(anchor);
+      anchor.click();
+      html.document.body?.children.remove(anchor);
+      html.Url.revokeObjectUrl(url);
+    } else {
+      final tempDir = await getTemporaryDirectory();
+      final file = File('${tempDir.path}/contact.vcf');
+      await file.writeAsString(vCardData);
+      await Share.shareXFiles([XFile(file.path)], text: 'Contact Information');
+    }
+  }
+
   Widget _buildMainContent(Map<String, dynamic> data) {
     final layout = data['layout'] != null 
         ? ProfileLayout.values.firstWhere(
@@ -845,89 +1332,101 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
             orElse: () => ProfileLayout.banner)
         : ProfileLayout.banner;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        children: [
-          SizedBox(height: layout == ProfileLayout.portrait ? 24 : 80),
-          Text(
-            data['displayName'] ?? '',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            alignment: WrapAlignment.center,
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
             children: [
-              if (data['jobTitle'] != null && data['jobTitle'].isNotEmpty) ...[
-                Text(
-                  data['jobTitle'],
-                  style: const TextStyle(color: Colors.white70, fontSize: 16),
-                  textAlign: TextAlign.center,
+              SizedBox(height: layout == ProfileLayout.portrait ? 24 : 80),
+              Text(
+                data['displayName'] ?? '',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
                 ),
-                if (data['companyName'] != null && data['companyName'].isNotEmpty) ...[
-                  Text(
-                    ' at ',
-                    style: const TextStyle(color: Colors.white70, fontSize: 16),
-                  ),
-                  Text(
-                    data['companyName'],
-                    style: const TextStyle(color: Colors.white70, fontSize: 16),
-                  ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                alignment: WrapAlignment.center,
+                children: [
+                  if (data['jobTitle'] != null && data['jobTitle'].isNotEmpty) ...[
+                    Text(
+                      data['jobTitle'],
+                      style: const TextStyle(color: Colors.white70, fontSize: 16),
+                      textAlign: TextAlign.center,
+                    ),
+                    if (data['companyName'] != null && data['companyName'].isNotEmpty) ...[
+                      Text(
+                        ' at ',
+                        style: const TextStyle(color: Colors.white70, fontSize: 16),
+                      ),
+                      Text(
+                        data['companyName'],
+                        style: const TextStyle(color: Colors.white70, fontSize: 16),
+                      ),
+                    ],
+                  ],
                 ],
+              ),
+              if (data['location'] != null && data['location'].isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    const Icon(Icons.location_on, color: Colors.white70, size: 16),
+                    const SizedBox(width: 4),
+                    Text(
+                      data['location'],
+                      style: const TextStyle(color: Colors.white70),
+                    ),
+                  ],
+                ),
+              ],
+              const SizedBox(height: 16),
+              if (data['bio'] != null)
+                Text(
+                  data['bio'],
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white70),
+                ),
+              const SizedBox(height: 24),
+              _buildSocialIcons(data['socialPlatforms'] ?? []),
+              const SizedBox(height: 24),
+              if (data['blocks'] != null) ...[
+                ...(data['blocks'] as List)
+                    .map((b) => Block.fromMap(b))
+                    .where((block) => 
+                        block.type == BlockType.website && 
+                        block.isVisible == true &&
+                        block.layout == BlockLayout.classic)
+                    .map((block) => _buildWebsiteBlock(block)),
+                ...(data['blocks'] as List)
+                    .map((b) => Block.fromMap(b))
+                    .where((block) => 
+                        block.type == BlockType.contact && 
+                        block.isVisible == true &&
+                        block.layout != BlockLayout.iconButton)
+                    .map((block) => _buildContactBlock(block, layout)),
+                ...(data['blocks'] as List)
+                    .map((b) => Block.fromMap(b))
+                    .where((block) => block.type == BlockType.image && 
+                                      block.isVisible == true)
+                    .map((block) => _buildImageBlock(block)),
+                ...(data['blocks'] as List)
+                    .map((b) => Block.fromMap(b))
+                    .where((block) => 
+                        block.type == BlockType.youtube && 
+                        block.isVisible == true)
+                    .map((block) => _buildYoutubeBlock(block)),
               ],
             ],
           ),
-          if (data['location'] != null && data['location'].isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Wrap(
-              alignment: WrapAlignment.center,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                const Icon(Icons.location_on, color: Colors.white70, size: 16),
-                const SizedBox(width: 4),
-                Text(
-                  data['location'],
-                  style: const TextStyle(color: Colors.white70),
-                ),
-              ],
-            ),
-          ],
-          const SizedBox(height: 16),
-          if (data['bio'] != null)
-            Text(
-              data['bio'],
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.white70),
-            ),
-          const SizedBox(height: 24),
-          _buildSocialIcons(data['socialPlatforms'] ?? []),
-          const SizedBox(height: 24),
-          if (data['blocks'] != null) ...[
-            ...(data['blocks'] as List)
-                .map((b) => Block.fromMap(b))
-                .where((block) => 
-                    block.type == BlockType.website && 
-                    block.isVisible == true &&
-                    block.layout == BlockLayout.classic)
-                .map((block) => _buildWebsiteBlock(block)),
-            ...(data['blocks'] as List)
-                .map((b) => Block.fromMap(b))
-                .where((block) => block.type == BlockType.image && 
-                                  block.isVisible == true)
-                .map((block) => _buildImageBlock(block)),
-            ...(data['blocks'] as List)
-                .map((b) => Block.fromMap(b))
-                .where((block) => 
-                    block.type == BlockType.youtube && 
-                    block.isVisible == true)
-                .map((block) => _buildYoutubeBlock(block)),
-          ],
-        ],
-      ),
+        ),
+      ],
     );
   }
 
