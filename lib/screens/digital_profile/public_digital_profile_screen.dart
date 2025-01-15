@@ -1330,19 +1330,23 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
 
   Future<void> _downloadVCard(Block block) async {
     final vCardData = _generateVCard(block);
+  
     if (kIsWeb) {
       final bytes = utf8.encode(vCardData);
-      final blob = html.Blob([bytes]);
-      final url = html.Url.createObjectUrlFromBlob(blob);
-      final anchor = html.AnchorElement()
-        ..href = url
-        ..download = '${block.contents.firstOrNull?.firstName ?? 'contact'}.vcf'
-        ..style.display = 'none';
-      html.document.body?.children.add(anchor);
-      anchor.click();
-      html.document.body?.children.remove(anchor);
-      html.Url.revokeObjectUrl(url);
+      final base64 = base64Encode(bytes);
+      final dataUrl = 'data:text/vcard;base64,$base64';
+    
+      // Get contact name for file
+      final firstName = block.contents.firstOrNull?.firstName ?? '';
+      final lastName = block.contents.firstOrNull?.lastName ?? '';
+      final fileName = '${firstName.trim()} ${lastName.trim()}'.trim();
+    
+      // Create and click download link
+      html.AnchorElement(href: dataUrl)
+      ..setAttribute('download', '${fileName.isEmpty ? 'contact' : fileName}.vcf')
+      ..click();
     } else {
+      // For mobile platforms
       final tempDir = await getTemporaryDirectory();
       final file = File('${tempDir.path}/contact.vcf');
       await file.writeAsString(vCardData);
