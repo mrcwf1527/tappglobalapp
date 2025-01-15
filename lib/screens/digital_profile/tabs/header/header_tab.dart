@@ -21,10 +21,11 @@ class _HeaderTabState extends State<HeaderTab> {
   Widget build(BuildContext context) {
     return Consumer<DigitalProfileProvider>(
       builder: (context, provider, child) {
-        // Add this check
         if (provider.profileData.id.isEmpty) {
           return const Center(child: CircularProgressIndicator());
         }
+
+        final currentLayout = provider.profileData.layout;
 
         return GestureDetector(
           onTap: () => FocusScope.of(context).unfocus(),
@@ -38,45 +39,34 @@ class _HeaderTabState extends State<HeaderTab> {
                   children: [
                     Expanded(
                       child: ProfileImageUpload(
-                        currentImageUrl: context
-                            .watch<DigitalProfileProvider>()
-                            .profileData
-                            .profileImageUrl,
+                        currentImageUrl: provider.profileData.profileImageUrl,
                         onImageUploaded: (url) {
-                          context
-                              .read<DigitalProfileProvider>()
-                              .updateProfile(profileImageUrl: url);
+                          provider.updateProfile(profileImageUrl: url);
                         },
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: CompanyImageUpload(
-                        currentImageUrl: context
-                            .watch<DigitalProfileProvider>()
-                            .profileData
-                            .companyImageUrl,
-                        onImageUploaded: (url) {
-                          context
-                              .read<DigitalProfileProvider>()
-                              .updateProfile(companyImageUrl: url);
-                        },
+                    if (currentLayout != ProfileLayout.portrait) ...[
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: CompanyImageUpload(
+                          currentImageUrl: provider.profileData.companyImageUrl,
+                          onImageUploaded: (url) {
+                            provider.updateProfile(companyImageUrl: url);
+                          },
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
-                const SizedBox(height: 24),
-                BannerUpload(
-                  currentImageUrl: context
-                      .watch<DigitalProfileProvider>()
-                      .profileData
-                      .bannerImageUrl,
-                  onImageUploaded: (url) {
-                    context
-                        .read<DigitalProfileProvider>()
-                        .updateProfile(bannerImageUrl: url);
-                  },
-                ),
+                if (currentLayout == ProfileLayout.banner) ...[
+                  const SizedBox(height: 24),
+                  BannerUpload(
+                    currentImageUrl: provider.profileData.bannerImageUrl,
+                    onImageUploaded: (url) {
+                      provider.updateProfile(bannerImageUrl: url);
+                    },
+                  ),
+                ],
                 const SizedBox(height: 24),
                 const ProfileForm(),
                 const SizedBox(height: 24),
