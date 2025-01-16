@@ -1,6 +1,5 @@
 // lib/widgets/digital_profile/social_icons.dart
 // Profile Components: Social media links management
-// Profile Components: Social media links management
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

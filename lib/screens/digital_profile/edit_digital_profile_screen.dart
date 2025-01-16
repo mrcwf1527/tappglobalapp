@@ -3,10 +3,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:pretty_qr_code/pretty_qr_code.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import 'tabs/blocks/blocks_tab.dart';
 import 'tabs/header/header_tab.dart';
 import '../../providers/digital_profile_provider.dart';
@@ -447,51 +447,31 @@ class BorderedQRView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        QrImageView(
-          data: data,
-          size: size,
-          eyeStyle: QrEyeStyle(
-            eyeShape: QrEyeShape.square,
-            color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.white
-              : Colors.black,
-          ),
-          dataModuleStyle: QrDataModuleStyle(
-            dataModuleShape: QrDataModuleShape.square,
-            color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.white
-              : Colors.black,
-          ),
-        ),
-        if (profileImageUrl != null)
-          Container(
-            width: 36,
-            height: 36,
-            padding: const EdgeInsets.all(2),
-            decoration: BoxDecoration(
-              color: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFF191919)
-                : const Color(0xFFf5f5f5),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(6),
-                child: Image(
-                  image: NetworkImage(profileImageUrl!),
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-          ),
-      ],
+    final qrImage = QrImage(QrCode.fromData(
+      data: data,
+      errorCorrectLevel: QrErrorCorrectLevel.H,
+    ));
+
+    final decoration = PrettyQrDecoration(
+      shape: PrettyQrSmoothSymbol(
+        color: Theme.of(context).brightness == Brightness.dark
+          ? Colors.white 
+          : Colors.black,
+        roundFactor: 1,
+      ),
+      image: profileImageUrl != null ? PrettyQrDecorationImage(
+        image: NetworkImage(profileImageUrl!),
+        position: PrettyQrDecorationImagePosition.embedded,
+      ) : null,
+    );
+
+    return SizedBox(
+      width: size,
+      height: size,
+      child: PrettyQrView(
+        qrImage: qrImage,
+        decoration: decoration,
+      ),
     );
   }
 }
