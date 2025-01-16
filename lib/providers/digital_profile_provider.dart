@@ -155,6 +155,7 @@ class DigitalProfileProvider extends ChangeNotifier {
     String? profileImageUrl,
     String? companyImageUrl,
     String? bannerImageUrl,
+    ProfileLayout? layout,
   }) async {
     _profileData = DigitalProfileData(
       id: _profileData.id,
@@ -171,7 +172,7 @@ class DigitalProfileProvider extends ChangeNotifier {
       socialPlatforms: _profileData.socialPlatforms,
       createdAt: _profileData.createdAt,
       updatedAt: _profileData.updatedAt,
-      layout: _profileData.layout,
+      layout: layout ?? _profileData.layout,
       blocks: _profileData.blocks,
     );
     _isDirty = true;

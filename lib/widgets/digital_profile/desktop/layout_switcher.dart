@@ -72,7 +72,10 @@ class LayoutSwitcher extends StatelessWidget {
           onTap: () => LayoutSelectorModal.show(
             context,
             provider.selectedLayout,
-            provider.setLayout,
+            (newLayout) async {
+              provider.updateProfile(layout: newLayout);
+              provider.saveProfile();
+            },
           ),
         );
       },
@@ -113,9 +116,12 @@ class LayoutSwitcher extends StatelessWidget {
           Radio<ProfileLayout>(
             value: layout,
             groupValue: provider.selectedLayout,
-            onChanged: (value) {
+            onChanged: (value) async {
               if (value != null) {
                 provider.setLayout(value);
+                // Update profile immediately too
+                provider.updateProfile(layout: value);
+                await provider.saveProfile();
               }
             },
           ),

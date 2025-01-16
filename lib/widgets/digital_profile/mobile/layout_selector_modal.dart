@@ -185,7 +185,15 @@ class _LayoutSelectorModalState extends State<LayoutSelectorModal> {
                   : Colors.black,
             ),
             onPressed: () {
-              widget.onLayoutSelected(_layouts[_currentPage]);
+              final provider = context.read<DigitalProfileProvider>();
+              final newLayout = _layouts[_currentPage];
+
+              // Update both the selected layout and profile layout
+              provider.setLayout(newLayout);
+              provider.updateProfile(layout: newLayout);
+              provider.saveProfile();
+
+              widget.onLayoutSelected(newLayout);
               Navigator.of(context).pop();
             },
             child: const Text('Select Layout'),
