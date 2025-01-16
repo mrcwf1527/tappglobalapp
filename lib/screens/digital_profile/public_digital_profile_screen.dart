@@ -1259,16 +1259,21 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                           ],
                         ),
                       ),
+                      const SizedBox(width: 24),
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: PrettyQr(
+                        child: PrettyQrView.data(
                           data: vCardData,
-                          size: 120,
-                          roundEdges: true,
+                          decoration: const PrettyQrDecoration(
+                            shape: PrettyQrSmoothSymbol(
+                              color: Colors.black,
+                              roundFactor: 1,
+                            ),
+                          ),
                         ),
                       ),
                     ],

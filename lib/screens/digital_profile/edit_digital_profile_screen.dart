@@ -335,6 +335,7 @@ class ShareProfileSheet extends StatelessWidget {
         color: Theme.of(context).scaffoldBackgroundColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
+      padding: const EdgeInsets.all(24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -405,7 +406,10 @@ class ShareProfileSheet extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 16),
         child: Row(
           children: [
-            FaIcon(icon, size: 20),
+            SizedBox(
+              width: 24,
+              child: FaIcon(icon, size: 20),
+            ),
             const SizedBox(width: 16),
             Text(
               title,
