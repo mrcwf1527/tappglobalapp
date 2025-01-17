@@ -1,7 +1,9 @@
 // lib/screens/digital_profile/edit_digital_profile_screen.dart
 // Profile Management: Digital profile editing interface
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:pretty_qr_code/pretty_qr_code.dart';
@@ -319,18 +321,26 @@ class _EditDigitalProfileScreenState extends State<EditDigitalProfileScreen>
   }
 }
 
-class ShareProfileSheet extends StatelessWidget {
+class ShareProfileSheet extends StatefulWidget {
   final String username;
   final String displayName;
   final String? profileImageUrl;
-  final _qrKey = GlobalKey<BorderedQRViewState>();
-
-  ShareProfileSheet({
+  
+  const ShareProfileSheet({
     required this.username,
     required this.displayName,
     this.profileImageUrl,
     super.key,
   });
+
+  @override 
+  State<ShareProfileSheet> createState() => _ShareProfileSheetState();
+}
+
+class _ShareProfileSheetState extends State<ShareProfileSheet> {
+  final _qrKey = GlobalKey<BorderedQRViewState>();
+  final _vcardKey = GlobalKey();
+  bool _showingVCard = false;
 
   @override
   Widget build(BuildContext context) {
@@ -366,11 +376,14 @@ class ShareProfileSheet extends StatelessWidget {
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 24),
-                    BorderedQRView(
-                      key: _qrKey,
-                      data: 'https://tappglobal-app-profile.web.app/$username',
-                      profileImageUrl: profileImageUrl,
-                    ),
+                    if (!_showingVCard) 
+                      BorderedQRView(
+                        key: _qrKey,
+                        data: 'https://tappglobal-app-profile.web.app/${widget.username}',
+                        profileImageUrl: widget.profileImageUrl,
+                      )
+                    else
+                      _buildVCardQR(provider),
                     const SizedBox(height: 24),
                     _buildOption(
                       context,
@@ -380,9 +393,9 @@ class ShareProfileSheet extends StatelessWidget {
                     ),
                     if (hasContactBlock) _buildOption(
                       context,
-                      'Share Card Offline',
-                      FontAwesomeIcons.fileExport,
-                      () => _shareOffline(context),
+                      _showingVCard ? 'Show Profile QR' : 'Share Card Offline',
+                      _showingVCard ? FontAwesomeIcons.qrcode : FontAwesomeIcons.fileExport,
+                      () => setState(() => _showingVCard = !_showingVCard),
                     ),
                     _buildOption(
                       context,
@@ -404,6 +417,108 @@ class ShareProfileSheet extends StatelessWidget {
         );
       },
     );
+  }
+
+  Widget _buildVCardQR(DigitalProfileProvider provider) {
+    final contactBlock = provider.profileData.blocks
+        .firstWhere((block) => block.type == BlockType.contact);
+    final vCardData = _generateVCard(provider, contactBlock);
+
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+  
+    return Column(
+      children: [
+        SizedBox(
+          width: 200,
+          height: 200,
+          child: PrettyQrView.data(
+            key: _vcardKey,
+            data: vCardData,
+            decoration: PrettyQrDecoration(
+              shape: PrettyQrSmoothSymbol(
+                color: isDarkMode ? Colors.white : Colors.black,
+                roundFactor: 1,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Scan to add contact',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      ],
+    );
+  }
+
+  String _generateVCard(DigitalProfileProvider provider, Block block) {
+    final content = block.contents.firstOrNull;
+    if (content == null) return '';
+
+    final phones = (content.metadata?['phones'] as List? ?? []);
+    final emails = (content.metadata?['emails'] as List? ?? []);
+
+    final vCard = [
+      'BEGIN:VCARD',
+      'VERSION:3.0',
+      'FN;CHARSET=UTF-8:${content.firstName ?? ''} ${content.lastName ?? ''}'.trim(),
+      'N;CHARSET=UTF-8:${content.lastName ?? ''};${content.firstName ?? ''};;;',
+      if (content.imageUrl?.isNotEmpty == true) 'PHOTO;MEDIATYPE=image/jpeg:${content.imageUrl}',
+      ...emails.map((email) => 'EMAIL;CHARSET=UTF-8;type=WORK,INTERNET:${email['address']}'),
+      ...phones.map((phone) => 'TEL;TYPE=CELL:${phone['number']}'),
+      if (content.jobTitle?.isNotEmpty == true) 'TITLE;CHARSET=UTF-8:${content.jobTitle}',
+      if (content.companyName?.isNotEmpty == true) 'ORG;CHARSET=UTF-8:${content.companyName}',
+      'URL;type=TAPP! Digital Profile;CHARSET=UTF-8:https://l.tappglobal.app/${widget.username}',
+      'URL;TYPE=TAPP! Calendar Link:',
+      'URL;TYPE=WhatsApp:',
+      'URL;TYPE=Facebook:',
+      'URL;TYPE=X (Twitter):',
+      'URL;TYPE=LinkedIn Personal:',
+      'URL;TYPE=Instagram:',
+      'URL;TYPE=Youtube Channel:',
+      'URL;TYPE=TikTok:',
+      'END:VCARD'
+    ].join('\n');
+
+    return vCard;
+  }
+
+  Future<Uint8List?> _exportVCardQR() async {
+    debugPrint('Starting vCard QR export');
+    
+    // Using completer to manage async
+    final completer = Completer<Uint8List?>();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (_vcardKey.currentContext == null) {
+        debugPrint('Context is null');
+        completer.complete(null);
+        return;
+      }
+
+      final renderObject = _vcardKey.currentContext!.findRenderObject() as RenderRepaintBoundary?;
+      if (renderObject == null) {
+        debugPrint('RenderObject is null');
+        completer.complete(null);
+        return;
+      }
+
+      debugPrint('Generating image');
+      final image = await renderObject.toImage(pixelRatio: 3.0);
+      debugPrint('Converting to byte data');
+      final byteData = await image.toByteData(format: ImageByteFormat.png);
+     
+      if (byteData == null) {
+        debugPrint('ByteData is null');
+         completer.complete(null);
+        return;
+      }
+
+      debugPrint('Export complete');
+      completer.complete(byteData.buffer.asUint8List());
+    });
+
+    return completer.future;
   }
 
   Widget _buildOption(
@@ -435,39 +550,36 @@ class ShareProfileSheet extends StatelessWidget {
 
   Future<void> _shareProfile(BuildContext context) async {
     final text =
-        'Hi I\'m $displayName, here\'s my digital profile: https://tappglobal-app-profile.web.app/$username';
+        'Hi I\'m ${widget.displayName}, here\'s my digital profile: https://tappglobal-app-profile.web.app/${widget.username}';
     await Share.share(text);
   }
 
-  // TODO: Implement vCard sharing
-  void _shareOffline(BuildContext context) {}
-
-  // TODO: Implement wallet integration
+  // TODO: Implement Apple/Google Wallet integration
   void _addToWallet(BuildContext context) {}
 
   Future<void> _saveQR(BuildContext context) async {
     try {
-      final bytes = await _qrKey.currentState?.exportQR();
-      if (bytes == null) throw Exception('Failed to generate QR');
+      Uint8List? bytes;
+      if (_showingVCard) {
+        bytes = await _exportVCardQR();
+        if (bytes == null) throw Exception('Failed to generate vCard QR');
      
-      await ImageSaveUtil.saveImage(bytes, 'tapp_qr_$username.png');
+        await ImageSaveUtil.saveImage(bytes, 'tapp_vcard_${widget.username}.png');
+      } else {
+        bytes = await _qrKey.currentState?.exportQR();
+        if (bytes == null) throw Exception('Failed to generate QR');
+     
+        await ImageSaveUtil.saveImage(bytes, 'tapp_qr_${widget.username}.png');
+      }
     
       if (!context.mounted) return;
-    
-      // Close the bottom sheet first
       Navigator.pop(context);
-    
-      // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('QR Code saved successfully')),
       );
     } catch (e) {
       if (!context.mounted) return;
-    
-      // Close the bottom sheet even if there's an error
       Navigator.pop(context);
-    
-      // Show error message
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Failed to save QR Code')),
       );
