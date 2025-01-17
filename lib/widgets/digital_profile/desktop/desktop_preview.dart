@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'profile_preview.dart';
+import '../../../models/block.dart';
 import '../../../providers/digital_profile_provider.dart';
 import '../../../screens/digital_profile/edit_digital_profile_screen.dart';
 
@@ -159,52 +160,59 @@ class ShareDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Container(
-        width: 400,
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Share Profile',
-              style: Theme.of(context).textTheme.titleLarge,
+    return Consumer<DigitalProfileProvider>(
+      builder: (context, provider, child) {
+        final hasContactBlock = provider.profileData.blocks
+            .any((block) => block.type == BlockType.contact);
+
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Container(
+            width: 400,
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Share Profile',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 24),
+                BorderedQRView(
+                  data: 'https://tappglobal-app-profile.web.app/$username',
+                  profileImageUrl: profileImageUrl,
+                ),
+                const SizedBox(height: 24),
+                _buildOption(
+                  context,
+                  'Copy Link',
+                  FontAwesomeIcons.copy,
+                  () => _copyLink(context),
+                  subtitle: 'https://tappglobal-app-profile.web.app/$username',
+                ),
+                if (hasContactBlock) _buildOption(
+                  context,
+                  'Download Contact Card',
+                  FontAwesomeIcons.fileExport,
+                  () => _downloadContactCard(context),
+                ),
+                _buildOption(
+                  context,
+                  'Add to Wallet',
+                  FontAwesomeIcons.wallet,
+                  () => _addToWallet(context),
+                ),
+                _buildOption(
+                  context,
+                  'Save QR Code',
+                  FontAwesomeIcons.download,
+                  () => _saveQRCode(context),
+                ),
+              ],
             ),
-            const SizedBox(height: 24),
-            BorderedQRView(
-              data: 'https://tappglobal-app-profile.web.app/$username',
-              profileImageUrl: profileImageUrl,
-            ),
-            const SizedBox(height: 24),
-            _buildOption(
-              context,
-              'Copy Link',
-              FontAwesomeIcons.copy,
-              () => _copyLink(context),
-              subtitle: 'https://tappglobal-app-profile.web.app/$username',
-            ),
-            _buildOption(
-              context,
-              'Download Contact Card',
-              FontAwesomeIcons.fileExport,
-              () => _downloadContactCard(context),
-            ),
-            _buildOption(
-              context,
-              'Add to Wallet',
-              FontAwesomeIcons.wallet,
-              () => _addToWallet(context),
-            ),
-            _buildOption(
-              context,
-              'Save QR Code',
-              FontAwesomeIcons.download,
-              () => _saveQRCode(context),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 

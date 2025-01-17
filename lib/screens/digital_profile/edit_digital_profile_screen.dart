@@ -1,5 +1,6 @@
 // lib/screens/digital_profile/edit_digital_profile_screen.dart
 // Profile Management: Digital profile editing interface
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -9,6 +10,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
 import 'tabs/blocks/blocks_tab.dart';
 import 'tabs/header/header_tab.dart';
+import '../../utils/image_saver.dart';
+import '../../models/block.dart';
 import '../../providers/digital_profile_provider.dart';
 import '../../widgets/navigation/web_side_nav.dart';
 import '../../widgets/responsive_layout.dart';
@@ -320,8 +323,9 @@ class ShareProfileSheet extends StatelessWidget {
   final String username;
   final String displayName;
   final String? profileImageUrl;
+  final _qrKey = GlobalKey<BorderedQRViewState>();
 
-  const ShareProfileSheet({
+  ShareProfileSheet({
     required this.username,
     required this.displayName,
     this.profileImageUrl,
@@ -330,67 +334,75 @@ class ShareProfileSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(height: 12),
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.grey[400],
-              borderRadius: BorderRadius.circular(2),
-            ),
+    return Consumer<DigitalProfileProvider>(
+      builder: (context, provider, child) {
+        final hasContactBlock = provider.profileData.blocks
+            .any((block) => block.type == BlockType.contact);
+
+        return Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           ),
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              children: [
-                Text(
-                  'Share Profile',
-                  style: Theme.of(context).textTheme.titleLarge,
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[400],
+                  borderRadius: BorderRadius.circular(2),
                 ),
-                const SizedBox(height: 24),
-                BorderedQRView(
-                  data: 'https://tappglobal-app-profile.web.app/$username',
-                  profileImageUrl: profileImageUrl,
+              ),
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    Text(
+                      'Share Profile',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 24),
+                    BorderedQRView(
+                      key: _qrKey,
+                      data: 'https://tappglobal-app-profile.web.app/$username',
+                      profileImageUrl: profileImageUrl,
+                    ),
+                    const SizedBox(height: 24),
+                    _buildOption(
+                      context,
+                      'Share Profile',
+                      FontAwesomeIcons.shareNodes,
+                      () => _shareProfile(context),
+                    ),
+                    if (hasContactBlock) _buildOption(
+                      context,
+                      'Share Card Offline',
+                      FontAwesomeIcons.fileExport,
+                      () => _shareOffline(context),
+                    ),
+                    _buildOption(
+                      context,
+                      'Add to Wallet',
+                      FontAwesomeIcons.wallet,
+                      () => _addToWallet(context),
+                    ),
+                    _buildOption(
+                      context,
+                      'Save QR Code',
+                      FontAwesomeIcons.download,
+                      () => _saveQR(context),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 24),
-                _buildOption(
-                  context,
-                  'Share Profile',
-                  FontAwesomeIcons.shareNodes,
-                  () => _shareProfile(context),
-                ),
-                _buildOption(
-                  context,
-                  'Share Card Offline',
-                  FontAwesomeIcons.fileExport,
-                  () => _shareOffline(context),
-                ),
-                _buildOption(
-                  context,
-                  'Add to Wallet',
-                  FontAwesomeIcons.wallet,
-                  () => _addToWallet(context),
-                ),
-                _buildOption(
-                  context,
-                  'Save QR Code',
-                  FontAwesomeIcons.download,
-                  () => _saveQR(context),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -433,11 +445,37 @@ class ShareProfileSheet extends StatelessWidget {
   // TODO: Implement wallet integration
   void _addToWallet(BuildContext context) {}
 
-  // TODO: Implement QR saving
-  void _saveQR(BuildContext context) {}
+  Future<void> _saveQR(BuildContext context) async {
+    try {
+      final bytes = await _qrKey.currentState?.exportQR();
+      if (bytes == null) throw Exception('Failed to generate QR');
+     
+      await ImageSaveUtil.saveImage(bytes, 'tapp_qr_$username.png');
+    
+      if (!context.mounted) return;
+    
+      // Close the bottom sheet first
+      Navigator.pop(context);
+    
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('QR Code saved successfully')),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+    
+      // Close the bottom sheet even if there's an error
+      Navigator.pop(context);
+    
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to save QR Code')),
+      );
+    }
+  }
 }
 
-class BorderedQRView extends StatelessWidget {
+class BorderedQRView extends StatefulWidget {
   final String data;
   final String? profileImageUrl;
   final double size;
@@ -450,32 +488,78 @@ class BorderedQRView extends StatelessWidget {
   });
 
   @override
+  State<BorderedQRView> createState() => BorderedQRViewState();
+}
+
+class BorderedQRViewState extends State<BorderedQRView> {
+  @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final qrImage = QrImage(QrCode.fromData(
-      data: data,
+      data: widget.data,
       errorCorrectLevel: QrErrorCorrectLevel.H,
     ));
 
     final decoration = PrettyQrDecoration(
       shape: PrettyQrSmoothSymbol(
-        color: Theme.of(context).brightness == Brightness.dark
-          ? Colors.white 
-          : Colors.black,
+        color: isDarkMode ? Colors.white : Colors.black,
         roundFactor: 1,
       ),
-      image: profileImageUrl != null ? PrettyQrDecorationImage(
-        image: NetworkImage(profileImageUrl!),
-        position: PrettyQrDecorationImagePosition.embedded,
-      ) : null,
+      image: widget.profileImageUrl?.isNotEmpty ?? false 
+        ? PrettyQrDecorationImage(
+            image: NetworkImage(widget.profileImageUrl!),
+            position: PrettyQrDecorationImagePosition.embedded,
+          )
+        : PrettyQrDecorationImage(
+            image: AssetImage(isDarkMode 
+              ? 'assets/logo/logo_white.png'
+              : 'assets/logo/logo_black.png'),
+            position: PrettyQrDecorationImagePosition.embedded,
+          ),
     );
 
     return SizedBox(
-      width: size,
-      height: size,
+      width: widget.size,
+      height: widget.size,
       child: PrettyQrView(
         qrImage: qrImage,
         decoration: decoration,
       ),
     );
+  }
+
+  Future<Uint8List> exportQR() async {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final qrImage = QrImage(QrCode.fromData(
+      data: widget.data,
+      errorCorrectLevel: QrErrorCorrectLevel.H,
+  ));
+
+  final decoration = PrettyQrDecoration(
+    shape: PrettyQrSmoothSymbol(
+      color: isDarkMode ? Colors.white : Colors.black,
+      roundFactor: 1,
+    ), // Remove trailing comma
+    image: widget.profileImageUrl?.isNotEmpty ?? false 
+      ? PrettyQrDecorationImage(
+          image: NetworkImage(widget.profileImageUrl!),
+          position: PrettyQrDecorationImagePosition.embedded,
+        )
+      : PrettyQrDecorationImage(
+          image: AssetImage(isDarkMode 
+            ? 'assets/logo/logo_white.png'
+            : 'assets/logo/logo_black.png'),
+          position: PrettyQrDecorationImagePosition.embedded,
+        ),
+      background: isDarkMode ? Colors.black : Colors.white
+    );
+
+    final image = await qrImage.toImage(
+      size: 1024,
+      decoration: decoration,
+    );
+
+    final byteData = await image.toByteData(format: ImageByteFormat.png);
+    return byteData!.buffer.asUint8List();
   }
 }
