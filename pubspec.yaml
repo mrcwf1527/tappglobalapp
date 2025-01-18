@@ -39,6 +39,8 @@ dependencies:
   youtube_player_iframe: ^5.2.1
   pretty_qr_code: ^3.3.0
   image_gallery_saver: ^2.0.3
+  aws_s3_api: ^2.0.0
+  uuid: ^4.5.1
 
 dev_dependencies:
   flutter_test:

@@ -12,6 +12,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:crop_your_image/crop_your_image.dart';
 import 'package:provider/provider.dart';
 import 'package:phone_numbers_parser/phone_numbers_parser.dart';
+import '../../../services/s3_service.dart';
 import '../../../models/block.dart';
 import '../../../models/country_code.dart';
 import '../../../models/social_platform.dart';
@@ -46,6 +47,7 @@ class _ContactBlockState extends State<ContactBlock> {
   final Map<String, ValueNotifier<CountryCode>> _countryNotifiers = {};
   final ImagePicker _picker = ImagePicker();
   bool _isUploading = false;
+  final _s3Service = S3Service();
 
   @override
   void initState() {
@@ -515,8 +517,8 @@ class _ContactBlockState extends State<ContactBlock> {
   }
 
   Future<void> _pickAndUploadImage() async {
-  _showImageSourceDialog();
-}
+    _showImageSourceDialog();
+  }
 
 void _showImageSourceDialog() {
   showDialog(
@@ -647,25 +649,41 @@ void _showCropDialog(Uint8List imageBytes) {
 }
 
 Future<void> _handleCroppedImage(Uint8List croppedBytes) async {
-  setState(() => _isUploading = true);
+  if (mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error!!!')),
+    );
+  }
 
   try {
-    if (croppedBytes.length > 224 * 1024) {
-      final decodedImage = await decodeImageFromList(croppedBytes);
-      final resizedImage = await _resizeImage(decodedImage, 400, 400);
-      final compressedBytes = await _compressImage(resizedImage);
-      await _uploadImage(compressedBytes);
-    } else {
-      await _uploadImage(croppedBytes);
-    }
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) throw Exception('User not logged in');
+
+    final downloadUrl = await _s3Service.uploadImage(
+      imageBytes: croppedBytes,
+      userId: userId,
+      folder: 'contact_images',
+      fileName: widget.block.id,
+      maxSizeKB: 224,
+      maxWidth: 400,
+      maxHeight: 400,
+    );
+
+    final content = widget.block.contents.first;
+    final updatedContent = content.copyWith(imageUrl: downloadUrl);
+
+    setState(() {
+      widget.block.contents[0] = updatedContent;
+    });
+
+    final updatedBlock = widget.block.copyWith(
+      contents: [updatedContent],
+      sequence: widget.block.sequence,
+    );
+
+    widget.onBlockUpdated(updatedBlock);
   } catch (e) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
-    }
-  } finally {
-    if (mounted) setState(() => _isUploading = false);
+    debugPrint('Error: $e');
   }
 }
 
@@ -699,44 +717,7 @@ Future<void> _handleCroppedImage(Uint8List croppedBytes) async {
   
     return recorder.endRecording().toImage(newWidth, newHeight);
   }
-
-  Future<void> _uploadImage(Uint8List imageBytes) async {
-    final userId = FirebaseAuth.instance.currentUser?.uid;
-    if (userId == null) throw Exception('User not logged in');
-
-    final ref = FirebaseStorage.instance
-        .ref()
-        .child('users')
-        .child(userId)
-        .child('contact_images/${widget.block.id}.jpg');
-
-    await ref.putData(imageBytes, SettableMetadata(contentType: 'image/jpeg'));
-    final downloadUrl = await ref.getDownloadURL();
-
-    final content = widget.block.contents.first;
-    final updatedContent = content.copyWith(
-      imageUrl: downloadUrl,
-      firstName: content.firstName,
-      lastName: content.lastName,
-      jobTitle: content.jobTitle,
-      companyName: content.companyName,
-      metadata: content.metadata,
-      isPrimaryEmail: content.isPrimaryEmail,
-      isPrimaryPhone: content.isPrimaryPhone
-    );
-
-    setState(() {
-      widget.block.contents[0] = updatedContent;
-    });
   
-    final updatedBlock = widget.block.copyWith(
-      contents: [updatedContent],
-      sequence: widget.block.sequence,
-    );
-  
-    widget.onBlockUpdated(updatedBlock);
-  }
-
   Widget _buildPhoneNumbersSection(bool isDarkMode) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
