@@ -90,11 +90,11 @@ class S3Service {
       imageBytes = await _compressImage(resized);
     }
 
-    if (imageBytes.length > maxSizeKB * 1024) {
+    if (imageBytes.length > maxSizeKB * 15360) {
       // Implement compression logic here
       // You can use packages like flutter_image_compress
       // For now, using basic compression
-      final quality = (maxSizeKB * 1024 * 100 / imageBytes.length).round();
+      final quality = (maxSizeKB * 15360 * 100 / imageBytes.length).round();
       final compressedImage = await _compressImage(image, quality: quality);
       return compressedImage;
     }

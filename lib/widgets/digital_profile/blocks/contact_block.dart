@@ -649,12 +649,6 @@ void _showCropDialog(Uint8List imageBytes) {
 }
 
 Future<void> _handleCroppedImage(Uint8List croppedBytes) async {
-  if (mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error!!!')),
-    );
-  }
-
   try {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) throw Exception('User not logged in');

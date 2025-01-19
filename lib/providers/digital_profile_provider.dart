@@ -4,7 +4,8 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../../services/s3_service.dart';
 import '../models/social_platform.dart';
 import '../models/block.dart';
 
@@ -120,6 +121,8 @@ class DigitalProfileData {
 }
 
 class DigitalProfileProvider extends ChangeNotifier {
+  final _s3Service = S3Service();
+
   DigitalProfileData _profileData = DigitalProfileData(
     id: '',
     userId: '',
@@ -352,40 +355,14 @@ class DigitalProfileProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> deleteAllBlockImages(
-      String blockId, BlockType type, List<BlockContent> contents) async {
+  Future<void> deleteAllBlockImages(String blockId, BlockType type, List<BlockContent> contents) async {
     try {
       final userId = FirebaseAuth.instance.currentUser?.uid;
       if (userId == null) return;
 
       for (var content in contents) {
         if (content.imageUrl != null && content.imageUrl!.isNotEmpty) {
-          debugPrint('Deleting image: ${content.imageUrl}');
-
-          if (type == BlockType.image) {
-            // For image blocks, imageUrl is just the contentId
-            final ref = FirebaseStorage.instance
-                .ref()
-                .child('users')
-                .child(userId)
-                .child('block_images')
-                .child('${content.id}.jpg');
-            await ref.delete();
-          } else if (type == BlockType.website) {
-            // For website blocks, extract from full URL
-            final uri = Uri.parse(content.imageUrl!);
-            final decodedPath = Uri.decodeComponent(uri.path);
-            final pathSegments = decodedPath.split('/');
-            final fileName = pathSegments.last;
-
-            final ref = FirebaseStorage.instance
-                .ref()
-                .child('users')
-                .child(userId)
-                .child('link_images')
-                .child(fileName);
-            await ref.delete();
-          }
+          await _s3Service.deleteFile(content.imageUrl!);
         }
       }
     } catch (e) {
@@ -395,36 +372,8 @@ class DigitalProfileProvider extends ChangeNotifier {
 
   Future<void> deleteBlockImage(String blockId, String imageUrl) async {
     try {
-      debugPrint('Attempting to delete image: $imageUrl');
-
-      final userId = FirebaseAuth.instance.currentUser?.uid;
-      if (userId == null) return;
-
-      String fileName;
-      String folderName;
-
-      if (imageUrl.startsWith('http')) {
-        // Handle full URLs (for link_images)
-        final uri = Uri.parse(imageUrl);
-        final decodedPath = Uri.decodeComponent(uri.path);
-        final pathSegments = decodedPath.split('/');
-        fileName = pathSegments.last;
-        folderName = 'link_images';
-      } else {
-        // Handle direct IDs (for block_images and contact_block)
-        fileName = '$imageUrl.jpg';
-        folderName = 'block_images';
-      }
-
-      final ref = FirebaseStorage.instance
-          .ref()
-          .child('users')
-          .child(userId)
-          .child(folderName)
-          .child(fileName);
-
-      await ref.delete();
-      debugPrint('Successfully deleted image: $fileName from $folderName');
+      await _s3Service.deleteFile(imageUrl);
+      debugPrint('Successfully deleted image: $imageUrl');
     } catch (e) {
       debugPrint('Error deleting block image: $e');
     }
@@ -435,13 +384,8 @@ class DigitalProfileProvider extends ChangeNotifier {
       final userId = FirebaseAuth.instance.currentUser?.uid;
       if (userId == null) return;
 
-      final ref = FirebaseStorage.instance
-          .ref()
-          .child('users')
-          .child(userId)
-          .child('contact_images/$blockId.jpg');
-
-      await ref.delete();
+      final imageUrl = '${dotenv.env['AWS_DOMAIN']!.replaceFirst('{0}', dotenv.env['AWS_BUCKET']!)}/users/$userId/contact_images/$blockId.jpg';
+      await _s3Service.deleteFile(imageUrl);
     } catch (e) {
       // File might not exist, which is fine
       debugPrint('Error deleting storage file: $e');
@@ -482,17 +426,18 @@ class DigitalProfileProvider extends ChangeNotifier {
     final contentId = DateTime.now().millisecondsSinceEpoch.toString();
     debugPrint('Uploading image with contentId: $contentId');
 
-    final ref = FirebaseStorage.instance
-        .ref()
-        .child('users')
-        .child(userId)
-        .child('block_images')
-        .child('$contentId.jpg');
-
-    await ref.putData(imageBytes, SettableMetadata(contentType: 'image/jpeg'));
-    final url = await ref.getDownloadURL();
-    debugPrint('Image uploaded, URL: $url');
-    return url;
+    final downloadUrl = await _s3Service.uploadImage(
+      imageBytes: imageBytes,
+      userId: userId,
+      folder: 'block_images',
+      fileName: contentId,
+      maxSizeKB: 1024,
+      maxWidth: 2000,
+      maxHeight: 2000,
+    );
+    
+    debugPrint('Image uploaded, URL: $downloadUrl');
+    return downloadUrl;
   }
 }
 

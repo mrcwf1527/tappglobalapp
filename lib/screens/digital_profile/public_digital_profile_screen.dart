@@ -261,7 +261,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                 if (data['companyImageUrl'] != null)
                   Positioned(
                     bottom: 0,
-                    right: -30,
+                    right: -28,
                     child: _buildCompanyImage(data, 28),
                   ),
               ],
@@ -321,7 +321,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
               if (data['companyImageUrl'] != null)
                 Positioned(
                   bottom: 0,
-                  right: -30,
+                  right: -28,
                   child: _buildCompanyImage(data, 28),
                 ),
             ],

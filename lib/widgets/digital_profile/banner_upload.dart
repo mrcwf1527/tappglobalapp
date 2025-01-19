@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart' show Uint8List, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:crop_your_image/crop_your_image.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import '../../services/s3_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import '../../providers/digital_profile_provider.dart';
@@ -31,6 +31,7 @@ class _BannerUploadState extends State<BannerUpload> {
   bool _isLoading = false;
   bool _isCropping = false;
   double _uploadProgress = 0.0;
+  final _s3Service = S3Service();
 
   Future<void> _pickImage(ImageSource source) async {
     try {
@@ -149,27 +150,15 @@ class _BannerUploadState extends State<BannerUpload> {
       final userId = FirebaseAuth.instance.currentUser?.uid;
       if (userId == null) throw Exception('User not logged in');
 
-      final ref = FirebaseStorage.instance
-          .ref()
-          .child('users')
-          .child(userId)
-          .child('banner_images/banner.jpg');
-
-      final metadata = SettableMetadata(
-        contentType: 'image/jpeg',
-        customMetadata: {'picked-file-path': 'banner-image'},
+      final downloadUrl = await _s3Service.uploadImage(
+        imageBytes: _croppedBytes!,
+        userId: userId,
+        folder: 'banner_images',
+        fileName: 'banner',
+        maxSizeKB: 800,
+        maxWidth: 2000,
+        maxHeight: 1000,
       );
-
-      final uploadTask = ref.putData(_croppedBytes!, metadata);
-
-      uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
-        setState(() {
-          _uploadProgress = snapshot.bytesTransferred / snapshot.totalBytes;
-        });
-      });
-
-      await uploadTask;
-      final downloadUrl = await ref.getDownloadURL();
 
       if (mounted) {
         final provider = context.read<DigitalProfileProvider>();
@@ -184,6 +173,7 @@ class _BannerUploadState extends State<BannerUpload> {
           _isLoading = false;
           _imageBytes = null;
           _croppedBytes = null;
+          _uploadProgress = 0;
         });
       }
     }

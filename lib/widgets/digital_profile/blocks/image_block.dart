@@ -1,13 +1,13 @@
 // lib/widgets/digital_profile/blocks/image_block.dart
 // Widget for managing image galleries. Handles image upload to Firebase Storage, displays image previews, supports reordering, and manages image visibility settings.
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../../models/block.dart';
 import '../../../providers/digital_profile_provider.dart';
+import '../../../services/s3_service.dart';
 import '../../../utils/debouncer.dart';
 
 class ImageBlock extends StatefulWidget {
@@ -170,6 +170,7 @@ class _ImageCard extends StatefulWidget {
 class _ImageCardState extends State<_ImageCard> {
   bool _isLoading = false;
   double? _aspectRatio;
+  final _s3Service = S3Service();
 
   @override
   void initState() {
@@ -212,14 +213,15 @@ class _ImageCardState extends State<_ImageCard> {
       if (userId == null) throw Exception('User not logged in');
 
       final imageBytes = await image.readAsBytes();
-      final ref = FirebaseStorage.instance
-          .ref()
-          .child('users')
-          .child(userId)
-          .child('block_images/${widget.content.id}.jpg');
-
-      await ref.putData(imageBytes, SettableMetadata(contentType: 'image/jpeg'));
-      final downloadUrl = await ref.getDownloadURL();
+      final downloadUrl = await _s3Service.uploadImage(
+        imageBytes: imageBytes,
+        userId: userId, 
+        folder: 'block_images',
+        fileName: widget.content.id,
+        maxSizeKB: 15360, // 15MB or 15x1024KB
+        maxWidth: 3840,
+        maxHeight: 2160,
+      );
 
       widget.onUpdate(widget.content.copyWith(
         imageUrl: downloadUrl,

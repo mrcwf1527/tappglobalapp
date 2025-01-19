@@ -1,11 +1,11 @@
 // lib/widgets/digital_profile/blocks/link_image_upload.dart
 // Component for handling thumbnail image uploads for website links. Integrates with Firebase Storage and provides visual feedback during upload process.
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
+import '../../../services/s3_service.dart';
 
 class LinkImageUpload extends StatefulWidget {
   final String? currentImageUrl;
@@ -25,6 +25,7 @@ class LinkImageUpload extends StatefulWidget {
 
 class _LinkImageUploadState extends State<LinkImageUpload> {
   final ImagePicker _picker = ImagePicker();
+  final _s3Service = S3Service();
   bool _isLoading = false;
 
   Future<void> _pickAndUploadImage() async {
@@ -33,31 +34,25 @@ class _LinkImageUploadState extends State<LinkImageUpload> {
       if (image == null) return;
 
       setState(() => _isLoading = true);
+
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId == null) throw Exception('User not logged in');
+
       final imageBytes = await image.readAsBytes();
-      await _uploadImage(imageBytes);
+      final downloadUrl = await _s3Service.uploadImage(
+        imageBytes: imageBytes,
+        userId: userId,
+        folder: 'link_images',
+        fileName: widget.linkId,
+        maxSizeKB: 224,
+        maxWidth: 400,
+        maxHeight: 400,
+      );
+      widget.onImageUploaded(downloadUrl);
     } catch (e) {
       _showError('Error picking image: $e');
     } finally {
       setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _uploadImage(Uint8List imageBytes) async {
-    try {
-      final userId = FirebaseAuth.instance.currentUser?.uid;
-      if (userId == null) throw Exception('User not logged in');
-
-      final ref = FirebaseStorage.instance
-          .ref()
-          .child('users')
-          .child(userId)
-          .child('link_images/${widget.linkId}.jpg');
-
-      await ref.putData(imageBytes, SettableMetadata(contentType: 'image/jpeg'));
-      final downloadUrl = await ref.getDownloadURL();
-      widget.onImageUploaded(downloadUrl);
-    } catch (e) {
-      _showError('Error uploading image: $e');
     }
   }
 
