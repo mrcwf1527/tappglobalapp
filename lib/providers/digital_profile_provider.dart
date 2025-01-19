@@ -321,6 +321,21 @@ class DigitalProfileProvider extends ChangeNotifier {
 
       if (!profile.exists) return;
 
+      // Clean up profile images only if they exist and are not empty
+      final profileImageUrl = profile.data()?['profileImageUrl'] as String?;
+      final companyImageUrl = profile.data()?['companyImageUrl'] as String?;
+      final bannerImageUrl = profile.data()?['bannerImageUrl'] as String?;
+
+      if (profileImageUrl != null && profileImageUrl.isNotEmpty) {
+        await _s3Service.deleteFile(profileImageUrl);
+      }
+      if (companyImageUrl != null && companyImageUrl.isNotEmpty) {
+        await _s3Service.deleteFile(companyImageUrl);
+      }
+      if (bannerImageUrl != null && bannerImageUrl.isNotEmpty) {
+        await _s3Service.deleteFile(bannerImageUrl);
+      }
+
       // Clean up images for all blocks
       final blocks = (profile.data()?['blocks'] as List?)
               ?.map((b) => Block.fromMap(b))
