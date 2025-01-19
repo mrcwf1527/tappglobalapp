@@ -170,7 +170,9 @@ class _VideoCardState extends State<_VideoCard> {
   late YoutubePlayerController _controller;
   bool _isLoaded = false;
   final FocusNode _urlFocus = FocusNode();
-
+  double get _aspectRatio {
+    return widget.content.url.contains('shorts/') ? 9 / 16 : 16 / 9;
+  }
   @override
   void initState() {
     super.initState();
@@ -206,21 +208,34 @@ class _VideoCardState extends State<_VideoCard> {
 
   String? _getYouTubeVideoId(String url) {
     if (url.isEmpty) return null;
-
-    // For YouTube Shorts
-    if (url.contains('youtube.com/shorts/')) {
-      final shortsId = url.split('shorts/').last.split('?').first;
-      return shortsId;
+    
+    try {
+      // Handle YouTube Shorts URLs
+      if (url.contains('shorts/')) {
+        final shortsRegExp = RegExp(r'shorts/([^/?]+)');
+        final shortsMatch = shortsRegExp.firstMatch(url);
+        if (shortsMatch != null) {
+          return shortsMatch.group(1);
+        }
+      }
+      
+      // Extract video ID from URL parameters, stripping other parameters
+      if (url.contains('?v=')) {
+        final videoId = url.split('?v=')[1].split('&')[0];
+        return videoId;
+      }
+      
+      // Handle youtu.be URLs
+      if (url.contains('youtu.be/')) {
+        final videoId = url.split('youtu.be/')[1].split('?')[0].split('&')[0];
+        return videoId;
+      }
+    } catch (e) {
+      debugPrint('Error parsing YouTube URL: $e');
+      return null;
     }
-
-    // For regular YouTube videos
-    RegExp regExp = RegExp(
-      r'^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*',
-      caseSensitive: false,
-      multiLine: false,
-    );
-    final match = regExp.firstMatch(url);
-    return match?.group(7);
+    
+    return null;
   }
 
   @override
@@ -267,7 +282,7 @@ class _VideoCardState extends State<_VideoCard> {
                   children: [
                     if (_isLoaded && videoId != null) ...[
                       AspectRatio(
-                        aspectRatio: 16 / 9,
+                        aspectRatio: _aspectRatio,
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
                           child: YoutubePlayer(
