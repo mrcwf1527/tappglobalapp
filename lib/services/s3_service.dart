@@ -1,4 +1,5 @@
 // lib/services/s3_service.dart
+// Service class for handling AWS S3 file operations including uploading, deleting, and optimizing images with size/dimension restrictions.
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';

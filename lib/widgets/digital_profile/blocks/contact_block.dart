@@ -5,7 +5,6 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
@@ -197,24 +196,22 @@ class _ContactBlockState extends State<ContactBlock> {
       final userId = FirebaseAuth.instance.currentUser?.uid;
       if (userId == null) throw Exception('User not logged in');
 
-      final ref = FirebaseStorage.instance
-          .ref()
-          .child('users')
-          .child(userId)
-          .child('contact_images/${widget.block.id}.jpg');
-
-      await ref.putData(processedBytes, SettableMetadata(contentType: 'image/jpeg'));
-      final downloadUrl = await ref.getDownloadURL();
+      final downloadUrl = await _s3Service.uploadImage(
+        imageBytes: processedBytes,
+        userId: userId,
+        folder: 'contact_images',
+        fileName: widget.block.id,
+        maxSizeKB: 224,
+        maxWidth: 400,
+        maxHeight: 400,
+      );
 
       if (mounted) {
         final content = widget.block.contents.first;
         final updatedContent = content.copyWith(imageUrl: downloadUrl);
-
-        // Add these lines to update the local state
         setState(() {
           widget.block.contents[0] = updatedContent;
         });
-
         _updateBlock(updatedContent);
       }
 

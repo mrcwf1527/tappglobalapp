@@ -4,7 +4,6 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../services/s3_service.dart';
 import '../models/social_platform.dart';
 import '../models/block.dart';
@@ -383,11 +382,15 @@ class DigitalProfileProvider extends ChangeNotifier {
     try {
       final userId = FirebaseAuth.instance.currentUser?.uid;
       if (userId == null) return;
-
-      final imageUrl = '${dotenv.env['AWS_DOMAIN']!.replaceFirst('{0}', dotenv.env['AWS_BUCKET']!)}/users/$userId/contact_images/$blockId.jpg';
-      await _s3Service.deleteFile(imageUrl);
+      
+      // Find the block in profile data
+      final block = _profileData.blocks.firstWhere((b) => b.id == blockId);
+      final imageUrl = block.contents.firstOrNull?.imageUrl;
+      
+      if (imageUrl != null) {
+        await _s3Service.deleteFile(imageUrl);
+      }
     } catch (e) {
-      // File might not exist, which is fine
       debugPrint('Error deleting storage file: $e');
     }
   }

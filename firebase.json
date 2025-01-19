@@ -29,9 +29,6 @@
         "destination": "/index.html"
       }]
     }],
-    "storage": {
-      "rules": "storage.rules"
-    },
     "flutter": {
       "platforms": {
         "android": {

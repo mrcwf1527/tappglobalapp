@@ -72,9 +72,12 @@ class _ImageBlockState extends State<ImageBlock> {
   }
 
   void _removeImage(int index) async {
-    final contentId = _contents[index].id;
     final provider = Provider.of<DigitalProfileProvider>(context, listen: false);
-    await provider.deleteBlockImage(widget.block.id, contentId);
+    
+    if (_contents[index].imageUrl != null) {
+      await provider.deleteBlockStorage(widget.block.id);
+      await provider.deleteBlockImage(widget.block.id, _contents[index].imageUrl!);
+    }
 
     setState(() {
       _contents.removeAt(index);
