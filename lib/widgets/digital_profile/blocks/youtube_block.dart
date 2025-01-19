@@ -206,6 +206,14 @@ class _VideoCardState extends State<_VideoCard> {
 
   String? _getYouTubeVideoId(String url) {
     if (url.isEmpty) return null;
+
+    // For YouTube Shorts
+    if (url.contains('youtube.com/shorts/')) {
+      final shortsId = url.split('shorts/').last.split('?').first;
+      return shortsId;
+    }
+
+    // For regular YouTube videos
     RegExp regExp = RegExp(
       r'^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*',
       caseSensitive: false,
