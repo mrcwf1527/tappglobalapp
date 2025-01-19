@@ -49,6 +49,10 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     _trackView();
   }
 
+  double _getVideoAspectRatio(String url) {
+    return url.contains('shorts/') ? 9/16 : 16/9;
+  }
+
   Future<DocumentSnapshot> _loadProfile() async {
     final usernameDoc = await FirebaseFirestore.instance
         .collection('usernames')
@@ -786,7 +790,6 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     final screenWidth = MediaQuery.of(context).size.width;
     final containerWidth = screenWidth > 500 ? 500.0 : screenWidth;
     final videoWidth = containerWidth - 48;
-    final videoHeight = videoWidth * 9 / 16;
 
     final validVideos = block.contents
       .where((content) => 
@@ -802,7 +805,11 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
       physics: const NeverScrollableScrollPhysics(),
       itemCount: validVideos.length,
       itemBuilder: (context, index) {
-        final videoId = _getYouTubeVideoId(validVideos[index].url)!;
+        final content = validVideos[index];
+        final aspectRatio = _getVideoAspectRatio(content.url);
+        final videoHeight = videoWidth / aspectRatio;
+        final videoId = _getYouTubeVideoId(content.url)!;
+
         return Container(
           width: videoWidth,
           height: videoHeight,
@@ -820,7 +827,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                   loop: false,
                 ),
               ),
-              aspectRatio: 16 / 9,
+              aspectRatio: aspectRatio,
             ),
           ),
         );
@@ -832,7 +839,6 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     final screenWidth = MediaQuery.of(context).size.width;
     final containerWidth = screenWidth > 500 ? 500.0 : screenWidth;
     final videoWidth = containerWidth - 48;
-    final videoHeight = videoWidth * 9/16;
 
     final validVideos = block.contents
       .where((content) => 
@@ -842,6 +848,10 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
       ).toList();
 
     if (validVideos.isEmpty) return const SizedBox.shrink();
+
+    // Get aspect ratio of first video for container sizing
+    final firstVideoAspectRatio = _getVideoAspectRatio(validVideos[0].url);
+    final videoHeight = videoWidth / firstVideoAspectRatio;
 
     return SizedBox(
       width: containerWidth,
@@ -856,7 +866,10 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
               itemCount: validVideos.length,
               physics: const AlwaysScrollableScrollPhysics(),
               itemBuilder: (context, index) {
-                final videoId = _getYouTubeVideoId(validVideos[index].url)!;
+                final content = validVideos[index];
+                final videoId = _getYouTubeVideoId(content.url)!;
+                final aspectRatio = _getVideoAspectRatio(content.url);
+                
                 return Container(
                   width: videoWidth,
                   padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -873,6 +886,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                           loop: false,
                         ),
                       ),
+                      aspectRatio: aspectRatio,
                     ),
                   ),
                 );
