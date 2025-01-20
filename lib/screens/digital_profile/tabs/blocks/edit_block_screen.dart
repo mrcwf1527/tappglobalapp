@@ -793,8 +793,7 @@ class _SettingsTabState extends State<_SettingsTab> {
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.block.title);
-    _descriptionController =
-        TextEditingController(text: widget.block.description);
+    _descriptionController = TextEditingController(text: widget.block.description);
     _isCollapsed = widget.block.isCollapsed ?? false;
   }
 
@@ -810,8 +809,8 @@ class _SettingsTabState extends State<_SettingsTab> {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<DigitalProfileProvider>(context, listen: false);
-    final blockIndex = provider.profileData.blocks
-        .indexWhere((b) => b.id == widget.block.id);
+    final blockIndex = provider.profileData.blocks.indexWhere((b) => b.id == widget.block.id);
+    
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -840,9 +839,7 @@ class _SettingsTabState extends State<_SettingsTab> {
             ),
             onChanged: (value) {
               _titleDebouncer.run(() {
-                final updatedBlock = {
-                  ...provider.profileData.blocks[blockIndex].toMap()
-                };
+                final updatedBlock = {...provider.profileData.blocks[blockIndex].toMap()};
                 updatedBlock['title'] = value;
                 widget.onUpdate(Block.fromMap(updatedBlock));
               });
@@ -857,45 +854,44 @@ class _SettingsTabState extends State<_SettingsTab> {
             ),
             onChanged: (value) {
               _descriptionDebouncer.run(() {
-                final updatedBlock = {
-                  ...provider.profileData.blocks[blockIndex].toMap()
-                };
+                final updatedBlock = {...provider.profileData.blocks[blockIndex].toMap()};
                 updatedBlock['description'] = value;
                 widget.onUpdate(Block.fromMap(updatedBlock));
               });
             },
           ),
-          const SizedBox(height: 24),
-          const Text(
-            'Links block visibility',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _VisibilityOption(
-                  title: 'EXPOSED',
-                  icon: Icons.view_agenda,
-                  isSelected: !_isCollapsed,
-                  onTap: () {
-                    setState(() {
-                      _isCollapsed = false;
-                    });
-                    final updatedBlock = widget.block.copyWith(
-                      isCollapsed: false,
-                      sequence: widget.block.sequence,
-                    );
-                    widget.onUpdate(updatedBlock);
-                  },
-                ),
+          if (widget.block.type == BlockType.website && widget.block.layout == BlockLayout.classic) ...[
+            const SizedBox(height: 24),
+            const Text(
+              'Links block visibility',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _VisibilityOption(
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: _VisibilityOption(
+                    title: 'EXPOSED',
+                    icon: Icons.view_agenda,
+                    isSelected: !_isCollapsed,
+                    onTap: () {
+                      setState(() {
+                        _isCollapsed = false;
+                      });
+                      final updatedBlock = widget.block.copyWith(
+                        isCollapsed: false,
+                        sequence: widget.block.sequence,
+                      );
+                      widget.onUpdate(updatedBlock);
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _VisibilityOption(
                     title: 'COLLAPSED',
                     icon: Icons.view_headline,
                     isSelected: _isCollapsed,
@@ -908,10 +904,12 @@ class _SettingsTabState extends State<_SettingsTab> {
                         sequence: widget.block.sequence,
                       );
                       widget.onUpdate(updatedBlock);
-                    }),
-              ),
-            ],
-          ),
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
