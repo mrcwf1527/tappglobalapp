@@ -39,10 +39,12 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   int _currentVideoPage = 0;
   PageController? _videoPageController;
   YoutubeCarouselManager? _youtubeManager;
+  PageController? _websitePageController;
 
   @override
   void initState() {
     super.initState();
+    _websitePageController = PageController();
     _pageController = PageController();
     _videoPageController = PageController();
     _profileFuture = _loadProfile();
@@ -401,8 +403,6 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   }
 
   Widget _buildWebsiteBlock(Block block) {
-    final alignment = block.textAlignment ?? TextAlignment.center;
-  
     return Container(
       margin: const EdgeInsets.only(top: 24),
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -432,143 +432,270 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
             ),
             const SizedBox(height: 16),
           ],
-          ...block.contents
-              .where((content) => 
-                  content.isVisible && 
-                  content.url.isNotEmpty)
-              .map((content) => Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () => _launchSocialLink({'id': 'website', 'value': content.url}, context),
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      height: 64,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2A2A2A),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: alignment == TextAlignment.center 
-                        ? Stack(
-                            alignment: Alignment.centerLeft,
-                            children: [
-                              if (content.imageUrl != null && content.imageUrl!.isNotEmpty)
-                                Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    image: DecorationImage(
-                                      image: NetworkImage(content.imageUrl!),
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                ),
-                              Center(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      content.title,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      textAlign: TextAlign.center,
-                                    ),
-                                    if (content.subtitle != null && content.subtitle!.isNotEmpty)
-                                      Text(
-                                        content.subtitle!,
-                                        style: const TextStyle(
-                                          color: Colors.white70,
-                                          fontSize: 12,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        textAlign: TextAlign.center,
-                                      ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          )
-                        : Row(
-                            mainAxisAlignment: alignment == TextAlignment.left 
-                              ? MainAxisAlignment.start 
-                              : MainAxisAlignment.end,
-                            children: [
-                              if (alignment == TextAlignment.left && content.imageUrl != null && content.imageUrl!.isNotEmpty) ...[
-                                Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    image: DecorationImage(
-                                      image: NetworkImage(content.imageUrl!),
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                              ],
-                              Column(
-                                crossAxisAlignment: alignment == TextAlignment.left 
-                                  ? CrossAxisAlignment.start 
-                                  : CrossAxisAlignment.end,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    content.title,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  if (content.subtitle != null && content.subtitle!.isNotEmpty)
-                                    Text(
-                                      content.subtitle!,
-                                      style: const TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 12,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                ],
-                              ),
-                              if (alignment == TextAlignment.right && content.imageUrl != null && content.imageUrl!.isNotEmpty) ...[
-                                const SizedBox(width: 12),
-                                Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    image: DecorationImage(
-                                      image: NetworkImage(content.imageUrl!),
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                    ),
-                  ),
-                ),
-              )),
+          block.layout == BlockLayout.carousel
+            ? _buildCarouselWebsiteLayout(block)
+            : _buildClassicWebsiteLayout(block),
         ],
       ),
     );
   }
 
+  Widget _buildCarouselWebsiteLayout(Block block) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final containerWidth = screenWidth > 500 ? 500.0 : screenWidth;
+    final imageSize = 198.0;
+
+    final visibleContents = block.contents
+        .where((content) => 
+            content.isVisible && 
+            content.url.isNotEmpty &&
+            content.title.isNotEmpty
+        ).toList();
+
+    return SizedBox(
+      width: containerWidth,
+      child: visibleContents.isEmpty 
+        ? const Center(child: Text('No content available', style: TextStyle(color: Colors.white70)))
+        : SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: visibleContents.map((content) {
+                      return Container(
+                        width: imageSize,
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => _launchSocialLink({'id': 'website', 'value': content.url}, context),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Card(
+                              color: const Color(0xFF2A2A2A),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  AspectRatio(
+                                    aspectRatio: 1,
+                                    child: ClipRRect(
+                                      borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                                      child: content.imageUrl != null && content.imageUrl!.isNotEmpty
+                                        ? Image.network(
+                                            content.imageUrl!,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (_, __, ___) => Container(color: Colors.black),
+                                          )
+                                        : Container(color: Colors.black),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.all(12),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            content.title,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                          if (content.subtitle != null && content.subtitle!.isNotEmpty) ...[
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              content.subtitle!,
+                                              style: const TextStyle(
+                                                color: Colors.white70,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                );
+              },
+            ),
+          ),
+    );
+  }
+
+  Widget _buildClassicWebsiteLayout(Block block) {
+    final alignment = block.textAlignment ?? TextAlignment.center;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: block.contents
+        .where((content) => 
+            content.isVisible && 
+            content.url.isNotEmpty)
+        .map((content) => Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => _launchSocialLink({'id': 'website', 'value': content.url}, context),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    height: 64,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2A2A2A),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: _buildWebsiteContent(content, alignment),
+                  ),
+                ),
+              ),
+            )).toList(),
+    );
+  }
+
+  Widget _buildWebsiteContent(BlockContent content, TextAlignment alignment) {
+    if (alignment == TextAlignment.center) {
+      return Stack(
+        children: [
+          if (content.imageUrl != null && content.imageUrl!.isNotEmpty)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  image: DecorationImage(
+                    image: NetworkImage(content.imageUrl!),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+            ),
+          Row(
+            children: [
+              if (content.imageUrl != null && content.imageUrl!.isNotEmpty)
+                const SizedBox(width: 52),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      content.title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                    ),
+                    if (content.subtitle != null && content.subtitle!.isNotEmpty) ...[
+                      Text(
+                        content.subtitle!,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              if (content.imageUrl != null && content.imageUrl!.isNotEmpty)
+                const SizedBox(width: 40),
+            ],
+          ),
+        ],
+      );
+    }
+
+    return Row(
+      mainAxisAlignment: alignment == TextAlignment.left 
+        ? MainAxisAlignment.start 
+        : MainAxisAlignment.end,
+      children: [
+        if (alignment == TextAlignment.left && content.imageUrl != null && content.imageUrl!.isNotEmpty) ...[
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              image: DecorationImage(
+                image: NetworkImage(content.imageUrl!),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+        ],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: alignment == TextAlignment.left 
+              ? CrossAxisAlignment.start 
+              : CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                content.title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (content.subtitle != null && content.subtitle!.isNotEmpty)
+                Text(
+                  content.subtitle!,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 12,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+            ],
+          ),
+        ),
+        if (alignment == TextAlignment.right && content.imageUrl != null && content.imageUrl!.isNotEmpty) ...[
+          const SizedBox(width: 12),
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              image: DecorationImage(
+                image: NetworkImage(content.imageUrl!),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
   
   Widget _buildImageBlock(Block block) {
     return Container(
@@ -1239,63 +1366,69 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
             child: InkWell(
               onTap: () => _downloadVCard(block),
               borderRadius: BorderRadius.circular(12),
-              child: AspectRatio(
-                aspectRatio: 16/9,
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2A2A2A),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Text(
-                              'Scan to add contact',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final qrSize = constraints.maxWidth > 400 ? 150.0 : constraints.maxWidth * 0.3;
+                  
+                  return Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2A2A2A),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Flexible(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Text(
+                                'Scan to add contact',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 8),
-                            const Text(
-                              'Use your phone camera to scan the QR code',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 14,
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Use your phone camera to scan the QR code',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 14,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 24),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: PrettyQrView.data(
-                          data: vCardData,
-                          decoration: const PrettyQrDecoration(
-                            shape: PrettyQrSmoothSymbol(
-                              color: Colors.black,
-                              roundFactor: 1,
+                        const SizedBox(width: 24),
+                        Container(
+                          width: qrSize,
+                          height: qrSize,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: PrettyQrView.data(
+                            data: vCardData,
+                            decoration: const PrettyQrDecoration(
+                              shape: PrettyQrSmoothSymbol(
+                                color: Colors.black,
+                                roundFactor: 1,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
+                      ],
+                    ),
+                  );
+                },
               ),
             ),
-          ),
+          )
         ],
       ),
     );
@@ -1459,9 +1592,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
               ...blocks.map((block) {
                 switch (block.type) {
                   case BlockType.website:
-                    return block.layout == BlockLayout.classic 
-                        ? _buildWebsiteBlock(block) 
-                        : const SizedBox.shrink();
+                    return _buildWebsiteBlock(block);
                   case BlockType.contact:
                     return block.layout != BlockLayout.iconButton 
                         ? _buildContactBlock(block, layout)
@@ -1746,6 +1877,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   
   @override
   void dispose() {
+    _websitePageController?.dispose();
     _pageController?.dispose();
     _videoPageController?.dispose();
     _youtubeManager?.dispose();
