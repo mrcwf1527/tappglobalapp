@@ -3,6 +3,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:pretty_qr_code/pretty_qr_code.dart';
 import 'package:universal_html/html.dart' as html;
@@ -16,6 +17,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import '../../models/social_platform.dart';
 import '../../../models/block.dart';
+import '../../providers/digital_profile_provider.dart';
+import 'package:collection/collection.dart';
 
 enum ProfileLayout {
   classic,
@@ -49,6 +52,13 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     _videoPageController = PageController();
     _profileFuture = _loadProfile();
     _trackView();
+
+    _profileFuture.then((doc) {
+      if (doc.exists) {
+        final provider = Provider.of<DigitalProfileProvider>(context, listen: false);
+        provider.loadProfile(doc.id);
+      }
+    });
   }
 
   double _getVideoAspectRatio(String url) {
@@ -403,40 +413,200 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   }
 
   Widget _buildWebsiteBlock(Block block) {
-    return Container(
-      margin: const EdgeInsets.only(top: 24),
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          if (block.title != null && block.title!.isNotEmpty) ...[
-            Text(
-              block.title!,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
+    return Consumer<DigitalProfileProvider>(
+      builder: (context, provider, _) {
+        // EXPOSED VIEW
+        if (!(block.isCollapsed ?? false)) {
+          return Container(
+            margin: const EdgeInsets.only(top: 24),
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                if (block.title != null && block.title!.isNotEmpty) ...[
+                  Text(
+                    block.title!,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                if (block.description != null && block.description!.isNotEmpty) ...[
+                  Text(
+                    block.description!,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 16,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                block.layout == BlockLayout.carousel
+                  ? _buildCarouselWebsiteLayout(block)
+                  : _buildClassicWebsiteLayout(block),
+              ],
             ),
-            const SizedBox(height: 8),
-          ],
-          if (block.description != null && block.description!.isNotEmpty) ...[
-            Text(
-              block.description!,
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 16,
+          );
+        }
+
+        // COLLAPSED VIEW
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Container(
+              margin: const EdgeInsets.only(top: 24),
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                children: [
+                  // Dropdown header
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => setState(() => block.isCollapsed = !block.isCollapsed!),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2A2A2A),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Stack(
+                          children: [
+                            // Add Padding widget to create space for the icon
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 24),  // Add horizontal padding
+                              child: Center(
+                                child: Column(
+                                  children: [
+                                    if (block.title != null)
+                                      Text(
+                                        block.title!,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    if (block.description != null)
+                                      Text(
+                                        block.description!,
+                                        style: const TextStyle(
+                                          color: Colors.white70,
+                                          fontSize: 14,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              right: 0,
+                              top: 0,
+                              bottom: 0,
+                              child: Center(
+                                child: Icon(
+                                  block.isCollapsed! ? Icons.expand_more : Icons.expand_less,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    ),
+                  ),
+
+                  // Dropdown content
+                  if (!block.isCollapsed!)
+                    Container(
+                      margin: const EdgeInsets.only(top: 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: block.contents
+                          .where((content) => content.isVisible && content.url.isNotEmpty)
+                          .map((content) => Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            child: Material(
+                              color: const Color(0xFF2A2A2A),
+                              borderRadius: BorderRadius.circular(12),
+                              child: InkWell(
+                                onTap: () => _launchSocialLink({'id': 'website', 'value': content.url}, context),
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  height: 64,
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  child: Row(
+                                    children: [
+                                      if (content.imageUrl != null && content.imageUrl!.isNotEmpty) ...[
+                                        Container(
+                                          width: 40,
+                                          height: 40,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            image: DecorationImage(
+                                              image: NetworkImage(content.imageUrl!),
+                                              fit: BoxFit.cover,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                      ],
+                                      Expanded(
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          crossAxisAlignment: CrossAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              content.title,
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              textAlign: TextAlign.center,
+                                            ),
+                                            if (content.subtitle?.isNotEmpty == true)
+                                              Text(
+                                                content.subtitle!,
+                                                style: const TextStyle(
+                                                  color: Colors.white70,
+                                                  fontSize: 12,
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                textAlign: TextAlign.center,
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                      if (content.imageUrl != null && content.imageUrl!.isNotEmpty)
+                                        const SizedBox(width: 40),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          )).toList(),
+                      ),
+                    ),
+                ],
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-          ],
-          block.layout == BlockLayout.carousel
-            ? _buildCarouselWebsiteLayout(block)
-            : _buildClassicWebsiteLayout(block),
-        ],
-      ),
+            );
+          }
+        );
+      },
     );
   }
 
@@ -1506,13 +1676,15 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     }
   }
 
-    Widget _buildMainContent(Map<String, dynamic> data) {
+  Widget _buildMainContent(Map<String, dynamic> data) {
+    final provider = Provider.of<DigitalProfileProvider>(context, listen: true);
     final layout = data['layout'] != null 
         ? ProfileLayout.values.firstWhere(
             (e) => e.name == data['layout'],
             orElse: () => ProfileLayout.banner)
         : ProfileLayout.banner;
 
+    // Initialize blocks from data first
     final blocks = <Block>[];
     if (data['blocks'] != null) {
       final List<dynamic> blocksList = data['blocks'] as List;
@@ -1524,13 +1696,23 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
       blocks.sort((a, b) => a.sequence.compareTo(b.sequence));
     }
 
+    // Update blocks with provider state if available
+    if (provider.profileData.blocks.isNotEmpty) {
+      blocks.clear();
+      blocks.addAll(
+        provider.profileData.blocks
+          .where((block) => block.isVisible == true)
+      );
+      blocks.sort((a, b) => a.sequence.compareTo(b.sequence));
+    }
+
     return Stack(
       clipBehavior: Clip.none,
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
-             mainAxisSize: MainAxisSize.min, // Changed to min
+             mainAxisSize: MainAxisSize.min,
             children: [
               SizedBox(height: layout == ProfileLayout.portrait ? 24 : 80),
               Text(

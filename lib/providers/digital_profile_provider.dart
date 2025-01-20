@@ -265,6 +265,17 @@ class DigitalProfileProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void toggleBlockCollapse(String blockId) {
+    final blockIndex = _profileData.blocks.indexWhere((b) => b.id == blockId);
+    if (blockIndex != -1) {
+      final updatedBlocks = [..._profileData.blocks];
+      updatedBlocks[blockIndex].isCollapsed = !(updatedBlocks[blockIndex].isCollapsed ?? false);
+      
+      _profileData.blocks = updatedBlocks;
+      notifyListeners();
+    }
+  }
+
   Future<void> saveProfile() async {
     try {
       final userId = FirebaseAuth.instance.currentUser?.uid;

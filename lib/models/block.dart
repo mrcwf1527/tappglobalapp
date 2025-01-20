@@ -34,7 +34,7 @@ class Block {
   final BlockLayout layout;
   final String? aspectRatio;
   final TextAlignment? textAlignment;
-  final bool? isCollapsed;
+  bool? isCollapsed;
 
   Block({
     required this.id,

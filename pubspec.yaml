@@ -41,6 +41,7 @@ dependencies:
   image_gallery_saver: ^2.0.3
   aws_s3_api: ^2.0.0
   uuid: ^4.5.1
+  collection: ^1.19.0
 
 dev_dependencies:
   flutter_test:
