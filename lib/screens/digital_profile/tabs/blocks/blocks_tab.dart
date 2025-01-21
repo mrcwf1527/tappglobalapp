@@ -220,13 +220,17 @@ class BlocksTab extends StatelessWidget {
   IconData _getBlockIcon(BlockType type) {
     switch (type) {
       case BlockType.website:
-        return Icons.link;
+        return FontAwesomeIcons.link;
       case BlockType.image:
-        return Icons.image;
+        return FontAwesomeIcons.image;
       case BlockType.youtube:
-        return Icons.play_circle;
+        return FontAwesomeIcons.youtube;
       case BlockType.contact:
-        return Icons.contact_mail;
+        return FontAwesomeIcons.addressBook;
+      case BlockType.text:
+        return FontAwesomeIcons.font;
+      case BlockType.spacer:
+        return FontAwesomeIcons.minus;
     }
   }
 
@@ -239,7 +243,11 @@ class BlocksTab extends StatelessWidget {
       case BlockType.youtube:
         return 'YouTube Videos';
       case BlockType.contact:
-        return 'Contact Details';
+        return 'Contact Card';
+      case BlockType.text:
+        return 'Text';
+      case BlockType.spacer:
+        return 'Space & Dividers';
     }
   }
 
@@ -306,6 +314,39 @@ class BlocksTab extends StatelessWidget {
                 'phones': [],
                 'emails': [],
               }
+            )
+          ],
+          sequence: sequence,
+          isVisible: true,
+        );
+      case BlockType.text:
+        return Block(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          type: type,
+          blockName: '',
+          title: '',
+          description: '',
+          contents: [],
+          sequence: sequence,
+          isVisible: true,
+          textAlignment: TextAlignment.left,
+        );
+      case BlockType.spacer:
+        return Block(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          type: type,
+          blockName: '',
+          title: '',
+          description: '',
+          contents: [
+            BlockContent(
+              id: DateTime.now().millisecondsSinceEpoch.toString(),
+              title: '',
+              url: '',
+              metadata: {
+                'height': 16.0,
+                'dividerStyle': 'none',
+              },
             )
           ],
           sequence: sequence,

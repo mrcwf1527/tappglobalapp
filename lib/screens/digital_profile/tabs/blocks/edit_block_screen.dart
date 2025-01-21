@@ -1,11 +1,14 @@
 // lib/screens/digital_profile/tabs/blocks/edit_block_screen.dart
 // Detailed block editing interface with three tabs (Links, Layouts, Settings). Manages block properties, content arrangement, layout options, and visibility settings. Includes specialized editors for different block types.
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../../models/block.dart';
 import '../../../../utils/debouncer.dart';
 import '../../../../providers/digital_profile_provider.dart';
 import '../../../../widgets/digital_profile/blocks/contact_block.dart';
+import '../../../../widgets/digital_profile/blocks/spacer_block.dart';
+import '../../../../widgets/digital_profile/blocks/text_block.dart';
 import '../../../../widgets/digital_profile/blocks/website_block.dart';
 import '../../../../widgets/digital_profile/blocks/image_block.dart';
 import '../../../../widgets/digital_profile/blocks/youtube_block.dart';
@@ -59,20 +62,28 @@ class _EditBlockScreenState extends State<EditBlockScreen>
       case BlockType.youtube:
         return 'YouTube Videos';
       case BlockType.contact:
-        return 'Contact Details';
+        return 'Contact Card';
+      case BlockType.text:
+        return 'Text';
+      case BlockType.spacer:
+        return 'Space & Dividers';
     }
   }
 
   IconData _getBlockIcon(BlockType type) {
     switch (type) {
       case BlockType.website:
-        return Icons.link;
+        return FontAwesomeIcons.link;
       case BlockType.image:
-        return Icons.image;
+        return FontAwesomeIcons.image;
       case BlockType.youtube:
-        return Icons.play_circle_filled;
+        return FontAwesomeIcons.youtube;
       case BlockType.contact:
-        return Icons.contact_mail;
+        return FontAwesomeIcons.addressBook;
+      case BlockType.text:
+        return FontAwesomeIcons.font;
+      case BlockType.spacer:
+        return FontAwesomeIcons.minus;
     }
   }
 
@@ -162,7 +173,6 @@ class _EditBlockScreenState extends State<EditBlockScreen>
                   padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
-                      // Block Icon
                       Padding(
                         padding: const EdgeInsets.only(right: 12),
                         child: Icon(
@@ -171,7 +181,6 @@ class _EditBlockScreenState extends State<EditBlockScreen>
                           size: 24,
                         ),
                       ),
-                      // Title TextField
                       Expanded(
                         child: Padding(
                           padding: const EdgeInsets.only(right: 16.0),
@@ -198,7 +207,6 @@ class _EditBlockScreenState extends State<EditBlockScreen>
                           ),
                         ),
                       ),
-                      // Visibility Toggle
                       Transform.scale(
                         scale: 0.7,
                         child: Switch(
@@ -231,7 +239,6 @@ class _EditBlockScreenState extends State<EditBlockScreen>
                           trackOutlineWidth: WidgetStateProperty.all(1.5),
                         ),
                       ),
-                      // Delete Icon
                       IconButton(
                         icon: const Icon(Icons.delete_outline),
                         onPressed: () => _showDeleteConfirmation(context, () {
@@ -244,76 +251,96 @@ class _EditBlockScreenState extends State<EditBlockScreen>
                   ),
                 ),
                 const Divider(height: 1),
-                // Tabs
-                TabBar(
-                  controller: _tabController,
-                  tabs: const [
-                    Tab(text: 'Links'),
-                    Tab(text: 'Layouts'),
-                    Tab(text: 'Settings'),
-                  ],
-                ),
-                Expanded(
-                  child: TabBarView(
+                if (widget.block.type != BlockType.text && widget.block.type != BlockType.spacer) ...[
+                  TabBar(
                     controller: _tabController,
-                    children: [
-                      // Links Tab
-                      Consumer<DigitalProfileProvider>(
-                        builder: (context, provider, _) {
-                          final currentBlock = provider.profileData.blocks
-                              .firstWhere((b) => b.id == widget.block.id);
-                          return Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 20.0),
-                            child: SingleChildScrollView(
-                              child: _buildEditor(
-                                provider.profileData.blocks.indexOf(currentBlock),
-                                provider,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      // Layouts Tab
-                      Consumer<DigitalProfileProvider>(
-                        builder: (context, provider, _) => _LayoutsTab(
-                          onLayoutChanged: (layout, aspectRatio) {
-                            provider.updateBlocks([
-                              for (var b in provider.profileData.blocks)
-                                if (b.id == widget.block.id)
-                                  b.copyWith(
-                                    layout: layout,
-                                    aspectRatio: aspectRatio,
-                                    sequence: b.sequence,
-                                  )
-                                else
-                                  b
-                            ]);
-                          },
-                          block: provider.profileData.blocks
-                              .firstWhere((b) => b.id == widget.block.id),
-                        ),
-                      ),
-                      // Settings Tab
-                      Consumer<DigitalProfileProvider>(
-                        builder: (context, provider, _) => _SettingsTab(
-                          block: provider.profileData.blocks
-                              .firstWhere((b) => b.id == widget.block.id),
-                          onUpdate: (updated) {
-                            provider.updateBlocks([
-                              for (var b in provider.profileData.blocks)
-                                if (b.id == widget.block.id)
-                                  updated
-                                else
-                                  b
-                            ]);
-                          },
-                        ),
-                      ),
+                    tabs: const [
+                      Tab(text: 'Links'),
+                      Tab(text: 'Layouts'),
+                      Tab(text: 'Settings'),
                     ],
                   ),
-                ),
-                const SizedBox(height: 56),
+                  Expanded(
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: [
+                        Consumer<DigitalProfileProvider>(
+                          builder: (context, provider, _) {
+                            final currentBlock = provider.profileData.blocks
+                                .firstWhere((b) => b.id == widget.block.id);
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                              child: SingleChildScrollView(
+                                child: _buildEditor(
+                                  provider.profileData.blocks.indexOf(currentBlock),
+                                  provider,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        Consumer<DigitalProfileProvider>(
+                          builder: (context, provider, _) => _LayoutsTab(
+                            onLayoutChanged: (layout, aspectRatio) {
+                              provider.updateBlocks([
+                                for (var b in provider.profileData.blocks)
+                                  if (b.id == widget.block.id)
+                                    b.copyWith(
+                                      layout: layout,
+                                      aspectRatio: aspectRatio,
+                                      sequence: b.sequence,
+                                    )
+                                  else
+                                    b
+                              ]);
+                            },
+                            block: provider.profileData.blocks
+                                .firstWhere((b) => b.id == widget.block.id),
+                          ),
+                        ),
+                        Consumer<DigitalProfileProvider>(
+                          builder: (context, provider, _) => _SettingsTab(
+                            block: provider.profileData.blocks
+                                .firstWhere((b) => b.id == widget.block.id),
+                            onUpdate: (updated) {
+                              provider.updateBlocks([
+                                for (var b in provider.profileData.blocks)
+                                  if (b.id == widget.block.id)
+                                    updated
+                                  else
+                                    b
+                              ]);
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                if (widget.block.type == BlockType.text)
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                      child: SingleChildScrollView(
+                        child: _buildEditor(
+                          blockIndex,
+                          provider,
+                        ),
+                      ),
+                    ),
+                  ),
+                if (widget.block.type == BlockType.spacer)
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                      child: SingleChildScrollView(
+                        child: _buildEditor(
+                          blockIndex,
+                          provider,
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             );
           },
@@ -375,6 +402,36 @@ class _EditBlockScreenState extends State<EditBlockScreen>
         );
       case BlockType.contact:
         blockEditor = ContactBlock(
+          block: currentBlock,
+          onBlockUpdated: (updated) {
+            final blocks = [...provider.profileData.blocks];
+            blocks[blockIndex] = updated;
+            provider.updateBlocks(blocks);
+          },
+          onBlockDeleted: (id) {
+            final blocks = [...provider.profileData.blocks];
+            blocks.removeAt(blockIndex);
+            provider.updateBlocks(blocks);
+            Navigator.maybePop(context);
+          },
+        );
+      case BlockType.text:
+        blockEditor = TextBlock(
+          block: currentBlock,
+          onBlockUpdated: (updated) {
+            final blocks = [...provider.profileData.blocks];
+            blocks[blockIndex] = updated;
+            provider.updateBlocks(blocks);
+          },
+          onBlockDeleted: (id) {
+            final blocks = [...provider.profileData.blocks];
+            blocks.removeAt(blockIndex);
+            provider.updateBlocks(blocks);
+            Navigator.maybePop(context);
+          },
+        );
+      case BlockType.spacer:
+        blockEditor = SpacerBlock(
           block: currentBlock,
           onBlockUpdated: (updated) {
             final blocks = [...provider.profileData.blocks];

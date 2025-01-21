@@ -34,6 +34,18 @@ class BlocksSelector extends StatelessWidget {
      'icon': FontAwesomeIcons.addressCard,
      'description': 'Add personal contact information'
    },
+   {
+    'type': BlockType.text,
+    'name': 'Text',
+    'icon': FontAwesomeIcons.font,
+    'description': 'Add formatted text with different styles'
+  },
+  {
+    'type': BlockType.spacer,
+    'name': 'Space & Dividers',
+    'icon': FontAwesomeIcons.minus,
+    'description': 'Add spacing and decorative dividers'
+  },
  ];
 
  List<Map<String, dynamic>> _getAvailableBlocks(BuildContext context) {

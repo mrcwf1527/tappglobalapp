@@ -1,11 +1,15 @@
 // lib/models/block.dart
 // Core data model for content blocks in digital profiles. Defines BlockType (website/image/youtube), BlockLayout (classic/carousel), and TextAlignment enums. Contains Block class for managing block properties and BlockContent class for individual content items within blocks. Includes serialization/deserialization logic for Firestore integration.
 
+import 'package:flutter/material.dart';
+
 enum BlockType {
   website,
   image,
   youtube,
-  contact
+  contact,
+  text,
+  spacer
 }
 
 enum BlockLayout {
@@ -20,6 +24,14 @@ enum TextAlignment {
   left,
   center,
   right
+}
+
+enum TextBlockStyle {
+  heading1,
+  heading2,
+  heading3,
+  paragraph,
+  quote
 }
 
 class Block {
@@ -132,6 +144,14 @@ class BlockContent {
   final String? lastName;
   final String? jobTitle;
   final String? companyName;
+  final TextBlockStyle? textBlockStyle;
+  final bool? isBold;
+  final bool? isItalic;
+  final bool? isUnderlined;
+  List<TextSpan>? richTextSpans;
+  bool? hasTransparentBackground;
+  Map<String, dynamic>? richTextDelta;
+  List<TextRange>? textRanges;
 
   BlockContent({
     required this.id,
@@ -147,6 +167,12 @@ class BlockContent {
     this.lastName,
     this.jobTitle,
     this.companyName,
+    this.textBlockStyle,
+    this.isBold = false,
+    this.isItalic = false,
+    this.isUnderlined = false,
+    this.richTextDelta,
+    this.textRanges,
   });
 
   Map<String, dynamic> toMap() => {
@@ -163,6 +189,12 @@ class BlockContent {
     'lastName': lastName,
     'jobTitle': jobTitle,
     'companyName': companyName,
+    'textBlockStyle': textBlockStyle?.name,
+    'isBold': isBold,
+    'isItalic': isItalic,
+    'isUnderlined': isUnderlined,
+    'richTextDelta': richTextDelta,
+    'textRanges': textRanges?.map((r) => r.toMap()).toList(),
   };
 
   factory BlockContent.fromMap(Map<String, dynamic> map) {
@@ -180,6 +212,16 @@ class BlockContent {
       lastName: map['lastName'],
       jobTitle: map['jobTitle'],
       companyName: map['companyName'],
+      textBlockStyle: map['textBlockStyle'] != null 
+          ? TextBlockStyle.values.firstWhere(
+              (e) => e.name == map['textBlockStyle'],
+              orElse: () => TextBlockStyle.paragraph)
+          : null,
+      isBold: map['isBold'] ?? false,
+      isItalic: map['isItalic'] ?? false,
+      isUnderlined: map['isUnderlined'] ?? false,
+      richTextDelta: map['richTextDelta'],
+      textRanges: (map['textRanges'] as List?)?.map((r) => TextRange.fromMap(r)).toList(),
     );
   }
 
@@ -197,6 +239,11 @@ class BlockContent {
     String? lastName,
     String? jobTitle,
     String? companyName,
+    TextBlockStyle? textBlockStyle,
+    bool? isBold,
+    bool? isItalic,
+    bool? isUnderlined,
+    List<TextRange>? textRanges,
   }) => BlockContent(
     id: id ?? this.id,
     title: title ?? this.title,
@@ -211,5 +258,51 @@ class BlockContent {
     lastName: lastName ?? this.lastName,
     jobTitle: jobTitle ?? this.jobTitle,
     companyName: companyName ?? this.companyName,
+    textBlockStyle: textBlockStyle ?? this.textBlockStyle,
+    isBold: isBold ?? this.isBold,
+    isItalic: isItalic ?? this.isItalic,
+    isUnderlined: isUnderlined ?? this.isUnderlined,
+    textRanges: textRanges ?? this.textRanges,
   );
+}
+
+class TextRange {
+  final int start;
+  final int end;
+  final TextBlockStyle? style;
+  final bool? isBold;
+  final bool? isItalic;
+  final bool? isUnderlined;
+
+  TextRange({
+    required this.start,
+    required this.end,
+    this.style,
+    this.isBold = false,
+    this.isItalic = false,
+    this.isUnderlined = false,
+  });
+
+  Map<String, dynamic> toMap() => {
+    'start': start,
+    'end': end,
+    'style': style?.name,
+    'isBold': isBold,
+    'isItalic': isItalic,
+    'isUnderlined': isUnderlined,
+  };
+
+  factory TextRange.fromMap(Map<String, dynamic> map) {
+    return TextRange(
+      start: map['start'],
+      end: map['end'],
+      style: map['style'] != null ? TextBlockStyle.values.firstWhere(
+        (e) => e.name == map['style'],
+        orElse: () => TextBlockStyle.paragraph
+      ) : null,
+      isBold: map['isBold'],
+      isItalic: map['isItalic'],
+      isUnderlined: map['isUnderlined'],
+    );
+  }
 }

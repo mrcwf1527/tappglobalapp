@@ -52,11 +52,19 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     _videoPageController = PageController();
     _profileFuture = _loadProfile();
     _trackView();
+  }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadProfileData();
+  }
+
+  void _loadProfileData() {
     _profileFuture.then((doc) {
-      if (doc.exists) {
-        final provider = Provider.of<DigitalProfileProvider>(context, listen: false);
-        provider.loadProfile(doc.id);
+      if (doc.exists && mounted) {
+        Provider.of<DigitalProfileProvider>(context, listen: false)
+          .loadProfile(doc.id);
       }
     });
   }
@@ -274,7 +282,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
               alignment: Alignment.center,
               children: [
                 _buildProfileImage(data, 60),
-                if (data['companyImageUrl'] != null)
+                if (data['companyImageUrl'] != null && data['companyImageUrl'].isNotEmpty)
                   Positioned(
                     bottom: 0,
                     right: -28,
@@ -334,7 +342,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
             alignment: Alignment.center,
             children: [
               _buildProfileImage(data, 60),
-              if (data['companyImageUrl'] != null)
+              if (data['companyImageUrl'] != null && data['companyImageUrl'].isNotEmpty)
                 Positioned(
                   bottom: 0,
                   right: -28,
@@ -1676,6 +1684,101 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     }
   }
 
+  Widget _buildTextBlock(Block block) {
+    final content = block.contents.firstOrNull;
+    if (content == null) return const SizedBox.shrink();
+
+    TextStyle style = const TextStyle(
+      color: Colors.white,
+      decorationColor: Colors.white, // Add this line for underline color
+    );
+    
+    switch (content.textBlockStyle) {
+      case TextBlockStyle.heading1:
+        style = style.copyWith(fontSize: 24, fontWeight: FontWeight.bold);
+      case TextBlockStyle.heading2:
+        style = style.copyWith(fontSize: 20, fontWeight: FontWeight.bold);
+      case TextBlockStyle.heading3:
+        style = style.copyWith(fontSize: 18, fontWeight: FontWeight.bold);
+      case TextBlockStyle.quote:
+        style = style.copyWith(fontSize: 16, fontStyle: FontStyle.italic);
+      default:
+        style = style.copyWith(fontSize: 16);
+    }
+
+    if (content.isBold == true) style = style.copyWith(fontWeight: FontWeight.bold);
+    if (content.isItalic == true) style = style.copyWith(fontStyle: FontStyle.italic);
+    if (content.isUnderlined == true) {style = style.copyWith(decoration: TextDecoration.underline);}
+
+    return Container(
+      margin: const EdgeInsets.only(top: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      width: double.infinity,
+      child: Align(
+        alignment: block.textAlignment == TextAlignment.left 
+          ? Alignment.centerLeft 
+          : block.textAlignment == TextAlignment.right 
+            ? Alignment.centerRight 
+            : Alignment.center,
+        child: Text(
+          content.title,
+          style: style,
+          textAlign: block.textAlignment == TextAlignment.left 
+            ? TextAlign.left 
+            : block.textAlignment == TextAlignment.right 
+              ? TextAlign.right 
+              : TextAlign.center,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSpacerBlock(Block block) {
+    final content = block.contents.firstOrNull;
+    if (content == null) return const SizedBox.shrink();
+
+    final height = content.metadata?['height'] as double? ?? 16.0;
+    final style = content.metadata?['dividerStyle'] as String? ?? 'none';
+
+    Widget divider;
+    switch (style) {
+      case 'thinLine':
+        divider = Divider(height: height, thickness: 1, color: Colors.white);
+      case 'thickLine':
+        divider = Divider(height: height, thickness: 3, color: Colors.white);
+      case 'dottedLine':
+        divider = CustomPaint(
+          size: Size.fromHeight(height),
+          painter: DottedLinePainter(color: Colors.white),
+        );
+      case 'dashed':
+        divider = CustomPaint(
+          size: Size.fromHeight(height),
+          painter: DashedLinePainter(color: Colors.white),
+        );
+      case 'doubleLines':
+        divider = CustomPaint(
+          size: Size.fromHeight(height),
+          painter: DoubleLinePainter(color: Colors.white),
+        );
+      case 'ellipsis':
+        divider = SizedBox(
+          height: height,
+          child: const Center(
+            child: Text('• • •', style: TextStyle(fontSize: 24, color: Colors.white)),
+          ),
+        );
+      default:
+        divider = SizedBox(height: height);
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(top: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: divider,
+    );
+  }
+
   Widget _buildMainContent(Map<String, dynamic> data) {
     final provider = Provider.of<DigitalProfileProvider>(context, listen: true);
     final layout = data['layout'] != null 
@@ -1684,7 +1787,6 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
             orElse: () => ProfileLayout.banner)
         : ProfileLayout.banner;
 
-    // Initialize blocks from data first
     final blocks = <Block>[];
     if (data['blocks'] != null) {
       final List<dynamic> blocksList = data['blocks'] as List;
@@ -1696,7 +1798,6 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
       blocks.sort((a, b) => a.sequence.compareTo(b.sequence));
     }
 
-    // Update blocks with provider state if available
     if (provider.profileData.blocks.isNotEmpty) {
       blocks.clear();
       blocks.addAll(
@@ -1712,42 +1813,45 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
-             mainAxisSize: MainAxisSize.min,
+            mainAxisSize: MainAxisSize.min,
             children: [
               SizedBox(height: layout == ProfileLayout.portrait ? 24 : 80),
-              Text(
-                data['displayName'] ?? '',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+              if (data['displayName']?.isNotEmpty == true) ...[
+                Text(
+                  data['displayName']!,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                alignment: WrapAlignment.center,
-                children: [
-                  if (data['jobTitle'] != null && data['jobTitle'].isNotEmpty) ...[
-                    Text(
-                      data['jobTitle'],
-                      style: const TextStyle(color: Colors.white70, fontSize: 16),
-                      textAlign: TextAlign.center,
-                    ),
-                    if (data['companyName'] != null && data['companyName'].isNotEmpty) ...[
-                      Text(
-                        ' at ',
-                        style: const TextStyle(color: Colors.white70, fontSize: 16),
-                      ),
-                      Text(
-                        data['companyName'],
-                        style: const TextStyle(color: Colors.white70, fontSize: 16),
-                      ),
-                    ],
-                  ],
-                ],
-              ),
-              if (data['location'] != null && data['location'].isNotEmpty) ...[
                 const SizedBox(height: 8),
+              ],
+              if (data['jobTitle']?.isNotEmpty == true || data['companyName']?.isNotEmpty == true) ...[
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  children: [
+                    if (data['jobTitle']?.isNotEmpty == true)
+                      Text(
+                        data['jobTitle']!,
+                        style: const TextStyle(color: Colors.white70, fontSize: 16),
+                        textAlign: TextAlign.center,
+                      ),
+                    if (data['jobTitle']?.isNotEmpty == true && data['companyName']?.isNotEmpty == true)
+                      const Text(
+                        ' at ',
+                        style: TextStyle(color: Colors.white70, fontSize: 16),
+                      ),
+                    if (data['companyName']?.isNotEmpty == true)
+                      Text(
+                        data['companyName']!,
+                        style: const TextStyle(color: Colors.white70, fontSize: 16),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+              ],
+              if (data['location']?.isNotEmpty == true) ...[
                 Wrap(
                   alignment: WrapAlignment.center,
                   crossAxisAlignment: WrapCrossAlignment.center,
@@ -1755,22 +1859,25 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                     const Icon(Icons.location_on, color: Colors.white70, size: 16),
                     const SizedBox(width: 4),
                     Text(
-                      data['location'],
+                      data['location']!,
                       style: const TextStyle(color: Colors.white70),
                     ),
                   ],
                 ),
+                const SizedBox(height: 16),
               ],
-              const SizedBox(height: 16),
-              if (data['bio'] != null)
+              if (data['bio']?.isNotEmpty == true) ...[
                 Text(
-                  data['bio'],
+                  data['bio']!,
                   textAlign: TextAlign.center,
                   style: const TextStyle(color: Colors.white70),
                 ),
-              const SizedBox(height: 24),
-              _buildSocialIcons(data['socialPlatforms'] ?? []),
-              const SizedBox(height: 24),
+                const SizedBox(height: 24),
+              ],
+              if ((data['socialPlatforms'] as List?)?.isNotEmpty == true) ...[
+                _buildSocialIcons(data['socialPlatforms'] ?? []),
+                const SizedBox(height: 24),
+              ],
               ...blocks.map((block) {
                 switch (block.type) {
                   case BlockType.website:
@@ -1783,6 +1890,10 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                     return _buildImageBlock(block);
                   case BlockType.youtube:
                     return _buildYoutubeBlock(block);
+                  case BlockType.text:
+                    return _buildTextBlock(block);
+                  case BlockType.spacer:
+                    return _buildSpacerBlock(block);
                 }
               }),
             ],
@@ -2140,4 +2251,85 @@ class YoutubeCarouselManager {
       controller.close();
     }
   }
+}
+
+class DottedLinePainter extends CustomPainter {
+ final Color color;
+ 
+ DottedLinePainter({required this.color});
+
+ @override
+ void paint(Canvas canvas, Size size) {
+   final paint = Paint()
+     ..color = color
+     ..strokeWidth = 1;
+
+   const spacing = 4.0;
+   final centerY = size.height / 2;
+   
+   for (double x = 0; x < size.width; x += spacing * 2) {
+     canvas.drawCircle(Offset(x, centerY), 1, paint);
+   }
+ }
+
+ @override
+ bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class DashedLinePainter extends CustomPainter {
+ final Color color;
+ 
+ DashedLinePainter({required this.color});
+
+ @override
+ void paint(Canvas canvas, Size size) {
+   final paint = Paint()
+     ..color = color
+     ..strokeWidth = 1;
+
+   const dashWidth = 5.0;
+   const dashSpace = 3.0;
+   final centerY = size.height / 2;
+   
+   for (double x = 0; x < size.width; x += dashWidth + dashSpace) {
+     canvas.drawLine(
+       Offset(x, centerY),
+       Offset(x + dashWidth, centerY),
+       paint,
+     );
+   }
+ }
+
+ @override
+ bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class DoubleLinePainter extends CustomPainter {
+ final Color color;
+ 
+ DoubleLinePainter({required this.color});
+
+ @override
+ void paint(Canvas canvas, Size size) {
+   final paint = Paint()
+     ..color = color
+     ..strokeWidth = 1;
+
+   final centerY = size.height / 2;
+   
+   canvas.drawLine(
+     Offset(0, centerY - 2),
+     Offset(size.width, centerY - 2),
+     paint,
+   );
+   
+   canvas.drawLine(
+     Offset(0, centerY + 2),
+     Offset(size.width, centerY + 2),
+     paint,
+   );
+ }
+
+ @override
+ bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
