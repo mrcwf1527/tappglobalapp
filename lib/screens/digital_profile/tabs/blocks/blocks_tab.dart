@@ -231,6 +231,8 @@ class BlocksTab extends StatelessWidget {
         return FontAwesomeIcons.font;
       case BlockType.spacer:
         return FontAwesomeIcons.minus;
+      case BlockType.socialPlatform:
+        return FontAwesomeIcons.layerGroup;
     }
   }
 
@@ -248,6 +250,8 @@ class BlocksTab extends StatelessWidget {
         return 'Text';
       case BlockType.spacer:
         return 'Space & Dividers';
+      case BlockType.socialPlatform:
+        return 'Social Platforms';
     }
   }
 
@@ -351,6 +355,18 @@ class BlocksTab extends StatelessWidget {
           ],
           sequence: sequence,
           isVisible: true,
+        );
+      case BlockType.socialPlatform:
+        return Block(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          type: type,
+          blockName: '',
+          title: '',
+          description: '',
+          contents: [],
+          sequence: sequence,
+          isVisible: true,
+          textAlignment: TextAlignment.center,
         );
     }
   }

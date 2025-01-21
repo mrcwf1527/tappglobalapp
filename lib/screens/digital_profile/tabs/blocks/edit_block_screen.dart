@@ -7,6 +7,7 @@ import '../../../../models/block.dart';
 import '../../../../utils/debouncer.dart';
 import '../../../../providers/digital_profile_provider.dart';
 import '../../../../widgets/digital_profile/blocks/contact_block.dart';
+import '../../../../widgets/digital_profile/blocks/social_platform_block.dart';
 import '../../../../widgets/digital_profile/blocks/spacer_block.dart';
 import '../../../../widgets/digital_profile/blocks/text_block.dart';
 import '../../../../widgets/digital_profile/blocks/website_block.dart';
@@ -67,6 +68,8 @@ class _EditBlockScreenState extends State<EditBlockScreen>
         return 'Text';
       case BlockType.spacer:
         return 'Space & Dividers';
+      case BlockType.socialPlatform:
+        return 'Social Platforms';
     }
   }
 
@@ -84,6 +87,8 @@ class _EditBlockScreenState extends State<EditBlockScreen>
         return FontAwesomeIcons.font;
       case BlockType.spacer:
         return FontAwesomeIcons.minus;
+      case BlockType.socialPlatform:
+        return FontAwesomeIcons.layerGroup;
     }
   }
 
@@ -432,6 +437,21 @@ class _EditBlockScreenState extends State<EditBlockScreen>
         );
       case BlockType.spacer:
         blockEditor = SpacerBlock(
+          block: currentBlock,
+          onBlockUpdated: (updated) {
+            final blocks = [...provider.profileData.blocks];
+            blocks[blockIndex] = updated;
+            provider.updateBlocks(blocks);
+          },
+          onBlockDeleted: (id) {
+            final blocks = [...provider.profileData.blocks];
+            blocks.removeAt(blockIndex);
+            provider.updateBlocks(blocks);
+            Navigator.maybePop(context);
+          },
+        );
+      case BlockType.socialPlatform:
+        blockEditor = SocialPlatformBlock(
           block: currentBlock,
           onBlockUpdated: (updated) {
             final blocks = [...provider.profileData.blocks];

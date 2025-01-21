@@ -9,7 +9,8 @@ enum BlockType {
   youtube,
   contact,
   text,
-  spacer
+  spacer,
+  socialPlatform
 }
 
 enum BlockLayout {

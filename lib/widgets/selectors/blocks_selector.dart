@@ -46,6 +46,12 @@ class BlocksSelector extends StatelessWidget {
     'icon': FontAwesomeIcons.minus,
     'description': 'Add spacing and decorative dividers'
   },
+  {
+    'type': BlockType.socialPlatform,
+    'name': 'Social Platforms',
+    'icon': FontAwesomeIcons.layerGroup,
+    'description': 'Add multiple social media profiles'
+  },
  ];
 
  List<Map<String, dynamic>> _getAvailableBlocks(BuildContext context) {

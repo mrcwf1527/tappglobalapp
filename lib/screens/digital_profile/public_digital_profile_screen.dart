@@ -1779,6 +1779,222 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     );
   }
 
+  Widget _buildSocialPlatformBlock(Block block) {
+    return Container(
+      margin: const EdgeInsets.only(top: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          if (block.title != null && block.title!.isNotEmpty) ...[
+            Text(
+              block.title!,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+          ],
+          if (block.description != null && block.description!.isNotEmpty) ...[
+            Text(
+              block.description!,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 16,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+          ],
+          block.layout == BlockLayout.carousel
+            ? _buildCarouselSocialPlatformLayout(block)
+            : _buildClassicSocialPlatformLayout(block),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildClassicSocialPlatformLayout(Block block) {
+    final alignment = block.textAlignment ?? TextAlignment.center;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: block.contents
+        .where((content) => content.isVisible && content.url.isNotEmpty)
+        .map((content) {
+          final platform = SocialPlatform.fromMap({
+            'id': content.metadata?['platformId'] ?? '',
+            'value': content.url,
+          });
+
+          return Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => _launchSocialLink({
+                  'id': platform.id,
+                  'value': content.url
+                }, context),
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  height: 64,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2A2A2A),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 40,
+                        child: Center(
+                          child: platform.icon != null
+                            ? FaIcon(platform.icon, color: Colors.white, size: 20)
+                            : platform.imagePath != null
+                              ? SvgPicture.asset(
+                                  platform.imagePath!,
+                                  width: 20,
+                                  height: 20,
+                                  colorFilter: const ColorFilter.mode(
+                                    Colors.white,
+                                    BlendMode.srcIn,
+                                  ),
+                                )
+                              : null,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: alignment == TextAlignment.left 
+                            ? CrossAxisAlignment.start 
+                            : alignment == TextAlignment.right
+                              ? CrossAxisAlignment.end
+                              : CrossAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              content.title.isEmpty ? platform.name : content.title,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            if (content.subtitle?.isNotEmpty == true)
+                              Text(
+                                content.subtitle!,
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+    );
+  }
+
+  Widget _buildCarouselSocialPlatformLayout(Block block) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final containerWidth = screenWidth > 500 ? 500.0 : screenWidth;
+    final itemWidth = 198.0;
+
+    final visibleContents = block.contents
+      .where((content) => 
+        content.isVisible && 
+        content.url.isNotEmpty
+      ).toList();
+
+    return SizedBox(
+      width: containerWidth,
+      child: visibleContents.isEmpty 
+        ? const Center(child: Text('No platforms added', style: TextStyle(color: Colors.white70)))
+        : SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: visibleContents.map((content) {
+                final platform = SocialPlatform.fromMap({
+                  'id': content.metadata?['platformId'] ?? '',
+                  'value': content.url,
+                });
+
+                return Container(
+                  width: itemWidth,
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => _launchSocialLink({
+                        'id': platform.id,
+                        'value': content.url
+                      }, context),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2A2A2A),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            if (platform.icon != null)
+                              FaIcon(platform.icon, color: Colors.white, size: 32)
+                            else if (platform.imagePath != null)
+                              SvgPicture.asset(
+                                platform.imagePath!,
+                                width: 32,
+                                height: 32,
+                                colorFilter: const ColorFilter.mode(
+                                  Colors.white,
+                                  BlendMode.srcIn,
+                                ),
+                              ),
+                            const SizedBox(height: 12),
+                            Text(
+                              content.title.isEmpty ? platform.name : content.title,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            if (content.subtitle?.isNotEmpty == true) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                content.subtitle!,
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+    );
+  }
+
   Widget _buildMainContent(Map<String, dynamic> data) {
     final provider = Provider.of<DigitalProfileProvider>(context, listen: true);
     final layout = data['layout'] != null 
@@ -1894,6 +2110,8 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                     return _buildTextBlock(block);
                   case BlockType.spacer:
                     return _buildSpacerBlock(block);
+                  case BlockType.socialPlatform:
+                    return _buildSocialPlatformBlock(block);
                 }
               }),
             ],
