@@ -147,7 +147,7 @@ class _ProfilePreviewState extends State<ProfilePreview> {
         final data = provider.profileData.toMap();
         return Center(
           child: Container(
-            constraints: const BoxConstraints(maxWidth: 375, maxHeight: 812),
+            constraints: const BoxConstraints(maxWidth: 500, maxHeight: 812),
             margin: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               color: const Color(0xFF0E0E0E),
@@ -211,7 +211,7 @@ class _ProfilePreviewState extends State<ProfilePreview> {
               alignment: Alignment.center,
               children: [
                 _buildProfileImage(data, 60),
-                if (data['companyImageUrl'] != null)
+                if (data['companyImageUrl'] != null && data['companyImageUrl'].isNotEmpty)
                   Positioned(
                     bottom: 0,
                     right: -30,
@@ -271,7 +271,7 @@ class _ProfilePreviewState extends State<ProfilePreview> {
             alignment: Alignment.center,
             children: [
               _buildProfileImage(data, 60),
-              if (data['companyImageUrl'] != null)
+              if (data['companyImageUrl'] != null && data['companyImageUrl'].isNotEmpty)
                 Positioned(
                   bottom: 0,
                   right: -30,
