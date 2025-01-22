@@ -43,6 +43,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   PageController? _videoPageController;
   YoutubeCarouselManager? _youtubeManager;
   PageController? _websitePageController;
+  bool _isExpanded = false;
 
   @override
   void initState() {
@@ -423,198 +424,152 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   Widget _buildWebsiteBlock(Block block) {
     return Consumer<DigitalProfileProvider>(
       builder: (context, provider, _) {
-        // EXPOSED VIEW
-        if (!(block.isCollapsed ?? false)) {
-          return Container(
-            margin: const EdgeInsets.only(top: 24),
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                if (block.title != null && block.title!.isNotEmpty) ...[
-                  Text(
-                    block.title!,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                ],
-                if (block.description != null && block.description!.isNotEmpty) ...[
-                  Text(
-                    block.description!,
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 16,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                ],
-                block.layout == BlockLayout.carousel
-                  ? _buildCarouselWebsiteLayout(block)
-                  : _buildClassicWebsiteLayout(block),
-              ],
-            ),
-          );
+        if (block.layout == BlockLayout.classic && block.isCollapsed == true) {
+          return _buildCollapsedWebsiteBlock(block);
         }
 
-        // COLLAPSED VIEW
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return Container(
-              margin: const EdgeInsets.only(top: 24),
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                children: [
-                  // Dropdown header
-                  Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () => setState(() => block.isCollapsed = !block.isCollapsed!),
-                      borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2A2A2A),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Stack(
-                          children: [
-                            // Add Padding widget to create space for the icon
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 24),  // Add horizontal padding
-                              child: Center(
-                                child: Column(
-                                  children: [
-                                    if (block.title != null)
-                                      Text(
-                                        block.title!,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    if (block.description != null)
-                                      Text(
-                                        block.description!,
-                                        style: const TextStyle(
-                                          color: Colors.white70,
-                                          fontSize: 14,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            Positioned(
-                              right: 0,
-                              top: 0,
-                              bottom: 0,
-                              child: Center(
-                                child: Icon(
-                                  block.isCollapsed! ? Icons.expand_more : Icons.expand_less,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    ),
+        return Container(
+          margin: const EdgeInsets.only(top: 24),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              if (block.title != null && block.title!.isNotEmpty) ...[
+                Text(
+                  block.title!,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                   ),
-
-                  // Dropdown content
-                  if (!block.isCollapsed!)
-                    Container(
-                      margin: const EdgeInsets.only(top: 16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: block.contents
-                          .where((content) => content.isVisible && content.url.isNotEmpty)
-                          .map((content) => Container(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            child: Material(
-                              color: const Color(0xFF2A2A2A),
-                              borderRadius: BorderRadius.circular(12),
-                              child: InkWell(
-                                onTap: () => _launchSocialLink({'id': 'website', 'value': content.url}, context),
-                                borderRadius: BorderRadius.circular(12),
-                                child: Container(
-                                  height: 64,
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                  child: Row(
-                                    children: [
-                                      if (content.imageUrl != null && content.imageUrl!.isNotEmpty) ...[
-                                        Container(
-                                          width: 40,
-                                          height: 40,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            image: DecorationImage(
-                                              image: NetworkImage(content.imageUrl!),
-                                              fit: BoxFit.cover,
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                      ],
-                                      Expanded(
-                                        child: Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          crossAxisAlignment: CrossAxisAlignment.center,
-                                          children: [
-                                            Text(
-                                              content.title,
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              textAlign: TextAlign.center,
-                                            ),
-                                            if (content.subtitle?.isNotEmpty == true)
-                                              Text(
-                                                content.subtitle!,
-                                                style: const TextStyle(
-                                                  color: Colors.white70,
-                                                  fontSize: 12,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                textAlign: TextAlign.center,
-                                              ),
-                                          ],
-                                        ),
-                                      ),
-                                      if (content.imageUrl != null && content.imageUrl!.isNotEmpty)
-                                        const SizedBox(width: 40),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          )).toList(),
-                      ),
-                    ),
-                ],
-              ),
-            );
-          }
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+              ],
+              if (block.description != null && block.description!.isNotEmpty) ...[
+                Text(
+                  block.description!,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 16,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+              ],
+              block.layout == BlockLayout.carousel
+                ? _buildCarouselWebsiteLayout(block)
+                : _buildClassicWebsiteLayout(block),
+            ],
+          ),
         );
       },
+    );
+  }
+
+  Widget _buildCollapsedWebsiteBlock(Block block) {
+    return Container(
+      margin: const EdgeInsets.only(top: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        children: [
+          Material(
+            color: const Color(0xFF2A2A2A),
+            borderRadius: BorderRadius.circular(12),
+            child: InkWell(
+              onTap: () {
+                setState(() {
+                  _isExpanded = !_isExpanded;
+                });
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                height: 64,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 40),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              block.title ?? '',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (block.description?.isNotEmpty == true)
+                              Text(
+                                block.description!,
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 14,
+                                ),
+                                textAlign: TextAlign.center,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      right: 0,
+                      child: Icon(
+                        _isExpanded ? Icons.expand_less : Icons.expand_more,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          if (_isExpanded)
+            _buildCollapsedWebsiteContent(block),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCollapsedWebsiteContent(Block block) {
+    final alignment = block.textAlignment ?? TextAlignment.center;
+    
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: block.contents
+          .where((content) => content.isVisible && content.url.isNotEmpty)
+          .map((content) => Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            child: Material(
+              color: const Color(0xFF2A2A2A),
+              borderRadius: BorderRadius.circular(12),
+              child: InkWell(
+                onTap: () => _launchSocialLink(
+                  {'id': 'website', 'value': content.url}, 
+                  context
+                ),
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  height: 64,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: _buildWebsiteContent(content, alignment),
+                ),
+              ),
+            ),
+          )).toList(),
+      ),
     );
   }
 
@@ -726,24 +681,24 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
             content.isVisible && 
             content.url.isNotEmpty)
         .map((content) => Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () => _launchSocialLink({'id': 'website', 'value': content.url}, context),
+          margin: const EdgeInsets.only(bottom: 12),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => _launchSocialLink({'id': 'website', 'value': content.url}, context),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                height: 64,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2A2A2A),
                   borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    height: 64,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF2A2A2A),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: _buildWebsiteContent(content, alignment),
-                  ),
                 ),
+                child: _buildWebsiteContent(content, alignment),
               ),
-            )).toList(),
+            ),
+          ),
+        )).toList(),
     );
   }
 
@@ -769,7 +724,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
           Row(
             children: [
               if (content.imageUrl != null && content.imageUrl!.isNotEmpty)
-                const SizedBox(width: 52),
+                const SizedBox(width: 56),
               Expanded(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -801,7 +756,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                 ),
               ),
               if (content.imageUrl != null && content.imageUrl!.isNotEmpty)
-                const SizedBox(width: 40),
+                const SizedBox(width: 56),
             ],
           ),
         ],
@@ -1847,35 +1802,120 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                     color: const Color(0xFF2A2A2A),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Row(
+                  child: alignment == TextAlignment.center ? Stack(
                     children: [
-                      SizedBox(
-                        width: 40,
-                        child: Center(
-                          child: platform.icon != null
-                            ? FaIcon(platform.icon, color: Colors.white, size: 20)
-                            : platform.imagePath != null
-                              ? SvgPicture.asset(
-                                  platform.imagePath!,
-                                  width: 20,
-                                  height: 20,
-                                  colorFilter: const ColorFilter.mode(
-                                    Colors.white,
-                                    BlendMode.srcIn,
+                      if (content.imageUrl != null && content.imageUrl!.isNotEmpty)
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              image: DecorationImage(
+                                image: NetworkImage(content.imageUrl!),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                        )
+                      else if (platform.icon != null || platform.imagePath != null)
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: SizedBox(
+                            width: 40,
+                            child: Center(
+                              child: platform.icon != null
+                                ? FaIcon(platform.icon, color: Colors.white, size: 36)
+                                : SvgPicture.asset(
+                                    platform.imagePath!,
+                                    width: 20,
+                                    height: 20,
+                                    colorFilter: const ColorFilter.mode(
+                                      Colors.white,
+                                      BlendMode.srcIn,
+                                    ),
                                   ),
-                                )
-                              : null,
+                            ),
+                          ),
                         ),
+                      Row(
+                        children: [
+                          if (content.imageUrl != null && content.imageUrl!.isNotEmpty || platform.icon != null || platform.imagePath != null)
+                            const SizedBox(width: 52),
+                          Expanded(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  content.title.isEmpty ? platform.name : content.title,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                if (content.subtitle?.isNotEmpty == true)
+                                  Text(
+                                    content.subtitle!,
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 12,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                              ],
+                            ),
+                          ),
+                          if (content.imageUrl != null && content.imageUrl!.isNotEmpty || platform.icon != null || platform.imagePath != null)
+                            const SizedBox(width: 40),
+                        ],
                       ),
-                      const SizedBox(width: 12),
+                    ],
+                  ) : Row(
+                    mainAxisAlignment: alignment == TextAlignment.left 
+                      ? MainAxisAlignment.start 
+                      : MainAxisAlignment.end,
+                    children: [
+                      if (alignment == TextAlignment.left)
+                        if (content.imageUrl != null && content.imageUrl!.isNotEmpty)
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              image: DecorationImage(
+                                image: NetworkImage(content.imageUrl!),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          )
+                        else if (platform.icon != null || platform.imagePath != null)
+                          SizedBox(
+                            width: 40,
+                            child: Center(
+                              child: platform.icon != null
+                                ? FaIcon(platform.icon, color: Colors.white, size: 36)
+                                : SvgPicture.asset(
+                                    platform.imagePath!,
+                                    width: 20,
+                                    height: 20,
+                                    colorFilter: const ColorFilter.mode(
+                                      Colors.white,
+                                      BlendMode.srcIn,
+                                    ),
+                                  ),
+                            ),
+                          ),
+                      if (alignment == TextAlignment.left && (content.imageUrl != null && content.imageUrl!.isNotEmpty || platform.icon != null || platform.imagePath != null))
+                        const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: alignment == TextAlignment.left 
                             ? CrossAxisAlignment.start 
-                            : alignment == TextAlignment.right
-                              ? CrossAxisAlignment.end
-                              : CrossAxisAlignment.center,
-                          mainAxisAlignment: MainAxisAlignment.center,
+                            : CrossAxisAlignment.end,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
                               content.title.isEmpty ? platform.name : content.title,
@@ -1896,6 +1936,38 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                           ],
                         ),
                       ),
+                      if (alignment == TextAlignment.right && (content.imageUrl != null && content.imageUrl!.isNotEmpty || platform.icon != null || platform.imagePath != null))
+                        const SizedBox(width: 12),
+                      if (alignment == TextAlignment.right)
+                        if (content.imageUrl != null && content.imageUrl!.isNotEmpty)
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              image: DecorationImage(
+                                image: NetworkImage(content.imageUrl!),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          )
+                        else if (platform.icon != null || platform.imagePath != null)
+                          SizedBox(
+                            width: 40,
+                            child: Center(
+                              child: platform.icon != null
+                                ? FaIcon(platform.icon, color: Colors.white, size: 36)
+                                : SvgPicture.asset(
+                                    platform.imagePath!,
+                                    width: 20,
+                                    height: 20,
+                                    colorFilter: const ColorFilter.mode(
+                                      Colors.white,
+                                      BlendMode.srcIn,
+                                    ),
+                                  ),
+                            ),
+                          ),
                     ],
                   ),
                 ),
@@ -1909,87 +1981,121 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   Widget _buildCarouselSocialPlatformLayout(Block block) {
     final screenWidth = MediaQuery.of(context).size.width;
     final containerWidth = screenWidth > 500 ? 500.0 : screenWidth;
-    final itemWidth = 198.0;
+    final imageSize = 198.0;
 
     final visibleContents = block.contents
-      .where((content) => 
-        content.isVisible && 
-        content.url.isNotEmpty
-      ).toList();
+        .where((content) => 
+            content.isVisible && 
+            content.url.isNotEmpty)
+        .toList();
 
     return SizedBox(
       width: containerWidth,
       child: visibleContents.isEmpty 
-        ? const Center(child: Text('No platforms added', style: TextStyle(color: Colors.white70)))
+        ? const Center(child: Text('No content available', style: TextStyle(color: Colors.white70)))
         : SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            child: Row(
-              children: visibleContents.map((content) {
-                final platform = SocialPlatform.fromMap({
-                  'id': content.metadata?['platformId'] ?? '',
-                  'value': content.url,
-                });
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: visibleContents.map((content) {
+                      final platform = SocialPlatform.fromMap({
+                        'id': content.metadata?['platformId'] ?? '',
+                        'value': content.url,
+                      });
 
-                return Container(
-                  width: itemWidth,
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () => _launchSocialLink({
-                        'id': platform.id,
-                        'value': content.url
-                      }, context),
-                      borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2A2A2A),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            if (platform.icon != null)
-                              FaIcon(platform.icon, color: Colors.white, size: 32)
-                            else if (platform.imagePath != null)
-                              SvgPicture.asset(
-                                platform.imagePath!,
-                                width: 32,
-                                height: 32,
-                                colorFilter: const ColorFilter.mode(
-                                  Colors.white,
-                                  BlendMode.srcIn,
-                                ),
+                      return Container(
+                        width: imageSize,
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => _launchSocialLink({
+                              'id': platform.id,
+                              'value': content.url
+                            }, context),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Card(
+                              color: const Color(0xFF2A2A2A),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                            const SizedBox(height: 12),
-                            Text(
-                              content.title.isEmpty ? platform.name : content.title,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  AspectRatio(
+                                    aspectRatio: 1,
+                                    child: ClipRRect(
+                                      borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                                      child: Container(
+                                        color: Colors.black,
+                                        child: content.imageUrl != null && content.imageUrl!.isNotEmpty
+                                          ? Image.network(
+                                              content.imageUrl!,
+                                              width: double.infinity, 
+                                              height: double.infinity,
+                                              fit: BoxFit.cover,
+                                            )
+                                          : Center(
+                                              child: platform.icon != null
+                                                ? FaIcon(platform.icon, color: Colors.white, size: 42)
+                                                : platform.imagePath != null
+                                                  ? SvgPicture.asset(
+                                                      platform.imagePath!,
+                                                      width: 32,
+                                                      height: 32,
+                                                      colorFilter: const ColorFilter.mode(
+                                                        Colors.white,
+                                                        BlendMode.srcIn,
+                                                      ),
+                                                    )
+                                                  : const Icon(Icons.link, color: Colors.white, size: 32),
+                                            ),
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.all(12),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            content.title.isEmpty ? platform.name : content.title,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                          if (content.subtitle?.isNotEmpty == true) ...[
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              content.subtitle!,
+                                              style: const TextStyle(
+                                                color: Colors.white70,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                              textAlign: TextAlign.center,
                             ),
-                            if (content.subtitle?.isNotEmpty == true) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                content.subtitle!,
-                                style: const TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 12,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ],
+                          ),
                         ),
-                      ),
-                    ),
+                      );
+                    }).toList(),
                   ),
                 );
-              }).toList(),
+              },
             ),
           ),
     );
@@ -2472,82 +2578,82 @@ class YoutubeCarouselManager {
 }
 
 class DottedLinePainter extends CustomPainter {
- final Color color;
- 
- DottedLinePainter({required this.color});
+  final Color color;
+  
+  DottedLinePainter({required this.color});
 
- @override
- void paint(Canvas canvas, Size size) {
-   final paint = Paint()
-     ..color = color
-     ..strokeWidth = 1;
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1;
 
-   const spacing = 4.0;
-   final centerY = size.height / 2;
-   
-   for (double x = 0; x < size.width; x += spacing * 2) {
-     canvas.drawCircle(Offset(x, centerY), 1, paint);
-   }
- }
+    const spacing = 4.0;
+    final centerY = size.height / 2;
+    
+    for (double x = 0; x < size.width; x += spacing * 2) {
+      canvas.drawCircle(Offset(x, centerY), 1, paint);
+    }
+  }
 
- @override
- bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class DashedLinePainter extends CustomPainter {
- final Color color;
- 
- DashedLinePainter({required this.color});
+  final Color color;
+  
+  DashedLinePainter({required this.color});
 
- @override
- void paint(Canvas canvas, Size size) {
-   final paint = Paint()
-     ..color = color
-     ..strokeWidth = 1;
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1;
 
-   const dashWidth = 5.0;
-   const dashSpace = 3.0;
-   final centerY = size.height / 2;
-   
-   for (double x = 0; x < size.width; x += dashWidth + dashSpace) {
-     canvas.drawLine(
-       Offset(x, centerY),
-       Offset(x + dashWidth, centerY),
-       paint,
-     );
-   }
- }
+    const dashWidth = 5.0;
+    const dashSpace = 3.0;
+    final centerY = size.height / 2;
+    
+    for (double x = 0; x < size.width; x += dashWidth + dashSpace) {
+      canvas.drawLine(
+        Offset(x, centerY),
+        Offset(x + dashWidth, centerY),
+        paint,
+      );
+    }
+  }
 
- @override
- bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class DoubleLinePainter extends CustomPainter {
- final Color color;
- 
- DoubleLinePainter({required this.color});
+  final Color color;
+  
+  DoubleLinePainter({required this.color});
 
- @override
- void paint(Canvas canvas, Size size) {
-   final paint = Paint()
-     ..color = color
-     ..strokeWidth = 1;
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1;
 
-   final centerY = size.height / 2;
-   
-   canvas.drawLine(
-     Offset(0, centerY - 2),
-     Offset(size.width, centerY - 2),
-     paint,
-   );
-   
-   canvas.drawLine(
-     Offset(0, centerY + 2),
-     Offset(size.width, centerY + 2),
-     paint,
-   );
- }
+    final centerY = size.height / 2;
+    
+    canvas.drawLine(
+      Offset(0, centerY - 2),
+      Offset(size.width, centerY - 2),
+      paint,
+    );
+    
+    canvas.drawLine(
+      Offset(0, centerY + 2),
+      Offset(size.width, centerY + 2),
+      paint,
+    );
+  }
 
- @override
- bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  }

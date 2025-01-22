@@ -795,8 +795,8 @@ class _LayoutsTabState extends State<_LayoutsTab> {
               ),
             ],
 
-            // Show text alignment only for website blocks
-            if (widget.block.type == BlockType.website) ...[
+            // Show text alignment only for website blocks and social platform blocks
+            if (widget.block.type == BlockType.website || widget.block.type == BlockType.socialPlatform) ...[
               const SizedBox(height: 24),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -937,7 +937,8 @@ class _SettingsTabState extends State<_SettingsTab> {
               });
             },
           ),
-          if (widget.block.type == BlockType.website && widget.block.layout == BlockLayout.classic) ...[
+          if ((widget.block.type == BlockType.website && widget.block.layout == BlockLayout.classic) ||
+              (widget.block.type == BlockType.socialPlatform && widget.block.layout == BlockLayout.classic)) ...[
             const SizedBox(height: 24),
             const Text(
               'Links block visibility',
