@@ -43,7 +43,8 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   PageController? _videoPageController;
   YoutubeCarouselManager? _youtubeManager;
   PageController? _websitePageController;
-  bool _isExpanded = false;
+  bool _isWebsiteExpanded = false;
+  bool _isSocialExpanded = false;
 
   @override
   void initState() {
@@ -479,7 +480,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
             child: InkWell(
               onTap: () {
                 setState(() {
-                  _isExpanded = !_isExpanded;
+                  _isWebsiteExpanded = !_isWebsiteExpanded;
                 });
               },
               borderRadius: BorderRadius.circular(12),
@@ -523,10 +524,14 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                     ),
                     Positioned(
                       right: 0,
-                      child: Icon(
-                        _isExpanded ? Icons.expand_less : Icons.expand_more,
-                        color: Colors.white,
-                        size: 24,
+                      child: AnimatedRotation(
+                        duration: const Duration(milliseconds: 300),
+                        turns: _isWebsiteExpanded ? 0.5 : 0,
+                        child: const Icon(
+                          Icons.expand_more,
+                          color: Colors.white,
+                          size: 24,
+                        ),
                       ),
                     ),
                   ],
@@ -534,8 +539,14 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
               ),
             ),
           ),
-          if (_isExpanded)
-            _buildCollapsedWebsiteContent(block),
+          AnimatedCrossFade(
+            duration: const Duration(milliseconds: 300),
+            firstChild: _buildCollapsedWebsiteContent(block),
+            secondChild: const SizedBox.shrink(),
+            crossFadeState: _isWebsiteExpanded 
+              ? CrossFadeState.showFirst 
+              : CrossFadeState.showSecond,
+          ),
         ],
       ),
     );
@@ -1735,40 +1746,48 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   }
 
   Widget _buildSocialPlatformBlock(Block block) {
-    return Container(
-      margin: const EdgeInsets.only(top: 24),
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          if (block.title != null && block.title!.isNotEmpty) ...[
-            Text(
-              block.title!,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-          ],
-          if (block.description != null && block.description!.isNotEmpty) ...[
-            Text(
-              block.description!,
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 16,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-          ],
-          block.layout == BlockLayout.carousel
-            ? _buildCarouselSocialPlatformLayout(block)
-            : _buildClassicSocialPlatformLayout(block),
-        ],
-      ),
+    return Consumer<DigitalProfileProvider>(
+      builder: (context, provider, _) {
+        if (block.layout == BlockLayout.classic && block.isCollapsed == true) {
+          return _buildCollapsedSocialPlatformBlock(block);
+        }
+
+        return Container(
+          margin: const EdgeInsets.only(top: 24),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              if (block.title != null && block.title!.isNotEmpty) ...[
+                Text(
+                  block.title!,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+              ],
+              if (block.description != null && block.description!.isNotEmpty) ...[
+                Text(
+                  block.description!,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 16,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+              ],
+              block.layout == BlockLayout.carousel
+                ? _buildCarouselSocialPlatformLayout(block)
+                : _buildClassicSocialPlatformLayout(block),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -1842,7 +1861,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                       Row(
                         children: [
                           if (content.imageUrl != null && content.imageUrl!.isNotEmpty || platform.icon != null || platform.imagePath != null)
-                            const SizedBox(width: 52),
+                            const SizedBox(width: 56),
                           Expanded(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -1869,7 +1888,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                             ),
                           ),
                           if (content.imageUrl != null && content.imageUrl!.isNotEmpty || platform.icon != null || platform.imagePath != null)
-                            const SizedBox(width: 40),
+                            const SizedBox(width: 56),
                         ],
                       ),
                     ],
@@ -1975,6 +1994,296 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
             ),
           );
         }).toList(),
+    );
+  }
+
+  Widget _buildCollapsedSocialPlatformBlock(Block block) {
+    return Container(
+      margin: const EdgeInsets.only(top: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        children: [
+          Material(
+            color: const Color(0xFF2A2A2A),
+            borderRadius: BorderRadius.circular(12),
+            child: InkWell(
+              onTap: () {
+                setState(() {
+                  _isSocialExpanded = !_isSocialExpanded;
+                });
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                height: 64,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 40),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              block.title ?? '',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (block.description?.isNotEmpty == true)
+                              Text(
+                                block.description!,
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 14,
+                                ),
+                                textAlign: TextAlign.center,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      right: 0,
+                      child: AnimatedRotation(
+                        duration: const Duration(milliseconds: 300),
+                        turns: _isSocialExpanded ? 0.5 : 0,
+                        child: const Icon(
+                          Icons.expand_more,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          AnimatedCrossFade(
+            duration: const Duration(milliseconds: 300),
+            firstChild: _buildCollapsedSocialPlatformContent(block),
+            secondChild: const SizedBox.shrink(),
+            crossFadeState: _isSocialExpanded 
+              ? CrossFadeState.showFirst 
+              : CrossFadeState.showSecond,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCollapsedSocialPlatformContent(Block block) {
+    final alignment = block.textAlignment ?? TextAlignment.center;
+    
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: block.contents
+          .where((content) => content.isVisible && content.url.isNotEmpty)
+          .map((content) {
+            final platform = SocialPlatform.fromMap({
+              'id': content.metadata?['platformId'] ?? '',
+              'value': content.url,
+            });
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              child: Material(
+                color: const Color(0xFF2A2A2A),
+                borderRadius: BorderRadius.circular(12),
+                child: InkWell(
+                  onTap: () => _launchSocialLink({
+                    'id': platform.id,
+                    'value': content.url
+                  }, context),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    height: 64,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: alignment == TextAlignment.center ? Stack(
+                      children: [
+                        if (content.imageUrl != null && content.imageUrl!.isNotEmpty)
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                image: DecorationImage(
+                                  image: NetworkImage(content.imageUrl!),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                          )
+                        else if (platform.icon != null || platform.imagePath != null)
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: SizedBox(
+                              width: 40,
+                              child: Center(
+                                child: platform.icon != null
+                                  ? FaIcon(platform.icon, color: Colors.white, size: 36)
+                                  : SvgPicture.asset(
+                                      platform.imagePath!,
+                                      width: 20,
+                                      height: 20,
+                                      colorFilter: const ColorFilter.mode(
+                                        Colors.white,
+                                        BlendMode.srcIn,
+                                      ),
+                                    ),
+                              ),
+                            ),
+                          ),
+                        Row(
+                          children: [
+                            if (content.imageUrl != null && content.imageUrl!.isNotEmpty || platform.icon != null || platform.imagePath != null)
+                              const SizedBox(width: 56),
+                            Expanded(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    content.title.isEmpty ? platform.name : content.title,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  if (content.subtitle?.isNotEmpty == true)
+                                    Text(
+                                      content.subtitle!,
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 12,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                ],
+                              ),
+                            ),
+                            if (content.imageUrl != null && content.imageUrl!.isNotEmpty || platform.icon != null || platform.imagePath != null)
+                              const SizedBox(width: 56),
+                          ],
+                        ),
+                      ],
+                    ) : Row(
+                      mainAxisAlignment: alignment == TextAlignment.left 
+                        ? MainAxisAlignment.start 
+                        : MainAxisAlignment.end,
+                      children: [
+                        if (alignment == TextAlignment.left)
+                          if (content.imageUrl != null && content.imageUrl!.isNotEmpty)
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                image: DecorationImage(
+                                  image: NetworkImage(content.imageUrl!),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            )
+                          else if (platform.icon != null || platform.imagePath != null)
+                            SizedBox(
+                              width: 40,
+                              child: Center(
+                                child: platform.icon != null
+                                  ? FaIcon(platform.icon, color: Colors.white, size: 36)
+                                  : SvgPicture.asset(
+                                      platform.imagePath!,
+                                      width: 20,
+                                      height: 20,
+                                      colorFilter: const ColorFilter.mode(
+                                        Colors.white,
+                                        BlendMode.srcIn,
+                                      ),
+                                    ),
+                              ),
+                            ),
+                        if (alignment == TextAlignment.left && (content.imageUrl != null && content.imageUrl!.isNotEmpty || platform.icon != null || platform.imagePath != null))
+                          const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: alignment == TextAlignment.left 
+                              ? CrossAxisAlignment.start 
+                              : CrossAxisAlignment.end,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                content.title.isEmpty ? platform.name : content.title,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              if (content.subtitle?.isNotEmpty == true)
+                                Text(
+                                  content.subtitle!,
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        if (alignment == TextAlignment.right && (content.imageUrl != null && content.imageUrl!.isNotEmpty || platform.icon != null || platform.imagePath != null))
+                          const SizedBox(width: 12),
+                        if (alignment == TextAlignment.right)
+                          if (content.imageUrl != null && content.imageUrl!.isNotEmpty)
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                image: DecorationImage(
+                                  image: NetworkImage(content.imageUrl!),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            )
+                          else if (platform.icon != null || platform.imagePath != null)
+                            SizedBox(
+                              width: 40,
+                              child: Center(
+                                child: platform.icon != null
+                                  ? FaIcon(platform.icon, color: Colors.white, size: 36)
+                                  : SvgPicture.asset(
+                                      platform.imagePath!,
+                                      width: 20,
+                                      height: 20,
+                                      colorFilter: const ColorFilter.mode(
+                                        Colors.white,
+                                        BlendMode.srcIn,
+                                      ),
+                                    ),
+                              ),
+                            ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+      ),
     );
   }
 
