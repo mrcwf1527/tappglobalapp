@@ -138,7 +138,7 @@ class _EditDigitalProfileScreenState extends State<EditDigitalProfileScreen>
                                     physics: const NeverScrollableScrollPhysics(),
                                     children: [
                                       _buildHeaderTabContent(isMobile: false),
-                                      const Center(child: Text('Blocks')),
+                                      const BlocksTab(),
                                       const Center(child: Text('Insights')),
                                       const Center(child: Text('Settings')),
                                     ],
