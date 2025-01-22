@@ -181,18 +181,21 @@ class _TextBlockState extends State<TextBlock> {
           ],
         ),
         const SizedBox(height: 16),
-        TextField(
-          controller: _textController,
-          maxLines: null,
-          decoration: const InputDecoration(
-            hintText: 'Enter your text here...',
-            border: OutlineInputBorder(),
+        Container(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: TextField(
+            controller: _textController,
+            maxLines: null,
+            decoration: const InputDecoration(
+              hintText: 'Enter your text here...',
+              border: OutlineInputBorder(),
+            ),
+            style: _getStyleForPosition(),
+            textAlign: widget.block.textAlignment?.toTextAlign() ?? TextAlign.left,
+            onChanged: (value) {
+              _updateBlock();
+            },
           ),
-          style: _getStyleForPosition(),
-          textAlign: widget.block.textAlignment?.toTextAlign() ?? TextAlign.left,
-          onChanged: (value) {
-            _updateBlock();
-          },
         ),
       ],
     );

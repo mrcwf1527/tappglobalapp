@@ -136,7 +136,7 @@ class _WebsiteBlockState extends State<WebsiteBlock> {
         }),
         Container(
           key: const ValueKey('add-link'),
-          margin: const EdgeInsets.only(top: 8),
+          margin: const EdgeInsets.symmetric(vertical: 16),
           child: ElevatedButton(
             onPressed: _addLink,
             style: ElevatedButton.styleFrom(

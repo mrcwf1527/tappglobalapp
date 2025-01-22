@@ -119,7 +119,7 @@ class _ImageBlockState extends State<ImageBlock> {
         }),
         Container(
           key: const ValueKey('add-image'),
-          margin: const EdgeInsets.only(top: 8),
+          margin: const EdgeInsets.symmetric(vertical: 16),
           child: ElevatedButton(
             onPressed: _addImage,
             style: ElevatedButton.styleFrom(

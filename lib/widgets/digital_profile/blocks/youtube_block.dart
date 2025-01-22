@@ -111,7 +111,7 @@ class _YouTubeBlockState extends State<YouTubeBlock> {
             }).toList(),
           ),
           Container(
-            margin: const EdgeInsets.only(top: 8),
+            margin: const EdgeInsets.symmetric(vertical: 16),
             child: ElevatedButton(
               onPressed: _addVideo,
               style: ElevatedButton.styleFrom(

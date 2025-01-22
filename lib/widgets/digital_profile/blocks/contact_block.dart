@@ -895,71 +895,74 @@ Future<void> _handleCroppedImage(Uint8List croppedBytes) async {
   }
 
   Widget _buildEmailsSection(bool isDarkMode) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Email Addresses',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Email Addresses',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-        ),
-        const SizedBox(height: 16),
-        ReorderableListView(
-          shrinkWrap: true,
-          buildDefaultDragHandles: false,
-          physics: const NeverScrollableScrollPhysics(),
-          onReorder: (oldIndex, newIndex) {
-            if (oldIndex < newIndex) newIndex -= 1;
-            setState(() {
-              final entries = _emailControllers.entries.toList();
-              final item = entries.removeAt(oldIndex);
-              entries.insert(newIndex, item);
-              
-              _emailControllers.clear();
-              for (var entry in entries) {
-                _emailControllers[entry.key] = entry.value;
-              }
-            });
-            _updateContent();
-          },
-          children: [
-            for (var entry in _emailControllers.entries)
-              _buildEmailField(
-                key: ValueKey(entry.key),
-                id: entry.key,
-                controller: entry.value,
-                index: _emailControllers.keys.toList().indexOf(entry.key),
-                isDarkMode: isDarkMode,
-              ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        ElevatedButton(
-          onPressed: _addEmail,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: isDarkMode ? const Color(0xFFD9D9D9) : Colors.black,
-            foregroundColor: isDarkMode ? Colors.black : Colors.white,
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          const SizedBox(height: 16),
+          ReorderableListView(
+            shrinkWrap: true,
+            buildDefaultDragHandles: false,
+            physics: const NeverScrollableScrollPhysics(),
+            onReorder: (oldIndex, newIndex) {
+              if (oldIndex < newIndex) newIndex -= 1;
+              setState(() {
+                final entries = _emailControllers.entries.toList();
+                final item = entries.removeAt(oldIndex);
+                entries.insert(newIndex, item);
+                
+                _emailControllers.clear();
+                for (var entry in entries) {
+                  _emailControllers[entry.key] = entry.value;
+                }
+              });
+              _updateContent();
+            },
             children: [
-              FaIcon(
-                FontAwesomeIcons.plus,
-                size: 16,
-                color: isDarkMode ? Colors.black : Colors.white,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Add Email Address',
-                style: TextStyle(
-                  color: isDarkMode ? Colors.black : Colors.white,
+              for (var entry in _emailControllers.entries)
+                _buildEmailField(
+                  key: ValueKey(entry.key),
+                  id: entry.key,
+                  controller: entry.value,
+                  index: _emailControllers.keys.toList().indexOf(entry.key),
+                  isDarkMode: isDarkMode,
                 ),
-              ),
             ],
           ),
-        ),
-      ],
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: _addEmail,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isDarkMode ? const Color(0xFFD9D9D9) : Colors.black,
+              foregroundColor: isDarkMode ? Colors.black : Colors.white,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                FaIcon(
+                  FontAwesomeIcons.plus,
+                  size: 16,
+                  color: isDarkMode ? Colors.black : Colors.white,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Add Email Address',
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.black : Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      )
     );
   }
 

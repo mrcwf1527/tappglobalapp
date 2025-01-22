@@ -260,7 +260,7 @@ class _SocialPlatformBlockState extends State<SocialPlatformBlock> {
         }),
         Container(
           key: const ValueKey('add-platform'),
-          margin: const EdgeInsets.only(top: 8),
+          margin: const EdgeInsets.symmetric(vertical: 16),
           child: ElevatedButton(
             onPressed: _addPlatform,
             style: ElevatedButton.styleFrom(
