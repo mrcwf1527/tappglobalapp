@@ -1,61 +1,96 @@
 {
-    "firestore": {
-      "rules": "firestore.rules",
-      "indexes": "firestore.indexes.json"
-    },
-    "functions": [{
-      "source": "functions",
-      "codebase": "default",
-      "ignore": ["node_modules", ".git", "firebase-debug.log", "firebase-debug.*.log", "*.local"],
-      "predeploy": [
-        "npm --prefix \"$RESOURCE_DIR\" run lint",
-        "npm --prefix \"$RESOURCE_DIR\" run build"
-      ]
-    }],
-    "hosting": [{
-      "target": "app",
-      "public": "build/web",
-      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-      "rewrites": [{
-        "source": "**",
-        "destination": "/index.html"
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "functions": [{
+    "source": "functions",
+    "codebase": "default",
+    "ignore": ["node_modules", ".git", "firebase-debug.log", "firebase-debug.*.log", "*.local"],
+    "predeploy": [
+      "npm --prefix \"$RESOURCE_DIR\" run lint",
+      "npm --prefix \"$RESOURCE_DIR\" run build"
+    ]
+  }],
+  "hosting": [{
+    "target": "app",
+    "public": "build/web",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "headers": [{
+      "source": "**",
+      "headers": [{
+        "key": "Access-Control-Allow-Origin",
+        "value": "*"
+      }, {
+        "key": "Access-Control-Allow-Methods",
+        "value": "GET,PUT,POST,DELETE,OPTIONS"
+      }, {
+        "key": "Access-Control-Allow-Headers",
+        "value": "Content-Type, Authorization, X-Requested-With"
+      }, {
+        "key": "Access-Control-Allow-Credentials",
+        "value": "true"
       }]
-    }, {
-      "target": "profile",
-      "public": "build/web",
-      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-      "rewrites": [{
-        "source": "**",
-        "destination": "/index.html"
+    }],
+    "rewrites": [{
+      "source": "**",
+      "destination": "/index.html"
+    }]
+  }, {
+    "target": "profile",
+    "public": "build/web",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "headers": [{
+      "source": "**",
+      "headers": [{
+        "key": "Access-Control-Allow-Origin",
+        "value": "*"
+      }, {
+        "key": "Access-Control-Allow-Methods",
+        "value": "GET,PUT,POST,DELETE,OPTIONS"
+      }, {
+        "key": "Access-Control-Allow-Headers",
+        "value": "Content-Type, Authorization, X-Requested-With"
+      }, {
+        "key": "Access-Control-Allow-Credentials",
+        "value": "true"
       }]
     }],
-    "flutter": {
-      "platforms": {
-        "android": {
-          "default": {
-            "projectId": "tappglobal-app",
-            "appId": "1:756432671303:android:5345f4240580058e651762",
-            "fileOutput": "android/app/google-services.json"
-          }
-        },
-        "ios": {
-          "default": {
-            "projectId": "tappglobal-app",
-            "appId": "1:756432671303:ios:555fc7bdfce065ce651762",
-            "uploadDebugSymbols": false,
-            "fileOutput": "ios/Runner/GoogleService-Info.plist"
-          }
-        },
-        "dart": {
-          "lib/firebase_options.dart": {
-            "projectId": "tappglobal-app",
-            "configurations": {
-              "android": "1:756432671303:android:5345f4240580058e651762",
-              "ios": "1:756432671303:ios:555fc7bdfce065ce651762",
-              "web": "1:756432671303:web:24bc8e4592dc32c0651762"
-            }
+    "rewrites": [{
+      "source": "**",
+      "destination": "/index.html"
+    }]
+  }],
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "tappglobal-app",
+          "appId": "1:756432671303:android:5345f4240580058e651762",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "tappglobal-app",
+          "appId": "1:756432671303:ios:555fc7bdfce065ce651762",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "tappglobal-app",
+          "configurations": {
+            "android": "1:756432671303:android:5345f4240580058e651762",
+            "ios": "1:756432671303:ios:555fc7bdfce065ce651762",
+            "web": "1:756432671303:web:24bc8e4592dc32c0651762"
           }
         }
       }
     }
+  },
+  "storage": {
+    "rules": "storage.rules"
   }
+}

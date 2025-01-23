@@ -1,7 +1,7 @@
 // lib/utils/image_saver.dart
 // Utility class for saving images to device storage or downloading in web browsers, with platform-specific implementations for mobile gallery and web downloads.
 import 'package:flutter/foundation.dart';
-import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:universal_html/html.dart' as html;
 
 class ImageSaveUtil {
@@ -15,7 +15,7 @@ class ImageSaveUtil {
       anchor.click();
       html.Url.revokeObjectUrl(url);
     } else {
-      final result = await ImageGallerySaver.saveImage(bytes);
+      final result = await ImageGallerySaverPlus.saveImage(bytes);
       if (result['isSuccess'] != true) {
         throw Exception('Failed to save image');
       }
