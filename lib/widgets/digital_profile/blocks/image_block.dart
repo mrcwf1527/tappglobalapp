@@ -1,5 +1,4 @@
 // lib/widgets/digital_profile/blocks/image_block.dart
-// Widget for managing image galleries. Handles image upload to Firebase Storage, displays image previews, supports reordering, and manages image visibility settings.
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -113,6 +112,7 @@ class _ImageBlockState extends State<ImageBlock> {
           return _ImageCard(
             key: ValueKey(content.id),
             content: content,
+            index: index,
             onUpdate: (updated) => _updateImage(index, updated),
             onDelete: () => _removeImage(index),
           );
@@ -158,12 +158,14 @@ class _ImageCard extends StatefulWidget {
   final BlockContent content;
   final Function(BlockContent) onUpdate;
   final VoidCallback onDelete;
+  final int index;
 
   const _ImageCard({
     required Key key,
     required this.content,
     required this.onUpdate,
     required this.onDelete,
+    required this.index,
   }) : super(key: key);
 
   @override
@@ -221,7 +223,7 @@ class _ImageCardState extends State<_ImageCard> {
         userId: userId, 
         folder: 'block_images',
         fileName: widget.content.id,
-        maxSizeKB: 15360, // 15MB or 15x1024KB
+        maxSizeKB: 15360,
         maxWidth: 3840,
         maxHeight: 2160,
       );
@@ -262,7 +264,13 @@ class _ImageCardState extends State<_ImageCard> {
         padding: const EdgeInsets.all(12),
         child: Row(
           children: [
-            const FaIcon(FontAwesomeIcons.gripVertical, size: 16),
+            ReorderableDragStartListener(
+              index: widget.index,
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8.0),
+                child: FaIcon(FontAwesomeIcons.gripVertical, size: 16),
+              ),
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: _isLoading

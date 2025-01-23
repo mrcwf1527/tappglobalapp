@@ -2,7 +2,9 @@
 // Widget for embedding YouTube videos. Handles video URL parsing, preview generation using youtube_player_iframe, and manages video arrangement and visibility settings.
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:youtube_player_iframe/youtube_player_iframe.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart' as flutter_player;
+import 'package:youtube_player_iframe/youtube_player_iframe.dart' as iframe_player;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../../models/block.dart';
 import '../../../utils/debouncer.dart';
 
@@ -167,7 +169,8 @@ class _VideoCard extends StatefulWidget {
 }
 
 class _VideoCardState extends State<_VideoCard> {
-  late YoutubePlayerController _controller;
+  late iframe_player.YoutubePlayerController _webController;
+  late flutter_player.YoutubePlayerController _mobileController;
   bool _isLoaded = false;
   final FocusNode _urlFocus = FocusNode();
   double get _aspectRatio {
@@ -190,16 +193,27 @@ class _VideoCardState extends State<_VideoCard> {
   void _initController() {
     final videoId = _getYouTubeVideoId(widget.content.url);
     if (videoId != null) {
-      _controller = YoutubePlayerController.fromVideoId(
-        videoId: videoId,
-        autoPlay: false,
-        params: const YoutubePlayerParams(
-          showFullscreenButton: false,
-          mute: true,
-          showControls: false,
-        ),
-      );
-      _controller.loadVideoById(videoId: videoId);
+      if (kIsWeb) {
+        _webController = iframe_player.YoutubePlayerController.fromVideoId(
+          videoId: videoId,
+          autoPlay: false,
+          params: const iframe_player.YoutubePlayerParams(
+            showFullscreenButton: false,
+            mute: true,
+            showControls: false,
+          ),
+        );
+      } else {
+        _mobileController = flutter_player.YoutubePlayerController(
+          initialVideoId: videoId,
+          flags: const flutter_player.YoutubePlayerFlags(
+            autoPlay: false,
+            mute: false,  // Changed to false
+            hideControls: false,  // Changed to false
+            enableCaption: true,
+          ),
+        );
+      }
       setState(() => _isLoaded = true);
     } else {
       setState(() => _isLoaded = false);
@@ -242,7 +256,11 @@ class _VideoCardState extends State<_VideoCard> {
   void dispose() {
     _urlFocus.dispose();
     if (_isLoaded) {
-      _controller.close();
+      if (kIsWeb) {
+        _webController.close();
+      } else {
+        _mobileController.dispose();
+      }
     }
     super.dispose();
   }
@@ -285,9 +303,18 @@ class _VideoCardState extends State<_VideoCard> {
                         aspectRatio: _aspectRatio,
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
-                          child: YoutubePlayer(
-                            controller: _controller,
-                          ),
+                          child: kIsWeb 
+                            ? iframe_player.YoutubePlayer(controller: _webController)
+                            : GestureDetector(
+                                onTap: () {
+                                  _mobileController.play();
+                                },
+                                child: flutter_player.YoutubePlayer(
+                                  controller: _mobileController,
+                                  showVideoProgressIndicator: true,
+                                  actionsPadding: const EdgeInsets.all(8),
+                                ),
+                              ),
                         ),
                       ),
                       const SizedBox(height: 12),
