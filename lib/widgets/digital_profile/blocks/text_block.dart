@@ -1,5 +1,5 @@
 // lib/widgets/digital_profile/blocks/text_block.dart
-//
+// A text editing widget with formatting controls (bold, italic, underline) and text alignment options (left, center, right) for creating formatted text content blocks.
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../models/block.dart';

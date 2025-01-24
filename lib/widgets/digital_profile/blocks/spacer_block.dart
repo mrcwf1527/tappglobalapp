@@ -1,5 +1,5 @@
 // lib/widgets/digital_profile/blocks/spacer_block.dart
-//
+// A widget that adds configurable vertical spacing between content blocks with various divider styles (none, thin line, thick line, dotted, dashed, double lines, ellipsis).
 import 'package:flutter/material.dart';
 import '../../../models/block.dart';
 

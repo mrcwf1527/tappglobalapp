@@ -1,4 +1,5 @@
 // lib/widgets/digital_profile/blocks/social_platform_block.dart
+// A widget that manages social media platform links with features for adding, reordering, and customizing platform-specific inputs including titles, subtitles, and thumbnail images.
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';

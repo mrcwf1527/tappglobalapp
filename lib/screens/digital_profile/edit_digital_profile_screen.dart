@@ -60,6 +60,26 @@ class _EditDigitalProfileScreenState extends State<EditDigitalProfileScreen>
     );
   }
 
+  Widget _buildComingSoonContent(String title) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Image.asset(
+            'assets/images/digital_profile_illustration.png',
+            width: 200,
+            height: 200,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            '$title Coming Soon',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildMobileLayout() {
     return Consumer<DigitalProfileProvider>(
       builder: (context, provider, child) => Scaffold(
@@ -85,8 +105,8 @@ class _EditDigitalProfileScreenState extends State<EditDigitalProfileScreen>
           children: [
             _buildHeaderTabContent(isMobile: true),
             const BlocksTab(),
-            const Center(child: Text('Insights')),
-            const Center(child: Text('Settings')),
+            _buildComingSoonContent('Insights'),
+            _buildComingSoonContent('Settings'),
           ],
         ),
       ),
@@ -139,8 +159,8 @@ class _EditDigitalProfileScreenState extends State<EditDigitalProfileScreen>
                                     children: [
                                       _buildHeaderTabContent(isMobile: false),
                                       const BlocksTab(),
-                                      const Center(child: Text('Insights')),
-                                      const Center(child: Text('Settings')),
+                                      _buildComingSoonContent('Insights'),
+                                      _buildComingSoonContent('Settings'),
                                     ],
                                   ),
                                 ),
