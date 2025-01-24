@@ -43,10 +43,7 @@ dependencies:
   collection: ^1.19.0
   image_gallery_saver_plus: ^3.0.5
   youtube_player_flutter: ^9.1.1
-  add_to_google_wallet: ^0.0.5
-  passkit: ^1.1.0
   platform: ^3.1.6
-  passkit_ui: ^1.0.0
 
 dev_dependencies:
   flutter_test:
@@ -59,5 +56,4 @@ flutter:
     - assets/logo/
     - assets/images/
     - assets/social_icons/
-    - assets/certificates/
     - .env

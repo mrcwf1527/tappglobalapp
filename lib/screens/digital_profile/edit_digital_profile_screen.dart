@@ -575,7 +575,21 @@ class _ShareProfileSheetState extends State<ShareProfileSheet> {
   }
 
   // TODO: Implement Apple/Google Wallet integration
-  void _addToWallet(BuildContext context) {}
+  void _addToWallet(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Coming Soon'),
+        content: const Text('Digital wallet integration will be available in a future update.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
 
   Future<void> _saveQR(BuildContext context) async {
     try {

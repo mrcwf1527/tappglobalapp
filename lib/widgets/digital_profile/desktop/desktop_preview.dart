@@ -9,6 +9,13 @@ import 'profile_preview.dart';
 import '../../../models/block.dart';
 import '../../../providers/digital_profile_provider.dart';
 import '../../../screens/digital_profile/edit_digital_profile_screen.dart';
+import '../../../utils/image_saver.dart';
+import 'dart:convert';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:universal_html/html.dart' as html;
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class DesktopPreview extends StatelessWidget {
   const DesktopPreview({super.key});
@@ -146,7 +153,7 @@ class DesktopPreview extends StatelessWidget {
   }
 }
 
-class ShareDialog extends StatelessWidget {
+class ShareDialog extends StatefulWidget {
   final String username;
   final String displayName;
   final String? profileImageUrl;
@@ -157,6 +164,13 @@ class ShareDialog extends StatelessWidget {
     this.profileImageUrl,
     super.key,
   });
+
+  @override
+  State<ShareDialog> createState() => _ShareDialogState();
+}
+
+class _ShareDialogState extends State<ShareDialog> {
+  final _qrKey = GlobalKey<BorderedQRViewState>();
 
   @override
   Widget build(BuildContext context) {
@@ -179,8 +193,9 @@ class ShareDialog extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
                 BorderedQRView(
-                  data: 'https://tappglobal-app-profile.web.app/$username',
-                  profileImageUrl: profileImageUrl,
+                  key: _qrKey,
+                  data: 'https://tappglobal-app-profile.web.app/${widget.username}',
+                  profileImageUrl: widget.profileImageUrl,
                 ),
                 const SizedBox(height: 24),
                 _buildOption(
@@ -188,7 +203,7 @@ class ShareDialog extends StatelessWidget {
                   'Copy Link',
                   FontAwesomeIcons.copy,
                   () => _copyLink(context),
-                  subtitle: 'https://tappglobal-app-profile.web.app/$username',
+                  subtitle: 'https://tappglobal-app-profile.web.app/${widget.username}',
                 ),
                 if (hasContactBlock) _buildOption(
                   context,
@@ -258,7 +273,7 @@ class ShareDialog extends StatelessWidget {
   }
 
   Future<void> _copyLink(BuildContext context) async {
-    final link = 'https://tappglobal-app-profile.web.app/$username';
+    final link = 'https://tappglobal-app-profile.web.app/${widget.username}';
     await Clipboard.setData(ClipboardData(text: link));
     if (!context.mounted) return;
     Navigator.of(context).pop();
@@ -271,12 +286,147 @@ class ShareDialog extends StatelessWidget {
     );
   }
 
-  // TODO: Implement vCard download
-  void _downloadContactCard(BuildContext context) {}
+  Future<void> _downloadContactCard(BuildContext context) async {
+    final provider = Provider.of<DigitalProfileProvider>(context, listen: false);
+  
+    // Find contact block
+    final contactBlock = provider.profileData.blocks
+      .firstWhere((block) => block.type == BlockType.contact,
+        orElse: () => throw Exception('No contact block found'));
+
+    final content = contactBlock.contents.firstOrNull;
+    if (content == null) return;
+
+    // Generate vCard data
+    final phones = (content.metadata?['phones'] as List? ?? []);
+    final emails = (content.metadata?['emails'] as List? ?? []);
+
+    final vCard = [
+      'BEGIN:VCARD',
+      'VERSION:3.0',
+      'FN;CHARSET=UTF-8:${content.firstName ?? ''} ${content.lastName ?? ''}'.trim(),
+      'N;CHARSET=UTF-8:${content.lastName ?? ''};${content.firstName ?? ''};;;',
+      if (content.imageUrl?.isNotEmpty == true) 'PHOTO;MEDIATYPE=image/jpeg:${content.imageUrl}',
+      ...emails.map((email) => 'EMAIL;CHARSET=UTF-8;type=WORK,INTERNET:${email['address']}'),
+      ...phones.map((phone) => 'TEL;TYPE=CELL:${phone['number']}'),
+      if (content.jobTitle?.isNotEmpty == true) 'TITLE;CHARSET=UTF-8:${content.jobTitle}',
+      if (content.companyName?.isNotEmpty == true) 'ORG;CHARSET=UTF-8:${content.companyName}',
+      'URL;type=TAPP! Digital Profile;CHARSET=UTF-8:https://l.tappglobal.app/${widget.username}',
+      'END:VCARD'
+    ].join('\n');
+
+    if (kIsWeb) {
+      final bytes = utf8.encode(vCard);
+      final base64 = base64Encode(bytes);
+      final dataUrl = 'data:text/vcard;base64,$base64';
+
+      // Create filename from contact name
+      final fileName = '${content.firstName ?? ''} ${content.lastName ?? ''}'.trim();
+      
+      // Create and click download link
+      html.AnchorElement(href: dataUrl)
+        ..setAttribute('download', '${fileName.isEmpty ? 'contact' : fileName}.vcf')
+        ..click();
+    } else {
+      // For mobile platforms
+      final tempDir = await getTemporaryDirectory();
+      final file = File('${tempDir.path}/contact.vcf');
+      await file.writeAsString(vCard);
+      await Share.shareXFiles([XFile(file.path)], text: 'Contact Information');
+    }
+
+    if (!context.mounted) return;
+    Navigator.pop(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Contact card downloaded successfully'))
+    );
+  }
 
   // TODO: Implement Apple/Google Wallet integration
-  void _addToWallet(BuildContext context) {}
+  void _addToWallet(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Coming Soon'),
+        content: const Text('Digital wallet integration will be available in a future update.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
 
-  // TODO: Implement QR code download
-  void _saveQRCode(BuildContext context) {}
+  Future<void> _saveQRCode(BuildContext context) async {
+    try {
+      // Validate QR key state
+      if (_qrKey.currentState == null) {
+        throw QRGenerationException('QR code component not initialized');
+      }
+
+      // Generate QR code bytes
+      final bytes = await _qrKey.currentState?.exportQR();
+      if (bytes == null) {
+        throw QRGenerationException('Failed to generate QR code data');
+      }
+
+      // Save image
+      try {
+        await ImageSaveUtil.saveImage(
+          bytes, 
+          'tapp_qr_${widget.username}.png'
+        );
+      } catch (e) {
+        throw ImageSaveException('Failed to save QR code: ${e.toString()}');
+      }
+
+      if (!context.mounted) return;
+      
+      Navigator.pop(context);
+      _showSuccessMessage(context);
+
+    } on QRGenerationException catch (e) {
+      _handleError(context, e.message);
+    } on ImageSaveException catch (e) {
+      _handleError(context, e.message);
+    } catch (e) {
+      _handleError(context, 'Unexpected error occurred while saving QR code');
+    }
+  }
+
+  void _showSuccessMessage(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('QR Code saved successfully'),
+        behavior: SnackBarBehavior.floating,
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _handleError(BuildContext context, String message) {
+    if (!context.mounted) return;
+    Navigator.pop(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Theme.of(context).colorScheme.error,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+}
+
+// Custom exceptions for better error handling
+class QRGenerationException implements Exception {
+  final String message;
+  QRGenerationException(this.message);
+}
+
+class ImageSaveException implements Exception {
+  final String message;
+  ImageSaveException(this.message);
 }
