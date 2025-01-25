@@ -2,8 +2,8 @@
 // Dummy home screen design with no functionality
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../widgets/scan_bottom_sheet.dart';
 import 'leads_screen.dart';
-import 'scan_screen.dart';
 import 'inbox_screen.dart';
 import 'digital_profile/digital_profile_screen.dart';
 import '../widgets/responsive_layout.dart';
@@ -45,7 +45,17 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onItemTapped(int index) {
-    setState(() => _selectedIndex = index);
+    if (index == 2) {
+      showModalBottomSheet(
+        context: context,
+        builder: (context) => const ScanBottomSheet(),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+      );
+    } else {
+      setState(() => _selectedIndex = index);
+    }
   }
 
   Future<void> _handleSignOut() async {
@@ -170,7 +180,6 @@ class _HomeScreenState extends State<HomeScreen> {
       child: switch (_selectedIndex) {
         0 => _buildHomeContent(),
         1 => const LeadsScreen(),
-        2 => const ScanScreen(),
         3 => const InboxScreen(),
         4 => const DigitalProfileScreen(),
         _ => _buildHomeContent(),

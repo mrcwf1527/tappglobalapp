@@ -6,7 +6,6 @@ import '../screens/auth_screen.dart';
 import '../screens/forgot_password_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/leads_screen.dart';
-import '../screens/scan_screen.dart';
 import '../screens/inbox_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/digital_profile/digital_profile_screen.dart';
@@ -64,7 +63,6 @@ class AppRoutes {
     forgotPassword: (context) => const ForgotPasswordScreen(),
     home: (context) => const HomeScreen(),
     leads: (context) => const LeadsScreen(),
-    scan: (context) => const ScanScreen(),
     inbox: (context) => const InboxScreen(),
     digitalProfile: (context) => const DigitalProfileScreen(),
     settings: (context) => const SettingsScreen(),

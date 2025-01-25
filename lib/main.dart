@@ -12,6 +12,8 @@ import 'config/theme.dart';
 import 'config/routes.dart';
 import 'providers/theme_provider.dart';
 import 'providers/digital_profile_provider.dart';
+import 'providers/business_card_provider.dart';
+import 'services/gemini_service.dart';
 import 'screens/auth_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/digital_profile/public_digital_profile_screen.dart';
@@ -24,12 +26,15 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  
+  await GeminiService().initialize();
 
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider(prefs)),
         ChangeNotifierProvider(create: (_) => DigitalProfileProvider()),
+        ChangeNotifierProvider(create: (_) => BusinessCardProvider()),
       ],
       child: const MyApp(),
     ),
@@ -99,7 +104,7 @@ class MyAppState extends State<MyApp> {
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return _buildLoadingScreen(); //Change to the loading screen
+          return _buildLoadingScreen();
         }
         return snapshot.data == null ? const AuthScreen() : const HomeScreen();
       },
