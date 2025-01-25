@@ -21,10 +21,10 @@ class EditBusinessCardScreen extends StatefulWidget {
 
 class _EditBusinessCardScreenState extends State<EditBusinessCardScreen> {
   final S3Service _s3Service = S3Service();
-  GlobalKey<FormState> _formKey = GlobalKey<FormState>(); // Initialize here
+  GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   late List<Map<String, dynamic>> _cards;
   late int _currentCardIndex = 0;
-  bool _isSaving = false;
+  final bool _isSaving = false;
   bool _isSavingAll = false;
 
   @override
@@ -33,8 +33,12 @@ class _EditBusinessCardScreenState extends State<EditBusinessCardScreen> {
     _cards = List.from(widget.extractedCards);
   }
 
-    Future<void> _saveAllCards() async {
+  Future<void> _saveAllCards() async {
+    if (!mounted) return;
+    
     setState(() => _isSavingAll = true);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
     
     try {
       final userId = FirebaseAuth.instance.currentUser?.uid;
@@ -59,57 +63,17 @@ class _EditBusinessCardScreenState extends State<EditBusinessCardScreen> {
       }
 
       if (mounted) {
-        Navigator.pop(context);
-        Navigator.pop(context);
+        navigator.pop();
+        navigator.pop();
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error saving cards: $e')),
-      );
+      if (mounted) {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text('Error saving cards: $e')),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isSavingAll = false);
-    }
-  }
-
-  Future<void> _saveCard() async {
-    if (!_formKey.currentState!.validate()) return;
-    _formKey.currentState!.save();
-
-    setState(() => _isSaving = true);
-
-    try {
-      final userId = FirebaseAuth.instance.currentUser?.uid;
-      if (userId == null) throw Exception('User not logged in');
-
-      final imageUrl = await _s3Service.uploadImage(
-        imageBytes: widget.imageBytes,
-        userId: userId,
-        folder: 'business_cards',
-        fileName: DateTime.now().millisecondsSinceEpoch.toString(),
-        maxSizeKB: 800,
-      );
-
-      final cardData = {
-        ..._cards[_currentCardIndex],
-        'userId': userId,
-        'imageUrl': imageUrl,
-        'createdAt': Timestamp.fromDate(DateTime.now()),
-      };
-
-      await FirebaseFirestore.instance
-          .collection('businessCards')
-          .add(cardData);
-
-      if (mounted) {
-        Navigator.pop(context);
-        Navigator.pop(context);
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error saving card: $e')),
-      );
-    } finally {
-      if (mounted) setState(() => _isSaving = false);
     }
   }
 
@@ -129,11 +93,18 @@ class _EditBusinessCardScreenState extends State<EditBusinessCardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
+    final theme = Theme.of(context);
+    
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, Object? result) async {
+        if (didPop) return;
+        
         if (_currentCardIndex == 0) {
-          return await showDialog(
-            context: context,
+          final currentContext = context;
+          final navigator = Navigator.of(currentContext);
+          final shouldPop = await showDialog<bool>(
+            context: currentContext,
             builder: (context) => AlertDialog(
               title: const Text('Discard Changes?'),
               content: const Text('If you go back, all changes will be lost.'),
@@ -149,12 +120,15 @@ class _EditBusinessCardScreenState extends State<EditBusinessCardScreen> {
               ],
             ),
           ) ?? false;
+          
+          if (shouldPop && mounted) {
+            navigator.pop();
+          }
         } else {
           setState(() {
             _currentCardIndex--;
             _formKey = GlobalKey<FormState>();
           });
-          return false;
         }
       },
       child: Scaffold(
@@ -188,10 +162,10 @@ class _EditBusinessCardScreenState extends State<EditBusinessCardScreen> {
                     ? _saveAllCards
                     : _nextCard,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).brightness == Brightness.light 
+                  backgroundColor: theme.brightness == Brightness.light 
                     ? Colors.black 
                     : Colors.white,
-                  foregroundColor: Theme.of(context).brightness == Brightness.light 
+                  foregroundColor: theme.brightness == Brightness.light 
                     ? Colors.white 
                     : Colors.black,
                   minimumSize: const Size(double.infinity, 50),
@@ -215,95 +189,36 @@ class _EditBusinessCardScreenState extends State<EditBusinessCardScreen> {
     );
   }
 
-    bool _hasSocialMedia(String field) {
+  bool _hasSocialMedia(String field) {
     final socialMedia = Map<String, String>.from(_cards[_currentCardIndex][field] ?? {});
     return socialMedia.values.any((value) => value.isNotEmpty);
   }
 
-
   // Modified _buildTextField to handle list conversion and maintain single line input
   Widget _buildTextField(String label, String field, dynamic initialValue) {
-  String value = '';
-  if (initialValue is List) {
-    value = initialValue.join(', ');
-  } else {
-    value = initialValue?.toString() ?? '';
-  }
-
-  return Padding(
-    padding: const EdgeInsets.only(bottom: 16),
-    child: TextFormField(
-      key: ValueKey('$field-$_currentCardIndex'),
-      initialValue: value,
-      decoration: InputDecoration(labelText: label),
-      onSaved: (value) {
-        if (field == 'phone' || field == 'email') {
-          _cards[_currentCardIndex][field] = value?.split(',').map((e) => e.trim()).toList() ?? [];
-        } else {
-          _cards[_currentCardIndex][field] = value ?? '';
-        }
-      },
-    ),
-  );
-}
-
-  Widget _buildListField(String label, String field) {
-    // Handle list initialization more carefully
-    dynamic fieldValue = _cards[_currentCardIndex][field];
-    List<String> values;
-    
-    if (fieldValue is List) {
-      values = fieldValue.map((e) => e.toString()).toList();
-    } else if (fieldValue is String) {
-      values = [fieldValue];
+    String value = '';
+    if (initialValue is List) {
+      value = initialValue.join(', ');
     } else {
-      values = [];
+      value = initialValue?.toString() ?? '';
     }
-    
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: Theme.of(context).textTheme.titleMedium),
-        ...List.generate(values.length, (index) => 
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    key: ValueKey('$field-$index-$_currentCardIndex'),
-                    initialValue: values[index],
-                    onSaved: (value) {
-                      if (value?.isNotEmpty ?? false) {
-                        values[index] = value!;
-                        _cards[_currentCardIndex][field] = values;
-                      }
-                    },
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: () => setState(() {
-                    values.add('');
-                    _cards[_currentCardIndex][field] = values;
-                  }),
-                ),
-                if (values.length > 1)
-                  IconButton(
-                    icon: const Icon(Icons.remove),
-                    onPressed: () => setState(() {
-                      values.removeAt(index);
-                      _cards[_currentCardIndex][field] = values;
-                    }),
-                  ),
-              ],
-            ),
-          )
-        ),
-      ],
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: TextFormField(
+        key: ValueKey('$field-$_currentCardIndex'),
+        initialValue: value,
+        decoration: InputDecoration(labelText: label),
+        onSaved: (value) {
+          if (field == 'phone' || field == 'email') {
+            _cards[_currentCardIndex][field] = value?.split(',').map((e) => e.trim()).toList() ?? [];
+          } else {
+            _cards[_currentCardIndex][field] = value ?? '';
+          }
+        },
+      ),
     );
   }
-
 
   Widget _buildSocialMediaFields(String label, String field) {
     final socialMedia = Map<String, String>.from(_cards[_currentCardIndex][field] ?? {});

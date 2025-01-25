@@ -20,7 +20,7 @@ class _ScanBottomSheetState extends State<ScanBottomSheet> {
   final GeminiService _geminiService = GeminiService();
   Uint8List? _imageBytes;
   Uint8List? _croppedBytes;
-  bool _isLoading = false;
+  final bool _isLoading = false;
   final _cropController = CropController(); // Added crop controller
 
   Future<void> _pickImage(ImageSource source) async {
@@ -90,8 +90,8 @@ class _ScanBottomSheetState extends State<ScanBottomSheet> {
                 baseColor: isDarkMode ? Colors.black : Colors.white,
                 // Customize crop area appearance
                 maskColor: isDarkMode 
-                  ? Colors.white.withOpacity(0.2) 
-                  : Colors.black.withOpacity(0.2),
+                  ? Colors.white.withAlpha((0.2 * 255).toInt())
+                  : Colors.black.withAlpha((0.2 * 255).toInt()),
                 cornerDotBuilder: (size, edgeAlignment) => 
                   Container(
                     width: size,
