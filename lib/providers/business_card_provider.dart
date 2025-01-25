@@ -1,4 +1,5 @@
 // lib/providers/business_card_provider.dart
+// State management class handling business card data operations with Firebase Firestore, including loading and adding cards.
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/business_card.dart';

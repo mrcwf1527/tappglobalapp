@@ -1,4 +1,5 @@
 // lib/services/gemini_service.dart
+// Service using Google's Gemini AI to extract structured business card information from images with specific formatting rules.
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
@@ -66,6 +67,49 @@ class GeminiService {
       return decoded is List 
           ? List<Map<String, dynamic>>.from(decoded)
           : [Map<String, dynamic>.from(decoded)];
+    } catch (e) {
+      throw Exception('Invalid response format: $e');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> extractFromPDF(Uint8List pdfBytes) async {
+    final apiKey = _remoteConfig.getString('gemini_api_key');
+    if (apiKey.isEmpty) throw Exception('Gemini API key not configured');
+    
+    final model = GenerativeModel(
+      model: 'gemini-2.0-flash-exp',
+      apiKey: apiKey,
+      generationConfig: GenerationConfig(
+        temperature: 0.3,
+        topK: 40,
+        topP: 0.9,
+        maxOutputTokens: 2048,
+      ),
+      systemInstruction: Content.system(_getSystemPrompt()),
+    );
+    debugPrint('Model initialized');
+
+    final chat = model.startChat();
+    final content = Content.multi([
+      TextPart('Extract information from this business card:'),
+      DataPart('application/pdf', pdfBytes),
+    ]);
+
+    debugPrint('Sending request to Gemini...');
+    final response = await chat.sendMessage(content);
+    debugPrint('Raw response: ${response.text}');
+
+    final jsonStr = response.text?.replaceAll('```json', '').replaceAll('```', '');
+    if (jsonStr == null || jsonStr.isEmpty) {
+      throw Exception('Failed to extract information from pdf file');
+    }
+
+    debugPrint('Parsing JSON...');
+    try {
+      final decoded = json.decode(jsonStr);
+      return decoded is List 
+        ? List<Map<String, dynamic>>.from(decoded)
+        : [Map<String, dynamic>.from(decoded)];
     } catch (e) {
       throw Exception('Invalid response format: $e');
     }

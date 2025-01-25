@@ -1,18 +1,22 @@
 // lib/screens/business_card/edit_business_card_screen.dart
+// Screen for editing scanned business card information with form fields and image preview, supporting multiple cards from a single scan.
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import '../../services/s3_service.dart';
 
 class EditBusinessCardScreen extends StatefulWidget {
   final Uint8List imageBytes;
   final List<Map<String, dynamic>> extractedCards;
+  final String? fileName;
 
   const EditBusinessCardScreen({
     super.key,
     required this.imageBytes,
     required this.extractedCards,
+    this.fileName,
   });
 
   @override
@@ -44,26 +48,40 @@ class _EditBusinessCardScreenState extends State<EditBusinessCardScreen> {
       final userId = FirebaseAuth.instance.currentUser?.uid;
       if (userId == null) throw Exception('User not logged in');
 
-      final imageUrl = await _s3Service.uploadImage(
-        imageBytes: widget.imageBytes,
-        userId: userId,
-        folder: 'business_cards',
-        fileName: DateTime.now().millisecondsSinceEpoch.toString(),
-        maxSizeKB: 800,
-      );
+      final String fileName = widget.fileName?.toLowerCase() ?? '';
+      String url;
+      
+      if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') || fileName.endsWith('.png')) {
+        url = await _s3Service.uploadImage(
+          imageBytes: widget.imageBytes,
+          userId: userId,
+          folder: 'business_cards',
+          fileName: DateTime.now().millisecondsSinceEpoch.toString(),
+          maxSizeKB: 800,
+        );
+      } else {
+        url = await _s3Service.uploadFile(
+          fileBytes: widget.imageBytes,
+          userId: userId,
+          folder: 'business_cards',
+          fileName: '${DateTime.now().millisecondsSinceEpoch}${widget.fileName ?? ''}',
+        );
+      }
 
       for (var card in _cards) {
         final cardData = {
           ...card,
           'userId': userId,
-          'imageUrl': imageUrl,
+          if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') || fileName.endsWith('.png'))
+            'imageUrl': url
+          else
+            'fileUrl': url,
           'createdAt': Timestamp.fromDate(DateTime.now()),
         };
         await FirebaseFirestore.instance.collection('businessCards').add(cardData);
       }
 
       if (mounted) {
-        navigator.pop();
         navigator.pop();
       }
     } catch (e) {
@@ -79,16 +97,195 @@ class _EditBusinessCardScreenState extends State<EditBusinessCardScreen> {
 
   void _nextCard() {
     if (_formKey.currentState!.validate()) {
-      // Save current form data
       _formKey.currentState!.save();
-      
-      // Move to next card
       setState(() {
         _currentCardIndex++;
-        // Force rebuild of form fields with new data
         _formKey = GlobalKey<FormState>();
       });
     }
+  }
+
+  Widget _buildPreviewContent() {
+    final String fileName = widget.fileName?.toLowerCase() ?? '';
+    
+    try {
+      if (fileName.endsWith('.pdf') || fileName.endsWith('.PDF')) {
+        return Container(
+          height: 200,
+          width: double.infinity,
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.picture_as_pdf, 
+                size: 48,
+                color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.grey[700],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'PDF Preview Available',
+                style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.grey[700],
+                ),
+              ),
+              Text(
+                'Tap to open',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[400] : Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+
+      return Image.memory(
+        widget.imageBytes,
+        height: 200,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) => ErrorPreviewContainer(
+          height: 200,
+          width: double.infinity,
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.broken_image, 
+                size: 48,
+                color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.grey[700],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Unable to load preview',
+                style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.grey[700],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+
+    } catch (e) {
+      return ErrorPreviewContainer(
+        height: 200,
+        width: double.infinity,
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, 
+              size: 48,
+              color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.grey[700],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Error loading preview',
+              style: TextStyle(
+                color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.grey[700],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  void _showExpandedPreview(BuildContext context) {
+    final String fileName = widget.fileName?.toLowerCase() ?? '';
+    
+    if (fileName.endsWith('.pdf') || fileName.endsWith('.PDF')) {
+      showDialog(
+        context: context,
+        builder: (context) => Dialog(
+          insetPadding: const EdgeInsets.all(16),
+          child: Stack(
+            children: [
+              SfPdfViewer.memory(
+                widget.imageBytes,
+                enableDoubleTapZooming: true,
+                pageSpacing: 8,
+              ),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: IconButton(
+                  icon: Icon(Icons.close, 
+                    color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+      return;
+    }
+
+    // Handle images
+    if (widget.fileName == null || fileName.endsWith('.jpg') || 
+        fileName.endsWith('.jpeg') || fileName.endsWith('.png')) {
+      showDialog(
+        context: context,
+        builder: (context) => Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: EdgeInsets.zero,
+          child: Stack(
+            fit: StackFit.loose,
+            children: [
+              InteractiveViewer(
+                minScale: 0.5,
+                maxScale: 4.0,
+                child: Image.memory(widget.imageBytes),
+              ),
+              Positioned(
+                top: 40,
+                right: 20,
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+      return;
+    }
+
+    // For other files
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Preview not available for this file type')),
+    );
+  }
+
+  Widget _buildExpandableImage() {
+    final preview = _buildPreviewContent();
+    if (preview is ErrorPreviewContainer || 
+        (preview is Image && (preview.errorBuilder != null))) {
+      return preview;
+    }
+    
+    return Center(
+      child: GestureDetector(
+        onTap: () => _showExpandedPreview(context),
+        child: preview,
+      ),
+    );
   }
 
   @override
@@ -194,7 +391,6 @@ class _EditBusinessCardScreenState extends State<EditBusinessCardScreen> {
     return socialMedia.values.any((value) => value.isNotEmpty);
   }
 
-  // Modified _buildTextField to handle list conversion and maintain single line input
   Widget _buildTextField(String label, String field, dynamic initialValue) {
     String value = '';
     if (initialValue is List) {
@@ -227,7 +423,7 @@ class _EditBusinessCardScreenState extends State<EditBusinessCardScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(bottom: 16), // Added padding
+          padding: const EdgeInsets.only(bottom: 16),
           child: Text(label, style: Theme.of(context).textTheme.titleSmall),
         ),
         ...socialMedia.entries
@@ -250,45 +446,15 @@ class _EditBusinessCardScreenState extends State<EditBusinessCardScreen> {
       ],
     );
   }
-  
-  Widget _buildExpandableImage() {
-    return Center(
-      child: GestureDetector(
-        onTap: () => _showExpandedImage(context),
-        child: Image.memory(
-          widget.imageBytes, 
-          height: 200, 
-          fit: BoxFit.contain
-        ),
-      ),
-    );
-    }
+}
 
-  void _showExpandedImage(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: EdgeInsets.zero,
-        child: Stack(
-          fit: StackFit.loose,
-          children: [
-            InteractiveViewer(
-              minScale: 0.5,
-              maxScale: 4.0,
-              child: Image.memory(widget.imageBytes),
-            ),
-            Positioned(
-              top: 40,
-              right: 20,
-              child: IconButton(
-                icon: const Icon(Icons.close, color: Colors.white),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+class ErrorPreviewContainer extends Container {
+  ErrorPreviewContainer({
+    super.key,
+    required super.child,
+    super.height,
+    super.width,
+    super.margin,
+    super.decoration,
+  });
 }

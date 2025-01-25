@@ -1,4 +1,5 @@
 // lib/widgets/scanning_loading_screen.dart
+// Loading screen with animation shown while processing scanned business card images.
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 

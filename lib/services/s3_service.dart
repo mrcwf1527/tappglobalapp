@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:aws_s3_api/s3-2006-03-01.dart';
 import 'package:uuid/uuid.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:path/path.dart' as path;
 
 class S3Service {
   static final S3Service _instance = S3Service._internal();
@@ -70,6 +71,48 @@ class S3Service {
       );
     } catch (e) {
       debugPrint('S3 delete error: $e');
+      rethrow;
+    }
+  }
+
+
+    Future<String> uploadFile({
+    required Uint8List fileBytes,
+    required String userId,
+    required String folder,
+    required String fileName,
+  }) async {
+    try {
+      final extension = path.extension(fileName);
+      final uniqueId = _uuid.v4();
+      final key = 'users/$userId/$folder/$uniqueId$extension';
+
+      String contentType;
+      switch (extension.toLowerCase()) {
+        case '.pdf':
+          contentType = 'application/pdf';
+        case '.doc':
+          contentType = 'application/msword';
+        case '.docx':
+          contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        case '.xls':
+          contentType = 'application/vnd.ms-excel';
+        case '.xlsx':
+          contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        default:
+          contentType = 'application/octet-stream';
+      }
+
+      await _s3.putObject(
+        bucket: dotenv.env['AWS_BUCKET']!,
+        key: key,
+        body: fileBytes,
+        contentType: contentType,
+      );
+
+      return '${dotenv.env['AWS_DOMAIN']!.replaceFirst('{0}', dotenv.env['AWS_BUCKET']!)}$key';
+    } catch (e) {
+      debugPrint('S3 upload error: $e');
       rethrow;
     }
   }

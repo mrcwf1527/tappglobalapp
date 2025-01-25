@@ -1,5 +1,7 @@
 // lib/widgets/scan_bottom_sheet.dart
+// Bottom sheet widget offering options to scan, upload, or import business cards with image cropping functionality.
 import 'dart:typed_data';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:crop_your_image/crop_your_image.dart';
@@ -140,8 +142,9 @@ class _ScanBottomSheetState extends State<ScanBottomSheet> {
       
       if (!mounted) return;
       
-      // Close loading screen
-      Navigator.pop(context);
+      // Close both bottom sheet and loading screen
+      Navigator.pop(context); // Close loading screen
+      Navigator.pop(context); // Close bottom sheet
       
       Navigator.push(
         context,
@@ -160,15 +163,53 @@ class _ScanBottomSheetState extends State<ScanBottomSheet> {
   }
 
   Future<void> _importFile() async {
-    // TODO: Implement file import functionality
-    // 1. Allow user to pick a file (PDF/DOC)
-    // 2. Convert file to image format if needed
-    // 3. Send to Gemini service for processing
-    // 4. Handle response similar to image processing
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('File import coming soon!')),
-    );
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+        withData: true,
+      );
+
+      if (result == null || result.files.first.bytes == null) return;
+      final bytes = result.files.first.bytes!;
+
+      if (!mounted) return;
+      
+      // Show loading screen
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const ScanningLoadingScreen(),
+      );
+
+      final extractedData = await _geminiService.extractFromPDF(bytes);
+      
+      if (!mounted) return;
+
+      // First pop the bottom sheet, then loading screen
+      Navigator.pop(context); // Bottom sheet
+      Navigator.pop(context); // Loading screen
+      
+      // Then push edit screen
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => EditBusinessCardScreen(
+            imageBytes: bytes,
+            extractedCards: extractedData,
+          ),
+        ),
+      );
+
+    } catch (e) {
+      debugPrint('Import error: $e');
+      if (!mounted) return;
+      
+      Navigator.pop(context); // Close loading screen
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
   }
 
   void _showErrorDialog(String message) {
@@ -252,6 +293,9 @@ class _ScanBottomSheetState extends State<ScanBottomSheet> {
         children: [
           Container(
             padding: const EdgeInsets.all(16),
+            width: 64,
+            height: 64,
+            alignment: Alignment.center,
             decoration: BoxDecoration(
               color: Theme.of(context).brightness == Brightness.dark 
                 ? Colors.grey[800] // Darker background for dark mode
@@ -278,7 +322,7 @@ class _ScanBottomSheetState extends State<ScanBottomSheet> {
                 : Colors.black, // Black text for light mode
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 24),
         ],
       ),
     );

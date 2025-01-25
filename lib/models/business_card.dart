@@ -1,4 +1,5 @@
 // lib/models/business_card.dart
+// Data model class defining the structure and properties of a business card with fields like name, title, contact info, and company details.
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class BusinessCard {
