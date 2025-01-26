@@ -20,21 +20,32 @@ class ScanBottomSheet extends StatefulWidget {
 class _ScanBottomSheetState extends State<ScanBottomSheet> {
   final ImagePicker _picker = ImagePicker();
   final GeminiService _geminiService = GeminiService();
+  Uint8List? _originalImageBytes;  // Added to store the original image
   Uint8List? _imageBytes;
   Uint8List? _croppedBytes;
   final bool _isLoading = false;
   final _cropController = CropController(); // Added crop controller
+  bool _isPickerLoading = false; // Added loading state for image picker
+  bool _isFilePickerLoading = false; // Add new state variable
 
   Future<void> _pickImage(ImageSource source) async {
+    setState(() => _isPickerLoading = true); // Set loading state to true
+
     try {
       final XFile? image = await _picker.pickImage(source: source);
-      if (image == null) return;
+      if (image == null) {
+        setState(() => _isPickerLoading = false); // Set loading state to false if no image is picked
+        return;
+      }
 
-      _imageBytes = await image.readAsBytes();
+      _originalImageBytes = await image.readAsBytes(); // Store original image
+      _imageBytes = _originalImageBytes; // Use original image for cropping display
       if (_imageBytes != null) {
+        setState(() => _isPickerLoading = false); // Set loading state to false before showing crop dialog
         _showCropDialog();
       }
     } catch (e) {
+      setState(() => _isPickerLoading = false); // Set loading state to false on error
       _showErrorDialog('Error picking image: $e');
     }
   }
@@ -128,7 +139,7 @@ class _ScanBottomSheetState extends State<ScanBottomSheet> {
   }
 
   Future<void> _processImage() async {
-    if (_croppedBytes == null) return;
+    if (_croppedBytes == null || _originalImageBytes == null) return; // Ensure original image is available
 
     // Show full-screen loading
     showDialog(
@@ -150,7 +161,8 @@ class _ScanBottomSheetState extends State<ScanBottomSheet> {
         context,
         MaterialPageRoute(
           builder: (context) => EditBusinessCardScreen(
-            imageBytes: _croppedBytes!,
+            imageBytes: _croppedBytes!, // For display and Gemini
+            originalImageBytes: _originalImageBytes, // For S3 upload
             extractedCards: extractedData,
           ),
         ),
@@ -163,6 +175,8 @@ class _ScanBottomSheetState extends State<ScanBottomSheet> {
   }
 
   Future<void> _importFile() async {
+    setState(() => _isFilePickerLoading = true);
+    
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -170,7 +184,11 @@ class _ScanBottomSheetState extends State<ScanBottomSheet> {
         withData: true,
       );
 
-      if (result == null || result.files.first.bytes == null) return;
+      if (result == null || result.files.first.bytes == null) {
+        setState(() => _isFilePickerLoading = false);
+        return;
+      }
+      
       final bytes = result.files.first.bytes!;
       final fileName = result.files.first.name; // Add this to preserve filename
 
@@ -201,6 +219,7 @@ class _ScanBottomSheetState extends State<ScanBottomSheet> {
       );
 
     } catch (e) {
+      setState(() => _isFilePickerLoading = false);
       debugPrint('Import error: $e');
       if (!mounted) return;
       
@@ -285,45 +304,59 @@ class _ScanBottomSheetState extends State<ScanBottomSheet> {
     required String label,
     required VoidCallback onTap,
   }) {
-    return InkWell(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            width: 64,
-            height: 64,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: Theme.of(context).brightness == Brightness.dark 
-                ? Colors.grey[800] // Darker background for dark mode
-                : Colors.grey[100], // Light background for light mode
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: FaIcon(
-              icon, 
-              size: 24,
-              color: Theme.of(context).brightness == Brightness.dark
-                ? Colors.white // White icon for dark mode
-                : Colors.black, // Black icon for light mode
-            ),
+  bool isLoading = (label.contains('Scan') || label.contains('Upload')) ? 
+                   _isPickerLoading : _isFilePickerLoading;
+
+  return InkWell(
+    onTap: isLoading ? null : onTap,
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          width: 64,
+          height: 64,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: isLoading ? Colors.grey[400] : Theme.of(context).brightness == Brightness.dark 
+              ? Colors.grey[800] 
+              : Colors.grey[100],
+            borderRadius: BorderRadius.circular(12),
           ),
-          const SizedBox(height: 12),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).brightness == Brightness.dark
-                ? Colors.white // White text for dark mode
-                : Colors.black, // Black text for light mode
-            ),
+          child: isLoading
+              ? SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white 
+                      : Colors.black,
+                  ),
+                )
+              : FaIcon(
+                  icon,
+                  size: 24,
+                  color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white
+                    : Colors.black,
+                ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.white // White text for dark mode
+              : Colors.black, // Black text for light mode
           ),
-          const SizedBox(height: 24),
-        ],
-      ),
-    );
-  }
+        ),
+        const SizedBox(height: 24),
+      ],
+    ),
+  );
+}
 }

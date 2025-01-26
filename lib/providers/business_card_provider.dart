@@ -3,30 +3,163 @@
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/business_card.dart';
+import '../services/s3_service.dart';
 
 class BusinessCardProvider extends ChangeNotifier {
   final _firestore = FirebaseFirestore.instance;
-  List<BusinessCard> _cards = [];
+  final _s3Service = S3Service();
 
-  List<BusinessCard> get cards => _cards;
+  List<BusinessCard> _allCards = [];
+  List<BusinessCard> _filteredCards = [];
+  String _searchQuery = '';
+  String? _selectedCountry;
+  String? _selectedDepartment;
+  String? _selectedSeniority;
+  String _sortBy = 'dateNewest';
+
+  List<BusinessCard> get cards => _filteredCards;
 
   Future<void> loadCards(String userId) async {
-    final snapshot = await _firestore
-        .collection('businessCards')
-        .where('userId', isEqualTo: userId)
-        .orderBy('createdAt', descending: true)
-        .get();
+    try {
+      final snapshot = await _firestore
+          .collection('businessCards')
+          .doc(userId)
+          .collection('cards')
+          .orderBy('createdAt', descending: true)
+          .get();
 
-    _cards = snapshot.docs
-        .map((doc) => BusinessCard.fromMap(doc.data(), id: doc.id))
-        .toList();
+      _allCards = snapshot.docs
+          .map((doc) => BusinessCard.fromMap(doc.data(), id: doc.id))
+          .toList();
+          
+      _filteredCards = List.from(_allCards);
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error loading cards: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> addCard(BusinessCard card, String userId) async {
+    try {
+      final doc = await _firestore
+          .collection('businessCards')
+          .doc(userId)
+          .collection('cards')
+          .add(card.toMap());
+          
+      final newCard = BusinessCard.fromMap(card.toMap(), id: doc.id);
+      _allCards.insert(0, newCard);
+      _applyFilters();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error adding card: $e');
+      rethrow;
+    }
+  }
+
+  void updateSearch(String query) {
+    _searchQuery = query;
+    _applyFilters();
+  }
+
+  void updateFilters({
+    String? country,
+    String? department,
+    String? seniority,
+    String? sortBy,
+  }) {
+    _selectedCountry = country;
+    _selectedDepartment = department;
+    _selectedSeniority = seniority;
+    if (sortBy != null) _sortBy = sortBy;
+    _applyFilters();
+  }
+
+  void _applyFilters() {
+    _filteredCards = _allCards.where((card) {
+      if (_searchQuery.isNotEmpty) {
+        final searchLower = _searchQuery.toLowerCase();
+        if (!card.name.toLowerCase().contains(searchLower) &&
+            !card.title.toLowerCase().contains(searchLower) &&
+            !card.brandName.toLowerCase().contains(searchLower)) {
+          return false;
+        }
+      }
+      
+      if (_selectedCountry != null && card.country != _selectedCountry) return false;
+      if (_selectedDepartment != null && card.departmentDivision != _selectedDepartment) return false;
+      if (_selectedSeniority != null && card.jobSeniority != _selectedSeniority) return false;
+      
+      return true;
+    }).toList();
+
+    // Apply sorting
+    switch (_sortBy) {
+      case 'dateNewest':
+        _filteredCards.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        break;
+      case 'dateOldest':
+        _filteredCards.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+        break;
+      case 'nameAZ':
+        _filteredCards.sort((a, b) => a.name.compareTo(b.name));
+        break;
+      case 'nameZA':
+        _filteredCards.sort((a, b) => b.name.compareTo(a.name));
+        break;
+      case 'seniorityHigh':
+        _filteredCards.sort((a, b) => _getSeniorityWeight(b.jobSeniority).compareTo(_getSeniorityWeight(a.jobSeniority)));
+        break;
+      case 'seniorityLow':
+        _filteredCards.sort((a, b) => _getSeniorityWeight(a.jobSeniority).compareTo(_getSeniorityWeight(b.jobSeniority)));
+        break;
+    }
+    
     notifyListeners();
   }
 
-  Future<void> addCard(BusinessCard card) async {
-    final doc = await _firestore.collection('businessCards').add(card.toMap());
-    final newCard = BusinessCard.fromMap(card.toMap(), id: doc.id);
-    _cards.insert(0, newCard);
-    notifyListeners();
+  int _getSeniorityWeight(String seniority) {
+    const weights = {
+      'C-Suite': 6,
+      'Executive': 5,
+      'Senior Management': 4,
+      'Mid Level': 3,
+      'Entry Level': 2,
+      'Intern': 1,
+      'Others': 0,
+    };
+    return weights[seniority] ?? 0;
+  }
+
+  Future<void> deleteCard(String cardId, String imageUrl, String userId) async {
+    try {
+      await _firestore
+          .collection('businessCards')
+          .doc(userId)
+          .collection('cards')
+          .doc(cardId)
+          .delete();
+      
+      if (imageUrl.isNotEmpty) {
+        await _s3Service.deleteFile(imageUrl);
+      }
+      
+      _allCards.removeWhere((card) => card.id == cardId);
+      _applyFilters();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error deleting card: $e');
+      rethrow;
+    }
+  }
+  
+  void clearFilters() {
+    _searchQuery = '';
+    _selectedCountry = null;
+    _selectedDepartment = null;
+    _selectedSeniority = null;
+    _sortBy = 'dateNewest';
+    _applyFilters();
   }
 }

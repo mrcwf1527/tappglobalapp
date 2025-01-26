@@ -1,7 +1,7 @@
 // lib/screens/business_card/edit_business_card_screen.dart
 // Screen for editing scanned business card information with form fields and image preview, supporting multiple cards from a single scan.
 import 'dart:io';
-import 'dart:html' as html;
+import 'package:universal_html/html.dart' as html;
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -15,10 +15,12 @@ class EditBusinessCardScreen extends StatefulWidget {
   final Uint8List imageBytes;
   final List<Map<String, dynamic>> extractedCards;
   final String? fileName;
+  final Uint8List? originalImageBytes;
 
   const EditBusinessCardScreen({
     super.key,
     required this.imageBytes,
+    this.originalImageBytes,
     required this.extractedCards,
     this.fileName,
   });
@@ -55,20 +57,22 @@ class _EditBusinessCardScreenState extends State<EditBusinessCardScreen> {
       final String fileName = widget.fileName?.toLowerCase() ?? '';
       String url;
       
-      if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') || fileName.endsWith('.png')) {
-        url = await _s3Service.uploadImage(
-          imageBytes: widget.imageBytes,
-          userId: userId,
-          folder: 'business_cards',
-          fileName: DateTime.now().millisecondsSinceEpoch.toString(),
-          maxSizeKB: 800,
-        );
-      } else {
+      if (fileName.endsWith('.pdf')) {
+        // For PDF files, use the original bytes
         url = await _s3Service.uploadFile(
           fileBytes: widget.imageBytes,
           userId: userId,
           folder: 'business_cards',
-          fileName: '${DateTime.now().millisecondsSinceEpoch}${widget.fileName ?? ''}',
+          fileName: widget.fileName ?? 'document.pdf',
+        );
+      } else {
+        // For images, always use original image bytes
+        url = await _s3Service.uploadImage(
+          imageBytes: widget.originalImageBytes!,
+          userId: userId,
+          folder: 'business_cards',
+          fileName: DateTime.now().millisecondsSinceEpoch.toString(),
+          maxSizeKB: 800,
         );
       }
 
@@ -76,13 +80,14 @@ class _EditBusinessCardScreenState extends State<EditBusinessCardScreen> {
         final cardData = {
           ...card,
           'userId': userId,
-          if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') || fileName.endsWith('.png'))
-            'imageUrl': url
-          else
-            'fileUrl': url,
+          'fileUrl': url,
           'createdAt': Timestamp.fromDate(DateTime.now()),
         };
-        await FirebaseFirestore.instance.collection('businessCards').add(cardData);
+        await FirebaseFirestore.instance
+            .collection('businessCards')
+            .doc(userId)
+            .collection('cards')
+            .add(cardData);
       }
 
       if (mounted) {
@@ -213,37 +218,47 @@ class _EditBusinessCardScreenState extends State<EditBusinessCardScreen> {
   }
 
   Future<void> _showExpandedPreview(BuildContext context) async {
+    if (!mounted) return;
+    final currentContext = context;
+    final navigator = Navigator.of(currentContext);
+    final messenger = ScaffoldMessenger.of(currentContext);
+    
     final String fileName = widget.fileName?.toLowerCase() ?? '';
     
     if (fileName.endsWith('.pdf')) {
-      if (!kIsWeb) {  // Change Platform.isAndroid || Platform.isIOS to !kIsWeb
-        final directory = await getApplicationDocumentsDirectory();
-        final filePath = '${directory.path}/${widget.fileName}';
-        
+      if (!kIsWeb) {
         try {
+          final directory = await getApplicationDocumentsDirectory();
+          if (!mounted) return;
+          
+          final filePath = '${directory.path}/${widget.fileName}';
           final file = File(filePath);
           await file.writeAsBytes(widget.imageBytes);
           
           final url = Uri.file(filePath);
-          if (await canLaunchUrl(url)) {
+          final canLaunch = await canLaunchUrl(url);
+          
+          if (!mounted) return;
+          if (canLaunch) {
             await launchUrl(url);
           } else {
-            if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
+            messenger.showSnackBar(
               const SnackBar(content: Text('Could not open file')),
             );
           }
         } catch (e) {
           if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
+          messenger.showSnackBar(
             SnackBar(content: Text('Error opening file: $e')),
           );
         }
       } else {
+        // Web implementation remains the same
         try {
           final blob = html.Blob([widget.imageBytes], 'application/pdf');
           final url = html.Url.createObjectUrlFromBlob(blob);
           
+          if (!mounted) return;
           final anchor = html.AnchorElement()
             ..href = url
             ..download = widget.fileName ?? 'document.pdf'
@@ -255,7 +270,7 @@ class _EditBusinessCardScreenState extends State<EditBusinessCardScreen> {
           html.Url.revokeObjectUrl(url);
         } catch (e) {
           if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
+          messenger.showSnackBar(
             SnackBar(content: Text('Error downloading file: $e')),
           );
         }
@@ -263,54 +278,41 @@ class _EditBusinessCardScreenState extends State<EditBusinessCardScreen> {
       return;
     }
 
-    // Handle images
-    if (widget.fileName == null || fileName.endsWith('.jpg') || 
-        fileName.endsWith('.jpeg') || fileName.endsWith('.png')) {
-      showDialog(
-        context: context,
-        builder: (context) => Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: EdgeInsets.zero,
-          child: Stack(
-            fit: StackFit.loose,
-            children: [
-              InteractiveViewer(
-                minScale: 0.5,
-                maxScale: 4.0,
-                child: Image.memory(widget.imageBytes),
+    // Image preview handling
+    if (!mounted) return;
+    await showDialog(
+      context: currentContext,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.zero,
+        child: Stack(
+          fit: StackFit.loose,
+          children: [
+            InteractiveViewer(
+              minScale: 0.5,
+              maxScale: 4.0,
+              child: Image.memory(widget.imageBytes),
+            ),
+            Positioned(
+              top: 40,
+              right: 20,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                onPressed: () => navigator.pop(),
               ),
-              Positioned(
-                top: 40,
-                right: 20,
-                child: IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
-      );
-      return;
-    }
-
-    // For other files
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Preview not available for this file type')),
+      ),
     );
   }
 
   Widget _buildExpandableImage() {
-    final preview = _buildPreviewContent();
-    if (preview is ErrorPreviewContainer || 
-        (preview is Image && (preview.errorBuilder != null))) {
-      return preview;
-    }
-    
-    return Center(
-      child: GestureDetector(
-        onTap: () => _showExpandedPreview(context),
-        child: preview,
+    return GestureDetector(
+      onTap: () => _showExpandedPreview(context),
+      child: Container( // Added Container for better tap detection
+        color: Colors.transparent, // Makes entire area tappable
+        child: _buildPreviewContent(),
       ),
     );
   }
