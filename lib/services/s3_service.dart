@@ -5,8 +5,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:aws_s3_api/s3-2006-03-01.dart';
 import 'package:uuid/uuid.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:path/path.dart' as path;
+import 'env_service.dart';
 
 class S3Service {
   static final S3Service _instance = S3Service._internal();
@@ -17,10 +17,10 @@ class S3Service {
   
   S3Service._internal() {
     _s3 = S3(
-      region: dotenv.env['AWS_REGION']!,
+      region: EnvService.getEnvVar('AWS_REGION'),
       credentials: AwsClientCredentials(
-        accessKey: dotenv.env['AWS_ACCESS_KEY_ID']!,
-        secretKey: dotenv.env['AWS_SECRET_ACCESS_KEY']!,
+        accessKey: EnvService.getEnvVar('AWS_ACCESS_KEY_ID'),
+        secretKey: EnvService.getEnvVar('AWS_SECRET_ACCESS_KEY'),
       ),
     );
   }
@@ -47,13 +47,13 @@ class S3Service {
       final key = 'users/$userId/$folder/$uniqueId.$extension';
 
       await _s3.putObject(
-        bucket: dotenv.env['AWS_BUCKET']!,
+        bucket: EnvService.getEnvVar('AWS_BUCKET'),
         key: key,
         body: optimizedBytes,
         contentType: 'image/jpeg',
       );
 
-      return '${dotenv.env['AWS_DOMAIN']!.replaceFirst('{0}', dotenv.env['AWS_BUCKET']!)}$key';
+      return '${EnvService.getEnvVar('AWS_DOMAIN').replaceFirst('{0}', EnvService.getEnvVar('AWS_BUCKET'))}$key';
     } catch (e) {
       debugPrint('S3 upload error: $e');
       rethrow;
@@ -66,7 +66,7 @@ class S3Service {
       final key = uri.path.substring(1); // Remove leading slash
 
       await _s3.deleteObject(
-        bucket: dotenv.env['AWS_BUCKET']!,
+        bucket: EnvService.getEnvVar('AWS_BUCKET'),
         key: key,
       );
     } catch (e) {
@@ -104,13 +104,13 @@ class S3Service {
       }
 
       await _s3.putObject(
-        bucket: dotenv.env['AWS_BUCKET']!,
+        bucket: EnvService.getEnvVar('AWS_BUCKET'),
         key: key,
         body: fileBytes,
         contentType: contentType,
       );
 
-      return '${dotenv.env['AWS_DOMAIN']!.replaceFirst('{0}', dotenv.env['AWS_BUCKET']!)}$key';
+      return '${EnvService.getEnvVar('AWS_DOMAIN').replaceFirst('{0}', EnvService.getEnvVar('AWS_BUCKET'))}$key';
     } catch (e) {
       debugPrint('S3 upload error: $e');
       rethrow;

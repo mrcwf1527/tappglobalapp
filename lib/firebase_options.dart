@@ -3,6 +3,7 @@
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'services/env_service.dart';
 
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
@@ -37,8 +38,7 @@ class DefaultFirebaseOptions {
   }
 
   static final FirebaseOptions web = FirebaseOptions(
-    apiKey: dotenv.env['FIREBASE_API_KEY_WEB'] ?? '',
-    // apiKey: const String.fromEnvironment('FIREBASE_API_KEY_WEB'),
+    apiKey: EnvService.getEnvVar('FIREBASE_API_KEY_WEB'),
     appId: '1:756432671303:web:24bc8e4592dc32c0651762',
     messagingSenderId: '756432671303',
     projectId: 'tappglobal-app',
