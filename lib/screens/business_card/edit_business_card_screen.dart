@@ -1,10 +1,14 @@
 // lib/screens/business_card/edit_business_card_screen.dart
 // Screen for editing scanned business card information with form fields and image preview, supporting multiple cards from a single scan.
+import 'dart:io';
+import 'dart:html' as html;
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../services/s3_service.dart';
 
 class EditBusinessCardScreen extends StatefulWidget {
@@ -109,37 +113,41 @@ class _EditBusinessCardScreenState extends State<EditBusinessCardScreen> {
     final String fileName = widget.fileName?.toLowerCase() ?? '';
     
     try {
-      if (fileName.endsWith('.pdf') || fileName.endsWith('.PDF')) {
-        return Container(
-          height: 200,
-          width: double.infinity,
-          margin: const EdgeInsets.symmetric(vertical: 8),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.picture_as_pdf, 
-                size: 48,
-                color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.grey[700],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'PDF Preview Available',
-                style: TextStyle(
+      if (fileName.endsWith('.pdf')) {
+        return GestureDetector(
+          onTap: () => _showExpandedPreview(context),
+          child: Container(
+            height: 200,
+            width: double.infinity,
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey),
+              borderRadius: BorderRadius.circular(8),
+              color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[900] : Colors.grey[100],
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.picture_as_pdf, 
+                  size: 48,
                   color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.grey[700],
                 ),
-              ),
-              Text(
-                'Tap to open',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[400] : Colors.grey[600],
+                const SizedBox(height: 12),
+                Text(
+                  'PDF File',
+                  style: TextStyle(
+                    color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.grey[700],
+                  ),
                 ),
-              ),
-            ],
+                Text(
+                  'Tap to download',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[400] : Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       }
@@ -204,35 +212,54 @@ class _EditBusinessCardScreenState extends State<EditBusinessCardScreen> {
     }
   }
 
-  void _showExpandedPreview(BuildContext context) {
+  Future<void> _showExpandedPreview(BuildContext context) async {
     final String fileName = widget.fileName?.toLowerCase() ?? '';
     
-    if (fileName.endsWith('.pdf') || fileName.endsWith('.PDF')) {
-      showDialog(
-        context: context,
-        builder: (context) => Dialog(
-          insetPadding: const EdgeInsets.all(16),
-          child: Stack(
-            children: [
-              SfPdfViewer.memory(
-                widget.imageBytes,
-                enableDoubleTapZooming: true,
-                pageSpacing: 8,
-              ),
-              Positioned(
-                top: 8,
-                right: 8,
-                child: IconButton(
-                  icon: Icon(Icons.close, 
-                    color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black
-                  ),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
+    if (fileName.endsWith('.pdf')) {
+      if (!kIsWeb) {  // Change Platform.isAndroid || Platform.isIOS to !kIsWeb
+        final directory = await getApplicationDocumentsDirectory();
+        final filePath = '${directory.path}/${widget.fileName}';
+        
+        try {
+          final file = File(filePath);
+          await file.writeAsBytes(widget.imageBytes);
+          
+          final url = Uri.file(filePath);
+          if (await canLaunchUrl(url)) {
+            await launchUrl(url);
+          } else {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Could not open file')),
+            );
+          }
+        } catch (e) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error opening file: $e')),
+          );
+        }
+      } else {
+        try {
+          final blob = html.Blob([widget.imageBytes], 'application/pdf');
+          final url = html.Url.createObjectUrlFromBlob(blob);
+          
+          final anchor = html.AnchorElement()
+            ..href = url
+            ..download = widget.fileName ?? 'document.pdf'
+            ..style.display = 'none';
+          
+          html.document.body?.append(anchor);
+          anchor.click();
+          anchor.remove();
+          html.Url.revokeObjectUrl(url);
+        } catch (e) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error downloading file: $e')),
+          );
+        }
+      }
       return;
     }
 

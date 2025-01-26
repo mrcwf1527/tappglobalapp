@@ -172,10 +172,10 @@ class _ScanBottomSheetState extends State<ScanBottomSheet> {
 
       if (result == null || result.files.first.bytes == null) return;
       final bytes = result.files.first.bytes!;
+      final fileName = result.files.first.name; // Add this to preserve filename
 
       if (!mounted) return;
       
-      // Show loading screen
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -186,17 +186,16 @@ class _ScanBottomSheetState extends State<ScanBottomSheet> {
       
       if (!mounted) return;
 
-      // First pop the bottom sheet, then loading screen
       Navigator.pop(context); // Bottom sheet
       Navigator.pop(context); // Loading screen
       
-      // Then push edit screen
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => EditBusinessCardScreen(
-            imageBytes: bytes,
+            imageBytes: bytes,          // Original PDF bytes preserved
             extractedCards: extractedData,
+            fileName: fileName,         // Pass filename for S3 upload
           ),
         ),
       );
@@ -205,7 +204,7 @@ class _ScanBottomSheetState extends State<ScanBottomSheet> {
       debugPrint('Import error: $e');
       if (!mounted) return;
       
-      Navigator.pop(context); // Close loading screen
+      Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
       );
