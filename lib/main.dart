@@ -17,6 +17,7 @@ import 'services/gemini_service.dart';
 import 'screens/auth_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/digital_profile/public_digital_profile_screen.dart';
+import 'providers/tag_provider.dart'; // Import the TagProvider
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,6 +36,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => ThemeProvider(prefs)),
         ChangeNotifierProvider(create: (_) => DigitalProfileProvider()),
         ChangeNotifierProvider(create: (_) => BusinessCardProvider()),
+        ChangeNotifierProvider(create: (_) => TagProvider()), // Added TagProvider
       ],
       child: const MyApp(),
     ),

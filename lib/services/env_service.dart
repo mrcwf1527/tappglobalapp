@@ -1,4 +1,5 @@
 // lib/services/env_service.dart
+// Service class that manages environment variables for Firebase and AWS configurations, with fallback to .env file values.
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class EnvService {

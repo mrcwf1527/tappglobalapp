@@ -13,6 +13,9 @@ import '../../../../widgets/digital_profile/blocks/text_block.dart';
 import '../../../../widgets/digital_profile/blocks/website_block.dart';
 import '../../../../widgets/digital_profile/blocks/image_block.dart';
 import '../../../../widgets/digital_profile/blocks/youtube_block.dart';
+import '../../../../widgets/navigation/web_side_nav.dart';
+import '../../../../widgets/responsive_layout.dart';
+import '../../../../widgets/digital_profile/desktop/desktop_preview.dart';
 
 class EditBlockScreen extends StatefulWidget {
   final Block block;
@@ -23,8 +26,7 @@ class EditBlockScreen extends StatefulWidget {
   State<EditBlockScreen> createState() => _EditBlockScreenState();
 }
 
-class _EditBlockScreenState extends State<EditBlockScreen>
-    with SingleTickerProviderStateMixin {
+class _EditBlockScreenState extends State<EditBlockScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _blockNameController = TextEditingController();
   final _debouncer = Debouncer();
@@ -146,6 +148,13 @@ class _EditBlockScreenState extends State<EditBlockScreen>
 
   @override
   Widget build(BuildContext context) {
+    return ResponsiveLayout(
+      mobileLayout: _buildMobileLayout(),
+      desktopLayout: _buildDesktopLayout(),
+    );
+  }
+
+  Widget _buildMobileLayout() {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
@@ -351,6 +360,278 @@ class _EditBlockScreenState extends State<EditBlockScreen>
           },
         ),
       ),
+    );
+  }
+
+  Widget _buildDesktopLayout() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final maxWidth = MediaQuery.of(context).size.width - 230.0;
+    final shouldCenter = maxWidth > 1530;
+    final contentWidth = shouldCenter ? 1530.0 : maxWidth;
+
+    return Consumer<DigitalProfileProvider>(
+      builder: (context, provider, _) => Scaffold(
+        body: Row(
+          children: [
+            WebSideNav(
+              selectedIndex: 4,
+              onTabSelected: (index) {
+                if (index == 0) Navigator.pushReplacementNamed(context, '/home');
+                if (index == 1) Navigator.pushReplacementNamed(context, '/leads');
+                if (index == 2) Navigator.pushReplacementNamed(context, '/scan');
+                if (index == 3) Navigator.pushReplacementNamed(context, '/inbox');
+                if (index == 5) Navigator.pushReplacementNamed(context, '/settings');
+              },
+            ),
+            Expanded(
+              child: Scaffold(
+                body: Center(
+                  child: SizedBox(
+                    width: contentWidth,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          flex: 60,
+                          child: Column(
+                            children: [
+                              _buildDesktopHeader(),
+                              Expanded(
+                                child: Container(
+                                  color: isDark ? const Color(0xFF191919) : Colors.grey[100],
+                                  child: _buildMainContent(provider),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          flex: 40,
+                          child: Column(
+                            children: const [
+                              Expanded(child: DesktopPreview()),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDesktopHeader() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.pop(context),
+          ),
+          const SizedBox(width: 16),
+          Text(
+            'Edit ${_getBlockTitle(widget.block.type)}',
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMainContent(DigitalProfileProvider provider) {
+    final blockIndex = provider.profileData.blocks.indexWhere((b) => b.id == widget.block.id);
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    if (blockIndex == -1 || _isDeleted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && Navigator.canPop(context)) {
+          Navigator.pop(context);
+        }
+      });
+      return const SizedBox();
+    }
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: Icon(
+                  _getBlockIcon(widget.block.type),
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 24,
+                ),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 16.0),
+                  child: TextField(
+                    controller: _blockNameController,
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      hintText: 'Block Name',
+                    ),
+                    onChanged: (value) {
+                      _debouncer.run(() {
+                        provider.updateBlocks([
+                          for (var b in provider.profileData.blocks)
+                            if (b.id == widget.block.id)
+                              b.copyWith(
+                                blockName: value,
+                                sequence: b.sequence,
+                              )
+                            else
+                              b
+                        ]);
+                      });
+                    },
+                  ),
+                ),
+              ),
+              Transform.scale(
+                scale: 0.7,
+                child: Switch(
+                  value: provider.profileData.blocks
+                          .firstWhere((b) => b.id == widget.block.id)
+                          .isVisible ??
+                      true,
+                  onChanged: (value) {
+                    provider.updateBlocks([
+                      for (var b in provider.profileData.blocks)
+                        if (b.id == widget.block.id)
+                          b.copyWith(
+                            isVisible: value,
+                            sequence: b.sequence,
+                          )
+                        else
+                          b
+                    ]);
+                  },
+                  activeColor: isDarkMode ? Colors.white : Colors.black,
+                  activeTrackColor: isDarkMode ? const Color(0xFF121212) : Colors.white,
+                  inactiveThumbColor: isDarkMode ? Colors.white : Colors.black,
+                  inactiveTrackColor: isDarkMode ? const Color(0xFF121212) : Colors.white,
+                  trackOutlineColor: WidgetStateProperty.all(
+                    isDarkMode ? Colors.white : Colors.black,
+                  ),
+                  trackOutlineWidth: WidgetStateProperty.all(1.5),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete_outline),
+                onPressed: () => _showDeleteConfirmation(context, () {
+                  final blocks = [...provider.profileData.blocks];
+                  blocks.removeAt(blockIndex);
+                  provider.updateBlocks(blocks);
+                }),
+              ),
+            ],
+          ),
+        ),
+        const Divider(height: 1),
+        if (widget.block.type != BlockType.text && widget.block.type != BlockType.spacer) ...[
+          TabBar(
+            controller: _tabController,
+            tabs: const [
+              Tab(text: 'Links'),
+              Tab(text: 'Layouts'),
+              Tab(text: 'Settings'),
+            ],
+          ),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                Consumer<DigitalProfileProvider>(
+                  builder: (context, provider, _) {
+                    final currentBlock = provider.profileData.blocks
+                        .firstWhere((b) => b.id == widget.block.id);
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                      child: SingleChildScrollView(
+                        child: _buildEditor(
+                          provider.profileData.blocks.indexOf(currentBlock),
+                          provider,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                Consumer<DigitalProfileProvider>(
+                  builder: (context, provider, _) => _LayoutsTab(
+                    onLayoutChanged: (layout, aspectRatio) {
+                      provider.updateBlocks([
+                        for (var b in provider.profileData.blocks)
+                          if (b.id == widget.block.id)
+                            b.copyWith(
+                              layout: layout,
+                              aspectRatio: aspectRatio,
+                              sequence: b.sequence,
+                            )
+                          else
+                            b
+                      ]);
+                    },
+                    block: provider.profileData.blocks
+                        .firstWhere((b) => b.id == widget.block.id),
+                  ),
+                ),
+                Consumer<DigitalProfileProvider>(
+                  builder: (context, provider, _) => _SettingsTab(
+                    block: provider.profileData.blocks
+                        .firstWhere((b) => b.id == widget.block.id),
+                    onUpdate: (updated) {
+                      provider.updateBlocks([
+                        for (var b in provider.profileData.blocks)
+                          if (b.id == widget.block.id)
+                            updated
+                          else
+                            b
+                      ]);
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+        if (widget.block.type == BlockType.text)
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: SingleChildScrollView(
+                child: _buildEditor(
+                  blockIndex,
+                  provider,
+                ),
+              ),
+            ),
+          ),
+        if (widget.block.type == BlockType.spacer)
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: SingleChildScrollView(
+                child: _buildEditor(
+                  blockIndex,
+                  provider,
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 

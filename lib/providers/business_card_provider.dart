@@ -1,11 +1,13 @@
 // lib/providers/business_card_provider.dart
 // State management class handling business card data operations with Firebase Firestore, including loading and adding cards.
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/business_card.dart';
 import '../services/s3_service.dart';
 
 class BusinessCardProvider extends ChangeNotifier {
+  StreamSubscription<QuerySnapshot>? _cardsSubscription;
   final _firestore = FirebaseFirestore.instance;
   final _s3Service = S3Service();
 
@@ -21,19 +23,32 @@ class BusinessCardProvider extends ChangeNotifier {
 
   Future<void> loadCards(String userId) async {
     try {
-      final snapshot = await _firestore
+      // Cancel existing subscription if any
+      await _cardsSubscription?.cancel();
+      
+      // Set up real-time listener
+      _cardsSubscription = _firestore
           .collection('businessCards')
           .doc(userId)
           .collection('cards')
           .orderBy('createdAt', descending: true)
-          .get();
-
-      _allCards = snapshot.docs
-          .map((doc) => BusinessCard.fromMap(doc.data(), id: doc.id))
-          .toList();
-          
-      _filteredCards = List.from(_allCards);
-      notifyListeners();
+          .snapshots()
+          .listen((snapshot) {
+        _allCards = snapshot.docs.map((doc) {
+          final data = doc.data();
+          final convertedData = {
+            ...data,
+            'phone': (data['phone'] as List?)?.map((e) => e.toString()).toList() ?? <String>[],
+            'email': (data['email'] as List?)?.map((e) => e.toString()).toList() ?? <String>[],
+            'social_media_personal': Map<String, String>.from(data['social_media_personal'] ?? {}),
+            'social_media_company': Map<String, String>.from(data['social_media_company'] ?? {})
+          };
+          return BusinessCard.fromMap(convertedData, id: doc.id);
+        }).toList();
+        
+        _applyFilters();
+        notifyListeners();
+      });
     } catch (e) {
       debugPrint('Error loading cards: $e');
       rethrow;
@@ -134,16 +149,27 @@ class BusinessCardProvider extends ChangeNotifier {
 
   Future<void> deleteCard(String cardId, String imageUrl, String userId) async {
     try {
+      final cardDoc = await _firestore
+          .collection('businessCards')
+          .doc(userId)
+          .collection('cards')
+          .doc(cardId)
+          .get();
+
+      if (cardDoc.exists) {
+        final fileUrl = cardDoc.data()?['fileUrl'] as String?;
+        
+        if (fileUrl != null && fileUrl.isNotEmpty) {
+          await _s3Service.deleteFile(fileUrl);  // Pass the complete URL
+        }
+      }
+
       await _firestore
           .collection('businessCards')
           .doc(userId)
           .collection('cards')
           .doc(cardId)
           .delete();
-      
-      if (imageUrl.isNotEmpty) {
-        await _s3Service.deleteFile(imageUrl);
-      }
       
       _allCards.removeWhere((card) => card.id == cardId);
       _applyFilters();
@@ -161,5 +187,69 @@ class BusinessCardProvider extends ChangeNotifier {
     _selectedSeniority = null;
     _sortBy = 'dateNewest';
     _applyFilters();
+  }
+  
+  Future<void> updateCardTags(String userId, String cardId, List<String> tags) async {
+    try {
+      await _firestore
+          .collection('businessCards')
+          .doc(userId)
+          .collection('cards')
+          .doc(cardId)
+          .update({'tags': tags});
+      
+      // Update local state immediately
+      final cardIndex = _allCards.indexWhere((card) => card.id == cardId);
+      if (cardIndex != -1) {
+        final updatedCard = BusinessCard.fromMap({
+          ..._allCards[cardIndex].toMap(),
+          'tags': tags,
+        }, id: cardId);
+        
+        _allCards[cardIndex] = updatedCard;
+        _applyFilters(); // Re-apply filters to update filtered cards
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Error updating card tags: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> updateCardNotes(String userId, String cardId, String notes) async {
+    try {
+      await _firestore
+          .collection('businessCards')
+          .doc(userId)
+          .collection('cards')
+          .doc(cardId)
+          .update({
+            'notes': notes,
+            'createdAt': FieldValue.serverTimestamp(), // Ensure timestamp is Firestore compatible
+          });
+      
+      // Update local state
+      final cardIndex = _allCards.indexWhere((card) => card.id == cardId);
+      if (cardIndex != -1) {
+        final updatedCard = BusinessCard.fromMap({
+          ..._allCards[cardIndex].toMap(),
+          'notes': notes,
+          'createdAt': Timestamp.now(), // Use Firestore Timestamp
+        }, id: cardId);
+        
+        _allCards[cardIndex] = updatedCard;
+        _applyFilters();
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Error updating card notes: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  void dispose() {
+    _cardsSubscription?.cancel();
+    super.dispose();
   }
 }

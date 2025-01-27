@@ -58,6 +58,14 @@ class AppRoutes {
     );
   }
 
+  static PageRoute _buildNoAnimationRoute(Widget page) {
+    return PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) => page,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) => child,
+      transitionDuration: Duration.zero,
+    );
+  }
+
   static final Map<String, Widget Function(BuildContext)> _routes = {
     auth: (context) => const AuthScreen(),
     forgotPassword: (context) => const ForgotPasswordScreen(),
@@ -84,7 +92,7 @@ class AppRoutes {
 
     if (settings.name == editBlock) {
       final block = settings.arguments as Block;
-      return _buildRoute(EditBlockScreen(block: block));
+      return _buildNoAnimationRoute(EditBlockScreen(block: block));
     }
 
     final builder = _routes[settings.name];
@@ -93,7 +101,7 @@ class AppRoutes {
     }
 
     if (settings.name == editDigitalProfile) {
-      return _buildRoute(EditDigitalProfileScreen(
+      return _buildNoAnimationRoute(EditDigitalProfileScreen(
         profileId: settings.arguments as String,
       ));
     }

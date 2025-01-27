@@ -1,6 +1,7 @@
 // lib/screens/business_card/edit_business_card_screen.dart
 // Screen for editing scanned business card information with form fields and image preview, supporting multiple cards from a single scan.
 import 'dart:io';
+import 'package:provider/provider.dart';
 import 'package:universal_html/html.dart' as html;
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
@@ -9,7 +10,10 @@ import 'package:path_provider/path_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import '../../models/tag.dart';
+import '../../providers/tag_provider.dart';
 import '../../services/s3_service.dart';
+import '../../widgets/business_cards/tag_bottom_sheet.dart';
 
 class EditBusinessCardScreen extends StatefulWidget {
   final Uint8List imageBytes;
@@ -41,10 +45,18 @@ class _EditBusinessCardScreenState extends State<EditBusinessCardScreen> {
   void initState() {
     super.initState();
     _cards = List.from(widget.extractedCards);
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId != null) {
+      Provider.of<TagProvider>(context, listen: false).loadTags(userId);
+    }
   }
 
   Future<void> _saveAllCards() async {
     if (!mounted) return;
+
+    // Add this line to save form data
+    if (!_formKey.currentState!.validate()) return;
+    _formKey.currentState!.save();
     
     setState(() => _isSavingAll = true);
     final scaffoldMessenger = ScaffoldMessenger.of(context);
@@ -107,6 +119,8 @@ class _EditBusinessCardScreenState extends State<EditBusinessCardScreen> {
   void _nextCard() {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
+      // Add this line to update cards list
+      _cards[_currentCardIndex] = {..._cards[_currentCardIndex]};
       setState(() {
         _currentCardIndex++;
         _formKey = GlobalKey<FormState>();
@@ -380,6 +394,46 @@ class _EditBusinessCardScreenState extends State<EditBusinessCardScreen> {
                 _buildSocialMediaFields('Personal Social Media', 'social_media_personal'),
               if (_hasSocialMedia('social_media_company'))
                 _buildSocialMediaFields('Company Social Media', 'social_media_company'),
+              // START OF NEW CODE
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Tags Section
+                  ListTile(
+                    title: const Text('Tags'),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.add),
+                      onPressed: () => _showTagBottomSheet(context),
+                    ),
+                  ),
+                  if (_cards[_currentCardIndex]['tags']?.isNotEmpty ?? false)
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: (_cards[_currentCardIndex]['tags'] as List<String>)
+                          .map((tagId) => _buildTagChip(tagId))
+                          .toList(),
+                    ),
+                  
+                  // Notes Section
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: TextFormField(
+                      initialValue: _cards[_currentCardIndex]['notes'] ?? '',
+                      decoration: const InputDecoration(
+                        labelText: 'Notes',
+                        alignLabelWithHint: true,
+                      ),
+                      maxLines: null,
+                      minLines: 3,
+                      onSaved: (value) {
+                        _cards[_currentCardIndex]['notes'] = value ?? '';
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              // END OF NEW CODE
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: _isSaving || _isSavingAll 
@@ -474,6 +528,61 @@ class _EditBusinessCardScreenState extends State<EditBusinessCardScreen> {
         }),
       ],
     );
+  }
+  
+  void _showTagBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => TagBottomSheet(
+        selectedTags: List<String>.from(_cards[_currentCardIndex]['tags'] ?? []),
+        onTagsSelected: (selectedTags) {
+          setState(() {
+            _cards[_currentCardIndex]['tags'] = selectedTags;
+          });
+        },
+      ),
+    );
+  }
+
+  Widget _buildTagChip(String tagId) {
+    return Consumer<TagProvider>(
+      builder: (context, tagProvider, _) {
+        final tag = tagProvider.tags.firstWhere(
+          (t) => t.id == tagId,
+          orElse: () => Tag(id: '', name: 'Unknown', color: '#000000', userId: ''),
+        );
+        
+        final color = Color(int.parse(tag.color.substring(1, 7), radix: 16) + 0xFF000000);
+        final isLight = _isLightColor(color);
+
+        return Chip(
+          label: Text(
+            tag.name,
+            style: TextStyle(
+              color: isLight ? Colors.black : Colors.white,
+            ),
+          ),
+          backgroundColor: color,
+          deleteIconColor: isLight ? Colors.black : Colors.white,
+          side: BorderSide(
+            color: isLight ? Colors.black : color,
+            width: 1.0,
+          ),
+          onDeleted: () {
+            setState(() {
+              _cards[_currentCardIndex]['tags'].remove(tagId);
+            });
+          },
+        );
+      },
+    );
+  }
+
+  bool _isLightColor(Color color) {
+    double luminance = (0.299 * color.r + 
+                      0.587 * color.g + 
+                      0.114 * color.b) / 255;
+    return luminance > 0.6;
   }
 }
 

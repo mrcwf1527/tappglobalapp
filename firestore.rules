@@ -34,9 +34,14 @@ service cloud.firestore {
     }
     
     match /businessCards/{userId}/cards/{cardId} {
-      allow read: if request.auth != null && userId == request.auth.uid;
-      allow create: if request.auth != null && userId == request.auth.uid;
-      allow update, delete: if request.auth != null && userId == request.auth.uid;
+      allow read, write: if request.auth != null;
+      allow create: if request.auth != null 
+        && request.resource.data.phone is list
+        && request.resource.data.email is list;
+    }
+    match /businessCards/{userId}/tags/{tagId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
   }
 }
